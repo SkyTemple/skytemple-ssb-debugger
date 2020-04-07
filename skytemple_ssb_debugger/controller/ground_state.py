@@ -90,7 +90,7 @@ class GroundStateController:
 
             if ground_state.running:
                 # Is running
-                ssb, ssx, actors, objects, performers, events = ground_state.collect()
+                global_script, ssb, ssx, actors, objects, performers, events = ground_state.collect()
 
                 # File tree store
                 self._files__tree_store.clear()
@@ -138,14 +138,16 @@ class GroundStateController:
                 # Entities store
                 self._entities__tree_store.clear()
                 self._entities__tree_store.append(None, [
-                    '<Global>', '0', '',  self.get_short_sname(ssb, 0), None, ''
+                    '<Global>', '0', '',
+                    self.get_short_sname(ssb, global_script.current_script_hanger), None, ''
                 ])
                 actors_node = self._entities__tree_store.append(None, [
                     'Actors', '', '', '', None, ''
                 ])
                 for actor in actors:
                     self._entities__tree_store.append(actors_node, [
-                        f'{actor.id}', f'{actor.hanger}', f'{actor.sector}', self.get_short_sname(ssb, actor.hanger), None, f'{actor.kind.name}'
+                        f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
+                        self.get_short_sname(ssb, actor.current_script_hanger), None, f'{actor.kind.name}'
                     ])
                 objects_node = self._entities__tree_store.append(None, [
                     'Objects', '', '', '', None, ''
@@ -155,22 +157,30 @@ class GroundStateController:
                     if kind_name == 'NULL':
                         kind_name = f'{object.kind.name} ({object.kind.id})'
                     self._entities__tree_store.append(objects_node, [
-                        f'{object.id}', f'{object.hanger}', f'{object.sector}', self.get_short_sname(ssb, object.hanger), None, kind_name
+                        f'{object.id}', f'{object.hanger}', f'{object.sector}',
+                        self.get_short_sname(ssb, object.current_script_hanger), None, kind_name
                     ])
                 performers_node = self._entities__tree_store.append(None, [
                     'Performers', '', '', '', None, ''
                 ])
                 for performer in performers:
                     self._entities__tree_store.append(performers_node, [
-                        f'{performer.id}', f'{performer.hanger}', f'{performer.sector}', self.get_short_sname(ssb, performer.hanger), None, f'{performer.kind}'
+                        f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
+                        self.get_short_sname(ssb, performer.current_script_hanger), None, f'{performer.kind}'
                     ])
                 events_node = self._entities__tree_store.append(None, [
                     'Events', '', '', '', None, ''
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [
-                        f'{event.id}', f'{event.hanger}', f'{event.sector}', self.get_short_sname(ssb, event.hanger), None, f'{event.kind}'
+                        f'{event.id}', f'{event.hanger}', f'{event.sector}',
+                        '', None, f'{event.kind}'
                     ])
+
+                pos_marks_node = self._entities__tree_store.append(None, [
+                    'Position Markers', '', '', '', None, ''
+                ])
+                # TODO
 
                 self._files__tree.expand_all()
                 self._entities__tree.expand_all()

@@ -16,17 +16,20 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera
+from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractScriptRuntimeState
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
 PERFORMER_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
-class Performer:
+class Performer(AbstractScriptRuntimeState):
     def __init__(self, mem: DeSmuME_Memory, rom_data: Pmd2Data, pnt: int):
-        self.mem = mem
+        super().__init__(mem, pnt)
         self.rom_data = rom_data
-        self.pnt = pnt
+
+    @property
+    def _script_struct_offset(self):
+        return PERFORMER_BEGIN_SCRIPT_STRUCT
 
     @property
     def id(self):

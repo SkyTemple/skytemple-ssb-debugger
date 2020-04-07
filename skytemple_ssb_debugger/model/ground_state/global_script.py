@@ -14,30 +14,16 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from abc import abstractmethod, ABC
-
 from desmume.emulator import DeSmuME_Memory
+from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.model.ground_state import AbstractScriptRuntimeState
 
 
-def pos_for_display_camera(pos: int, camera_pos: int) -> float:
-    """Subtracts the camera positon, but also turns the 'subpixel' position into a float"""
-    # TODO: is this actually correct...?
-    pos_abs = (pos >> 8) - camera_pos
-    pos_sub = (pos & 0xFF) / 0xFF
-    return pos_abs + pos_sub
-
-
-class AbstractScriptRuntimeState(ABC):
-    """TODO: For more see sandbox.sandbox. """
-    def __init__(self, mem: DeSmuME_Memory, pnt: int):
-        self.mem = mem
-        self.pnt = pnt
+class GlobalScript(AbstractScriptRuntimeState):
+    def __init__(self, mem: DeSmuME_Memory, rom_data: Pmd2Data, pnt: int):
+        super().__init__(mem, pnt)
+        self.rom_data = rom_data
 
     @property
-    @abstractmethod
     def _script_struct_offset(self):
-        pass
-
-    @property
-    def current_script_hanger(self):
-        return self.mem.unsigned.read_short(self.pnt + self._script_struct_offset + 0x10)
+        return 0

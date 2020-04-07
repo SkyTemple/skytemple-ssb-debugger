@@ -19,6 +19,7 @@ from typing import Optional, List, Tuple
 
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
 from skytemple_ssb_debugger.model.ground_state.actor import Actor, ACTOR_BEGIN_SCRIPT_STRUCT
 from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.model.ground_state.event import Event, EVENT_EXISTS_CHECK_OFFSET
@@ -40,12 +41,12 @@ class GroundEngineState:
 
         self.pnt_map = rom_data.binaries['overlay/overlay_0011.bin'].pointers['GroundStateMap'].begin_absolute
         base_pnt = rom_data.binaries['overlay/overlay_0011.bin'].blocks['GroundStatePntrs'].begin_absolute
-        #self.pnt_main_script_struct = base_pnt - 4
-        #self.pnt_unk = base_pnt
-        self.pnt_actors = base_pnt + 4
-        self.pnt_objects = base_pnt + 8
-        self.pnt_performers = base_pnt + 12
-        self.pnt_events = base_pnt + 16
+        self.pnt_main_script_struct = base_pnt
+        #self.pnt_unk = base_pnt + 4
+        self.pnt_actors = base_pnt + 8
+        self.pnt_objects = base_pnt + 12
+        self.pnt_performers = base_pnt + 16
+        self.pnt_events = base_pnt + 20
 
         self._load_ssb_for = None
 
@@ -67,6 +68,11 @@ class GroundEngineState:
     @property
     def loaded_ssb_files(self):
         return self._loaded_ssb_files
+
+    @property
+    def global_script(self) -> GlobalScript:
+        blk = self.emu.memory.unsigned.read_long(self.pnt_main_script_struct)
+        return GlobalScript(self.emu.memory, self.rom_data, blk)
 
     @property
     def map(self) -> Map:
@@ -121,7 +127,7 @@ class GroundEngineState:
             return None
         return Event(self.emu.memory, self.rom_data, blk)
 
-    def collect(self) -> Tuple[List[LoadedSsbFile], List[LoadedSsxFile], List[Actor], List[Object], List[Performer], List[Event]]:
+    def collect(self) -> Tuple[GlobalScript, List[LoadedSsbFile], List[LoadedSsxFile], List[Actor], List[Object], List[Performer], List[Event]]:
         loaded_ssb_files = self.loaded_ssb_files
         loaded_ssx_files = self.loaded_ssx_files
         actors = [x for x in self.actors if x is not None]
@@ -129,7 +135,7 @@ class GroundEngineState:
         performers = [x for x in self.performers if x is not None]
         events = [x for x in self.events if x is not None]
 
-        return loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events
+        return self.global_script, loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events
 
     def watch(self):
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
