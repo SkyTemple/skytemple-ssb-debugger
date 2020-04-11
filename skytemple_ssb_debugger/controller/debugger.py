@@ -23,6 +23,7 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
+from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.sandbox.sandbox import read_ssb_str_mem
 
 
@@ -58,7 +59,7 @@ class DebuggerController:
         self._debug_mode = False
         self._log_ground_engine_state = False
 
-    def enable(self, rom_data: Pmd2Data):
+    def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager):
         self.rom_data = rom_data
 
         arm9 = self.rom_data.binaries['arm9.bin']
@@ -69,7 +70,7 @@ class DebuggerController:
         self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
         self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
 
-        self.ground_engine_state = GroundEngineState(self.emu, self.rom_data, self.print_callback)
+        self.ground_engine_state = GroundEngineState(self.emu, self.rom_data, self.print_callback, ssb_file_manager)
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
         self.ground_engine_state.watch()
 

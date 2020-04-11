@@ -24,15 +24,17 @@ from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask, load_configured_config
 from desmume.emulator import DeSmuME, SCREEN_WIDTH, SCREEN_HEIGHT
-from desmume.frontend.gtk_drawing_area_desmume import AbstractRenderer
 from desmume.frontend.gtk_drawing_impl.software import SoftwareRenderer
 from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
+from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController
 from skytemple_ssb_debugger.controller.variable import VariableController
+from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
+from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
 gi.require_version('Gtk', '3.0')
 
@@ -50,11 +52,13 @@ class MainController:
         self.builder = builder
         self.window = window
         self.emu: Optional[DeSmuME] = None
+        self.rom: Optional[NintendoDSRom] = None
+        self.ssb_file_manager: Optional[SsbFileManager] = None
+        self.breakpoint_manager: Optional[BreakpointManager] = None
+        self.rom_filename = None
+
         self.debugger: Optional[DebuggerController] = None
         self.debug_overlay: Optional[DebugOverlayController] = None
-        self.variable_controller: VariableController = None
-        self.rom: Optional[NintendoDSRom] = None
-        self.rom_filename = None
 
         self.config_dir = os.path.join(skytemple_config_dir(), 'debugger')
         os.makedirs(self.config_dir, exist_ok=True)
@@ -110,7 +114,8 @@ class MainController:
             self._keyboard_cfg, self._joystick_cfg = load_configured_config(self.emu)
             self._keyboard_tmp = self._keyboard_cfg
 
-        self.variable_controller = VariableController(self.emu, self.builder)
+        self.code_editor: CodeEditorController = CodeEditorController(self.builder)
+        self.variable_controller: VariableController = VariableController(self.emu, self.builder)
         self.ground_state_controller = GroundStateController(self.emu, self.debugger, self.builder)
 
         # Load more initial settings
@@ -187,6 +192,9 @@ class MainController:
 
     def on_main_window_key_press_event(self, widget: Gtk.Widget, event: Gdk.EventKey, *args):
         if self.emu:
+            # Don't enable controls when in any entry or text view
+            if isinstance(self.window.get_focus(), Gtk.Entry) or isinstance(self.window.get_focus(), Gtk.TextView):
+                return False
             key = self.lookup_key(event.keyval)
             # shift,ctrl, both alts
             mask = Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK | Gdk.ModifierType.MOD5_MASK
@@ -215,8 +223,6 @@ class MainController:
     def on_draw_sub_configure_event(self, widget: Gtk.DrawingArea, *args):
         self.renderer.reshape(widget, 1)
         return True
-
-    # TODO: Size changes!
 
     def on_draw_main_motion_notify_event(self, widget: Gtk.Widget, event: Gdk.EventMotion, *args):
         return self.on_draw_motion_notify_event(widget, event, 0)
@@ -256,6 +262,7 @@ class MainController:
             return True
 
     def on_draw_button_press_event(self, widget: Gtk.Widget, event: Gdk.EventButton, display_id: int):
+        widget.grab_focus()
         if self.emu:
             if event.button == 1:
                 if display_id == 1 and self.emu.is_running():
@@ -264,6 +271,11 @@ class MainController:
                     if state & Gdk.ModifierType.BUTTON1_MASK:
                         self.set_touch_pos(x, y)
             return True
+
+    def on_right_event_box_button_press_event(self, widget: Gtk.Widget, *args):
+        """If the right area of the window is pressed, focus it, to disable any entry/textview focus."""
+        widget.grab_focus()
+        return False
 
     # MENU FILE
     def on_menu_open_activate(self, *args):
@@ -275,7 +287,8 @@ class MainController:
             self.open_rom(fn)
 
     def on_menu_save_activate(self, menu_item: Gtk.MenuItem, *args):
-        pass  # todo
+        if self.code_editor and self.code_editor.currently_open:
+            self.code_editor.currently_open.save()
 
     def on_menu_save_all_activate(self, menu_item: Gtk.MenuItem, *args):
         pass  # todo
@@ -375,6 +388,15 @@ class MainController:
         self._search_text = search.get_text()
         self._ssb_item_filter.refilter()
 
+    def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            model, treeiter = tree.get_selection().get_selected()
+            if treeiter is not None and model is not None:
+                if model[treeiter][0] == '':
+                    tree.expand_row(model[treeiter].path, False)
+                else:
+                    self.code_editor.open(model[treeiter][0])
+
     def init_file_tree(self):
         ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
         ssb_file_tree_store.clear()
@@ -444,13 +466,18 @@ class MainController:
     def open_rom(self, fn: str):
         try:
             self.rom = NintendoDSRom.fromFile(fn)
+            self.ssb_file_manager = SsbFileManager(self.rom)
+            self.breakpoint_manager = BreakpointManager(
+                os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_file_manager
+            )
             # Immediately save, because the module packs the ROM differently.
             self.rom.saveToFile(fn)
             self.rom_filename = fn
             rom_data = get_ppmdu_config_for_rom(self.rom)
-            self.debugger.enable(rom_data)
+            self.debugger.enable(rom_data, self.ssb_file_manager)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
+            self.code_editor.init(self.ssb_file_manager, self.breakpoint_manager, rom_data)
         except BaseException as ex:
             md = Gtk.MessageDialog(self.window,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
@@ -466,13 +493,10 @@ class MainController:
             self.emu_stop()
 
     def enable_editing_features(self):
-        label: Gtk.Label = self.builder.get_object('main_label')
-        label.set_text('Welcome to\n' 
-                       'SkyTemple\n'
-                       'Script Engine Debugger.\n'
-                       '\n'
-                       'Please select a script to edit,\n'
-                       'or start the game.')
+        code_editor_main: Gtk.Box = self.builder.get_object('code_editor_main')
+        code_editor_notebook: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
+        code_editor_main.remove(self.builder.get_object('main_label'))
+        code_editor_main.pack_start(code_editor_notebook, True, True, 0)
 
     def enable_debugging_features(self):
         self._set_sensitve("emulator_controls_playstop", True)
@@ -667,11 +691,19 @@ class MainController:
         return self._recursive_filter_func(self._search_text, model, iter)
 
     def _recursive_filter_func(self, search, model, iter):
+        # TODO: This is super slow, there's definitely a better way.
         if search is None:
             return True
         i_match = search.lower() in model[iter][1].lower()
         if i_match:
             return True
+        # See if parent matches
+        parent = model[iter].parent
+        while parent:
+            if search.lower() in parent[1].lower():
+                return True
+            parent = parent.parent
+        # See if child matches
         for child in model[iter].iterchildren():
             child_match = self._recursive_filter_func(search, child.model, child.iter)
             if child_match:

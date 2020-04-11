@@ -14,11 +14,18 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from explorerscript.source_map import SourceMap
+from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
 
 
-class LoadedSsbFile:
-    def __init__(self, file_name: str, hanger: int, hash: str = None):
-        self.file_name = file_name
-        self.hanger = hanger
-        # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
-        self.hash = hash
+class ExplorerScriptFile(AbstractScriptFile):
+    def load(self):
+        pass  # TODO
+
+    @property
+    def text(self):
+        return ''  # TODO
+
+    @property
+    def source_map(self):
+        return SourceMap({})  # TODO

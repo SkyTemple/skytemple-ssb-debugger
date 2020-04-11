@@ -14,7 +14,7 @@ setup(
     description='Script Engine debugger for Pokémon Mystery Dungeon Explorers of Sky (EU/US)',
     long_description=long_description,
     long_description_content_type='text/x-rst',
-    url='https://github.com/SkyTemple/ssb-debugger',
+    url='https://github.com/SkyTemple/skytemple-ssb-debugger',
     install_requires=[
         # TODO
     ],
@@ -22,17 +22,4 @@ setup(
         # TODO
     ],
     package_data={'': ['**.css', '**.glade']},
-    entry_points='''
-        [skytemple.module]
-        bgp=          skytemple.module.bgp.module:BgpModule
-        portrait=     skytemple.module.portrait.module:PortraitModule
-        map_bg=       skytemple.module.map_bg.module:MapBgModule
-        script=       skytemple.module.script.module:ScriptModule
-    ''',
-    #dungeon=      skytemple.module.dungeon.module:DungeonModule
-    #item=         skytemple.module.item.module:ItemModule
-    #music=        skytemple.module.music.module:MusicModule
-    #sprite=       skytemple.module.sprite.module:SpriteModule
-    #stats=        skytemple.module.stats.module:StatsModule
-    #strings=      skytemple.module.strings.module:StringsModule
 )

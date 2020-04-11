@@ -14,11 +14,22 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from abc import abstractmethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 
-class LoadedSsbFile:
-    def __init__(self, file_name: str, hanger: int, hash: str = None):
-        self.file_name = file_name
-        self.hanger = hanger
-        # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
-        self.hash = hash
+class AbstractScriptFile:
+    def __init__(self, parent: 'SsbLoadedFile'):
+        self.parent = parent
+
+    @abstractmethod
+    def load(self):
+        pass
+
+    @property
+    @abstractmethod
+    def text(self):
+        pass

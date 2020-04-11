@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+#  Copyright 2020 Parakoopa
+#
+#  This file is part of SkyTemple.
+#
+#  SkyTemple is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SkyTemple is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+
+-->
+<language id="ssbs" name="SSBScript" version="2.0" _section="Script">
+  <metadata>
+    <property name="mimetypes">text/x-ssbs;application/x-ssbs;text/x-ssbs-source;application/x-ssbs-source</property>
+    <property name="globs">*.ssbs</property>
+  </metadata>
+
+  <styles>
+    <style id="keyword"           name="Keyword"               map-to="def:keyword"/>
+    <style id="string"            name="String"                map-to="def:string"/>
+    <style id="decimal"           name="Decimal number"        map-to="def:decimal"/>
+    <style id="base-n-integer"    name="Base-N number"         map-to="def:base-n-integer"/>
+    <style id="constant"          name="Constant"              map-to="def:constant"/>
+    <style id="lang-string-key"   name="Language String Key"   map-to="def:special-constant"/>
+    <style id="label"             name="Label"                 map-to="def:preprocessor"/>
+    <style id="label-jump"        name="Label Jump"            map-to="def:preprocessor"/>
+  </styles>
+  <definitions>
+    <define-regex id="identifier">[a-zA-Z_][0-9a-zA-Z_]*</define-regex>
+
+    <define-regex id="number">[1-9][0-9]*</define-regex>
+
+    <context id="double-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
+      <start>"</start>
+      <end>"</end>
+      <include>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+
+    <context id="single-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
+      <start>'</start>
+      <end>'</end>
+      <include>
+        <context ref="def:line-continue"/>
+      </include>
+    </context>
+
+    <context id="lang-string-key" style-ref="lang-string-key">
+      <match>\%{identifier}=</match>
+    </context>
+
+    <context id="label" style-ref="label">
+      <match>\$\%{identifier}</match>
+    </context>
+
+    <context id="label-jump" style-ref="label-jump">
+      <match>@\%{identifier}</match>
+    </context>
+
+    <context id="decimal" style-ref="decimal">
+      <match>([1-9][0-9]*|0)(?![\w\.])</match>
+    </context>
+
+    <context id="octal" style-ref="base-n-integer">
+      <match>0[0-7]+(?![\w\.])</match>
+    </context>
+
+    <context id="hex" style-ref="base-n-integer">
+      <match>0[xX][0-9A-Fa-f]+(?![\w\.])</match>
+    </context>
+
+    <context id="binary" style-ref="base-n-integer">
+      <match>0[bB][01]+(?![\w\.])</match>
+    </context>
+
+    <context id="constant" style-ref="constant">
+      <match>(?&lt;![\w\.])([A-Z_][A-Z0-9_]{2,})(?![\w\.])</match>
+    </context>
+
+    <context id="keywords" style-ref="keyword">
+      <keyword>coro</keyword>
+      <keyword>def</keyword>
+      <keyword>for_actor</keyword>
+      <keyword>for_object</keyword>
+      <keyword>for_performer</keyword>
+      <keyword>alias</keyword>
+      <keyword>previous</keyword>
+    </context>
+
+    <context id="ssbs" class="no-spell-check">
+      <include>
+        <context ref="double-quoted-string"/>
+        <context ref="single-quoted-string"/>
+        <context ref="decimal"/>
+        <context ref="octal"/>
+        <context ref="hex"/>
+        <context ref="binary"/>
+        <context ref="keywords"/>
+        <context ref="lang-string-key"/>
+        <context ref="label"/>
+        <context ref="label-jump"/>
+        <context ref="constant"/>
+      </include>
+    </context>
+  </definitions>
+</language>

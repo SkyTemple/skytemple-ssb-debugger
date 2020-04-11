@@ -14,11 +14,22 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import math
+
+import cairo
+from gi.repository import Gdk
 
 
-class LoadedSsbFile:
-    def __init__(self, file_name: str, hanger: int, hash: str = None):
-        self.file_name = file_name
-        self.hanger = hanger
-        # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
-        self.hash = hash
+def create_breakpoint_icon():
+    w = h = 24
+    circle_radius = 8
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+    cr = cairo.Context(surface)
+
+    cr.arc(w / 2, h / 2, circle_radius, 0, 2 * math.pi)
+
+    cr.set_source_rgb(1.0, 0, 0)
+    cr.fill()
+
+    pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
+    return pixbuf

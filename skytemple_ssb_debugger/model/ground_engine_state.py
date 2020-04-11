@@ -17,6 +17,8 @@
 import warnings
 from typing import Optional, List, Tuple
 
+from gi.repository import Gtk
+
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
@@ -27,6 +29,7 @@ from skytemple_ssb_debugger.model.ground_state.loaded_ssb_file import LoadedSsbF
 from skytemple_ssb_debugger.model.ground_state.loaded_ssx_file import LoadedSsxFile
 from skytemple_ssb_debugger.model.ground_state.object import Object, OBJECT_BEGIN_SCRIPT_STRUCT
 from skytemple_ssb_debugger.model.ground_state.performer import Performer, PERFORMER_BEGIN_SCRIPT_STRUCT
+from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
 TALK_HANGER_OFFSET = 3
 MAX_SSX = 3
@@ -34,9 +37,10 @@ MAX_SSB = MAX_SSX + TALK_HANGER_OFFSET
 
 
 class GroundEngineState:
-    def __init__(self, emu: DeSmuME, rom_data: Pmd2Data, print_callback):
+    def __init__(self, emu: DeSmuME, rom_data: Pmd2Data, print_callback, ssb_file_manager: SsbFileManager):
         self.emu = emu
         self.rom_data = rom_data
+        self.ssb_file_manager = ssb_file_manager
         self.logging_enabled = False
 
         self.pnt_map = rom_data.binaries['overlay/overlay_0011.bin'].pointers['GroundStateMap'].begin_absolute
@@ -181,6 +185,7 @@ class GroundEngineState:
         if load_for > MAX_SSB:
             warnings.warn(f"Ground Engine debugger: Invalid hanger ID for ssb: {load_for}")
             return
+        self.ssb_file_manager.open_in_ground_engine(name)
         self._loaded_ssb_files[load_for] = (LoadedSsbFile(name, load_for))
 
     def hook__ssx_load(self, address, size):
@@ -212,6 +217,9 @@ class GroundEngineState:
         self._loaded_ssx_files = [None for _ in range(0, MAX_SSX + 1)]
         if keep_global:
             glob = self._loaded_ssb_files[0]
+        for i, ssb in enumerate(self._loaded_ssb_files):
+            if (i != 0 or not keep_global) and ssb is not None:
+                self.ssb_file_manager.close_in_ground_engine(ssb.file_name)
         self._loaded_ssb_files = [None for _ in range(0, MAX_SSB + 1)]
         if keep_global:
             self._loaded_ssb_files[0] = glob
@@ -220,7 +228,11 @@ class GroundEngineState:
         """Convert the state (that's not directly tied to the game's memory) to a dict for saving."""
         return {
             'running': self.running,
-            'ssbs': [x.file_name if x is not None else None for x in self._loaded_ssb_files],
+            'ssbs': {
+                x.file_name: self.ssb_file_manager.hash_for(x.file_name)
+                if x is not None else None
+                for x in self._loaded_ssb_files
+            },
             'ssxs': [x.file_name if x is not None else None for x in self._loaded_ssx_files],
             'load_ssb_for': self._load_ssb_for
         }
@@ -229,5 +241,29 @@ class GroundEngineState:
         """Load a saved state back from a dict"""
         self._running = state['running']
         self._load_ssb_for = state['load_ssb_for']
-        self._loaded_ssb_files = [LoadedSsbFile(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssbs'])]
+        self._loaded_ssb_files = [
+            LoadedSsbFile(fn, hng, hash)
+            if fn is not None else None
+            for hng, (hash, fn) in enumerate(state['ssbs'])
+        ]
+        # - Load SSB file hashes from ground state file, if the hashes don't match on reload with the saved
+        #   files, mark them as not up to date in RAM and show warning for affected files.
+        were_invalid = []
+        for f in self._loaded_ssb_files:
+            if f.hash != self.ssb_file_manager.hash_for(f.file_name):
+                self.ssb_file_manager.mark_invalid(f.file_name)
+                were_invalid.append(f.file_name)
+        if len(were_invalid) > 0:
+            n = '\n'
+            md = Gtk.MessageDialog(None,
+                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
+                                   Gtk.ButtonsType.OK,
+                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug"
+                                   f"these files, until they are reloaded:\n{n.join(were_invalid)}",
+                                   title="Warning!")
+            md.set_position(Gtk.WindowPosition.CENTER)
+            md.run()
+            md.destroy()
+        for ssb in self._loaded_ssb_files:
+            self.ssb_file_manager.open_in_ground_engine(ssb.file_name)
         self._loaded_ssx_files = [LoadedSsxFile(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]
