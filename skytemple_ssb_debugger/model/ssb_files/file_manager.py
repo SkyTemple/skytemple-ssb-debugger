@@ -14,19 +14,22 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-import base64
 import hashlib
 from typing import Dict
 
 from ndspy.rom import NintendoDSRom
 
+from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.types.file_types import FileType
+from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 
 class SsbFileManager:
-    def __init__(self, rom: NintendoDSRom):
+    def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str):
         self.rom = rom
+        self.rom_data = rom_data
+        self.rom_filename = rom_filename
         # TODO: Mechanism to close files again!
         self._open_files: Dict[str, SsbLoadedFile] = {}
 
@@ -45,8 +48,17 @@ class SsbFileManager:
         to reload for the editors, True is returned. You may call self.force_reload()
         when you are ready (to trigger ssb reload event).
         Otherwise False is returned and the event will be triggered later automatically.
+
+        :raises: ParseError: On parsing errors
+        :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
-        pass  # todo
+        self.get(filename)
+        compiler = ScriptCompiler(self.rom_data)
+        self._open_files[filename].ssb_model = compiler.compile_ssbscript(code)
+        self.rom.setFileByName(
+            filename, FileType.SSB.serialize(self._open_files[filename].ssb_model)
+        )
+        self.rom.saveToFile(self.rom_filename)
         # After save:
         return self._handle_after_save(filename)
 
@@ -57,6 +69,9 @@ class SsbFileManager:
         to reload for the editors, True is returned. You may call self.force_reload()
         when you are ready (to trigger ssb reload event).
         Otherwise False is returned and the event will be triggered later automatically.
+
+        :raises: ParseError: On parsing errors
+        :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
         pass  # todo
         # After save:
@@ -108,8 +123,8 @@ class SsbFileManager:
         self._open_files[filename].opened_in_ground_engine = False
         self._open_files[filename].not_breakable = False
         if not self._open_files[filename].ram_state_up_to_date:
-            self._open_files[filename].ram_state_up_to_date = True
             self._open_files[filename].signal_editor_reload()
+        self._open_files[filename].ram_state_up_to_date = True
         print(f"{filename}: Closed in Ground Engine")
         pass
 
@@ -128,7 +143,7 @@ class SsbFileManager:
 
     def hash_for(self, filename: str):
         self.get(filename)
-        return base64.b64encode(hashlib.sha256(self._open_files[filename].ssb_model.original_binary_data))
+        return hashlib.sha256(self._open_files[filename].ssb_model.original_binary_data).hexdigest()
 
     def mark_invalid(self, filename: str):
         """Mark a file as not breakable, because source mappings are not available."""

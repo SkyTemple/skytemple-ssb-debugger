@@ -466,14 +466,14 @@ class MainController:
     def open_rom(self, fn: str):
         try:
             self.rom = NintendoDSRom.fromFile(fn)
-            self.ssb_file_manager = SsbFileManager(self.rom)
+            rom_data = get_ppmdu_config_for_rom(self.rom)
+            self.ssb_file_manager = SsbFileManager(self.rom, rom_data, fn)
             self.breakpoint_manager = BreakpointManager(
                 os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_file_manager
             )
             # Immediately save, because the module packs the ROM differently.
             self.rom.saveToFile(fn)
             self.rom_filename = fn
-            rom_data = get_ppmdu_config_for_rom(self.rom)
             self.debugger.enable(rom_data, self.ssb_file_manager)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
@@ -558,11 +558,11 @@ class MainController:
         if os.path.exists(ground_engine_savestate_path):
             try:
                 was_running = self.emu.is_running()
-                self.emu_reset()
                 self._stopped = False
+                self.emu_reset()
+                self.emu.savestate.load_file(desmume_savestate_path)
                 with open(ground_engine_savestate_path, 'r') as f:
                     self.debugger.ground_engine_state.deserialize(json.load(f))
-                self.emu.savestate.load_file(desmume_savestate_path)
                 self.ground_state_controller.sync()
                 if was_running:
                     self._set_buttons_running()

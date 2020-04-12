@@ -228,11 +228,11 @@ class GroundEngineState:
         """Convert the state (that's not directly tied to the game's memory) to a dict for saving."""
         return {
             'running': self.running,
-            'ssbs': {
-                x.file_name: self.ssb_file_manager.hash_for(x.file_name)
+            'ssbs': [
+                [x.file_name, self.ssb_file_manager.hash_for(x.file_name)]
                 if x is not None else None
                 for x in self._loaded_ssb_files
-            },
+            ],
             'ssxs': [x.file_name if x is not None else None for x in self._loaded_ssx_files],
             'load_ssb_for': self._load_ssb_for
         }
@@ -242,28 +242,30 @@ class GroundEngineState:
         self._running = state['running']
         self._load_ssb_for = state['load_ssb_for']
         self._loaded_ssb_files = [
-            LoadedSsbFile(fn, hng, hash)
-            if fn is not None else None
-            for hng, (hash, fn) in enumerate(state['ssbs'])
+            LoadedSsbFile(fn_and_hash[0], hng, fn_and_hash[1])
+            if fn_and_hash is not None else None
+            for hng, fn_and_hash in enumerate(state['ssbs'])
         ]
         # - Load SSB file hashes from ground state file, if the hashes don't match on reload with the saved
         #   files, mark them as not up to date in RAM and show warning for affected files.
         were_invalid = []
         for f in self._loaded_ssb_files:
-            if f.hash != self.ssb_file_manager.hash_for(f.file_name):
-                self.ssb_file_manager.mark_invalid(f.file_name)
+            if f is not None and f.hash != self.ssb_file_manager.hash_for(f.file_name):
                 were_invalid.append(f.file_name)
         if len(were_invalid) > 0:
             n = '\n'
             md = Gtk.MessageDialog(None,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
                                    Gtk.ButtonsType.OK,
-                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug"
+                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug "
                                    f"these files, until they are reloaded:\n{n.join(were_invalid)}",
                                    title="Warning!")
             md.set_position(Gtk.WindowPosition.CENTER)
             md.run()
             md.destroy()
         for ssb in self._loaded_ssb_files:
-            self.ssb_file_manager.open_in_ground_engine(ssb.file_name)
+            if ssb is not None:
+                self.ssb_file_manager.open_in_ground_engine(ssb.file_name)
+                if ssb.file_name in were_invalid:
+                    self.ssb_file_manager.mark_invalid(ssb.file_name)
         self._loaded_ssx_files = [LoadedSsxFile(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]

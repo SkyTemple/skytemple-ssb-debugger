@@ -24,7 +24,9 @@ from typing import Tuple, List, Optional, TYPE_CHECKING
 from gi.repository import Gtk, GtkSource, GLib, Gdk
 from gi.repository.GtkSource import StyleSchemeManager, LanguageManager
 
+from explorerscript.parse_error import ParseError
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_files.script.ssb.script_compiler import SsbCompilerError
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
@@ -124,20 +126,43 @@ class SSBEditorController:
         saved = False
         ready_to_reload = False
         modified_buffer = None
-        if self._ssb_script_view.get_buffer().get_modified():
-            modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-            ready_to_reload = self._ssb.file_manager.save_from_ssb_script(
-                self._ssb.filename, modified_buffer.props.text
+        try:
+            if self._ssb_script_view.get_buffer().get_modified():
+                modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+                ready_to_reload = self._ssb.file_manager.save_from_ssb_script(
+                    self._ssb.filename, modified_buffer.props.text
+                )
+                saved = True
+                self._ssb_script_view.get_buffer().set_modified(False)
+            if self._explorerscript_view.get_buffer().get_modified():
+                modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+                ready_to_reload = self._ssb.file_manager.save_from_explorerscript(
+                    self._ssb.filename, modified_buffer.props.text
+                )
+                saved = True
+                self._explorerscript_view.get_buffer().set_modified(False)
+        except ParseError as err:
+            md = Gtk.MessageDialog(
+                None,
+                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
+                f"The script file {self.filename} could not be saved.\n"
+                f"ParseError: {err.error}",
+                title="Warning!"
             )
-            saved = True
-            self._ssb_script_view.get_buffer().set_modified(False)
-        if self._explorerscript_view.get_buffer().get_modified():
-            modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            ready_to_reload = self._ssb.file_manager.save_from_explorerscript(
-                self._ssb.filename, modified_buffer.props.text
+            md.run()
+            md.destroy()
+            return
+        except SsbCompilerError as err:
+            md = Gtk.MessageDialog(
+                None,
+                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
+                f"The script file {self.filename} could not be saved.\n"
+                f"{err}",
+                title="Warning!"
             )
-            saved = True
-            self._explorerscript_view.get_buffer().set_modified(False)
+            md.run()
+            md.destroy()
+            return
         if saved:
             self._waiting_for_reload = True
             # Build temporary text marks for the new source map. We will replace
