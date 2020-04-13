@@ -36,7 +36,6 @@ class ScriptStruct:
     def __str__(self):
         # Points to another struct!!!
         unk0_address = self.mem.unsigned.read_long(self.pnt)
-
         script_target_id = script_target_address = self.mem.unsigned.read_long(self.pnt + 4)
         if script_target_address != 0:
             script_target_id = self.mem.unsigned.read_short(script_target_address)
@@ -450,8 +449,7 @@ if __name__ == '__main__':
     # emu = DeSmuME("Y:\\dev\\desmume\\desmume\\src\\frontend\\interface\\windows\\__bins\\DeSmuME Interface-VS2019-Debug.dll")
 
     emu.open("../../../skyworkcopy_edit.nds")
-    #emu.savestate.load_file("../../skyworkcopy_edit.nds.ds1")
-    #emu.savestate.load_file("../../skyworkcopy_edit.nds.ds2")
+    emu.savestate.load_file("/home/marco/.config/skytemple/debugger/skyworkcopy_edit.nds.save.3.ds")
     # emu.open("..\\skyworkcopy.nds")
     win = emu.create_sdl_window(use_opengl_if_possible=True)
 

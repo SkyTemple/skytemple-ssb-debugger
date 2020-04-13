@@ -17,61 +17,81 @@
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptLevel, Pmd2ScriptEntity
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractScriptRuntimeState
 from skytemple_ssb_debugger.model.ground_state.map import Map
+from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
 
 ACTOR_BEGIN_SCRIPT_STRUCT = 0x38
 
 
 class Actor(AbstractScriptRuntimeState):
-    def __init__(self, mem: DeSmuME_Memory, rom_data: Pmd2Data, pnt: int):
-        super().__init__(mem, pnt)
-        self.rom_data = rom_data
+    def __init__(self, emulator_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
+        super().__init__(emulator_thread, pnt_to_block_start, rom_data)
+        self.offset = offset
+
+    @property
+    def pnt(self):
+        return super().pnt + self.offset
 
     @property
     def _script_struct_offset(self):
         return ACTOR_BEGIN_SCRIPT_STRUCT
 
     @property
-    def id(self):
-        return self.mem.unsigned.read_short(self.pnt + 0x00)
+    @wrap_threadsafe_emu()
+    def valid(self):
+        return self.emu_thread.emu.memory.signed.read_short(self.pnt + self._script_struct_offset) > 0
 
     @property
+    @wrap_threadsafe_emu()
+    def id(self):
+        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x00)
+
+    @property
+    @wrap_threadsafe_emu()
     def kind(self) -> Pmd2ScriptEntity:
-        kind_id = self.mem.unsigned.read_short(self.pnt + 0x02)
+        kind_id = self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x02)
         try:
             return self.rom_data.script_data.level_entities__by_id[kind_id]
         except KeyError:
             return Pmd2ScriptEntity(kind_id, -1, 'UNKNOWN', -1, -1, -1)
 
     @property
+    @wrap_threadsafe_emu()
     def hanger(self):
-        return self.mem.unsigned.read_short(self.pnt + 0x06)
+        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x06)
 
     @property
+    @wrap_threadsafe_emu()
     def sector(self):
-        return self.mem.unsigned.read_byte(self.pnt + 0x08)
+        return self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x08)
 
     @property
+    @wrap_threadsafe_emu()
     def direction(self):
-        return self.rom_data.script_data.directions__by_id[self.mem.unsigned.read_byte(self.pnt + 0x15A)]
+        return self.rom_data.script_data.directions__by_id[self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x15A)]
 
     @property
+    @wrap_threadsafe_emu()
     def x_north(self):
         # via code near 0x22FC310
-        return self.mem.unsigned.read_long(self.pnt + 0x15C)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x15C)
 
     @property
+    @wrap_threadsafe_emu()
     def y_west(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x160)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x160)
 
     @property
+    @wrap_threadsafe_emu()
     def x_south(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x164)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x164)
 
     @property
+    @wrap_threadsafe_emu()
     def y_east(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x168)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x168)
 
     def get_bounding_box_camera(self, map: Map):
         return (

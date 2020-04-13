@@ -83,8 +83,22 @@
           </packing>
         </child>
         <child>
+          <object class="GtkToolButton" id="code_editor_cntrls_resume">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Resume</property>
+            <property name="use_underline">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="homogeneous">True</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkToolButton" id="code_editor_cntrls_step_over">
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Step over the current instruction.</property>
             <property name="label" translatable="yes">Step Over</property>
@@ -98,6 +112,7 @@
         <child>
           <object class="GtkToolButton" id="code_editor_cntrls_step_into">
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Step into the current instruction, if it's a call, otherwise step over.</property>
             <property name="label" translatable="yes">Step Into</property>
@@ -111,6 +126,7 @@
         <child>
           <object class="GtkToolButton" id="code_editor_cntrls_step_out">
             <property name="visible">True</property>
+            <property name="sensitive">False</property>
             <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Step out of the current function call.</property>
             <property name="label" translatable="yes">Step Out</property>

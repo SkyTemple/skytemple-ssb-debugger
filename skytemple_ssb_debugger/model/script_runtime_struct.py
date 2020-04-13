@@ -14,40 +14,86 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Callable, Union
 
-from desmume.emulator import DeSmuME
+from desmume.emulator import DeSmuME_Memory
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
 
 
 class ScriptRuntimeStruct:
-    def __init__(self, emu: DeSmuME, rom_data: Pmd2Data, pnt: int):
-        self.emu = emu
+    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt: Union[int, Callable], parent=None):
+        super().__init__()
+        self.emu_thread = emu_thread
         self.rom_data = rom_data
-        self.pnt = pnt
+        # Can either be int or a callable. If it's a callable, it's called each time
+        # a value is accesed to retreive the current position.
+        self._pnt = pnt
+        # for debugging
+        self._parent = parent
 
     @property
+    def pnt(self):
+        if callable(self._pnt):
+            return self._pnt()
+        return self._pnt
+
+    @property
+    def valid(self):
+        """The first entry contains a pointer to something unknown (global script state?) when valid"""
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt) != 0
+
+    @property
+    @wrap_threadsafe_emu()
     def current_opcode(self) -> Pmd2ScriptOpCode:
         address_current_opcode = self.current_opcode_addr
-        return self.rom_data.script_data.op_codes__by_id[self.emu.memory.unsigned.read_short(address_current_opcode)]
+        return self.rom_data.script_data.op_codes__by_id[self.emu_thread.emu.memory.unsigned.read_short(address_current_opcode)]
 
     @property
+    @wrap_threadsafe_emu()
+    def start_addr_routine_infos(self) -> int:
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x14)
+
+    @property
+    @wrap_threadsafe_emu()
+    def start_addr_opcodes(self) -> int:
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x18)
+
+    @property
+    @wrap_threadsafe_emu()
     def current_opcode_addr(self) -> int:
-        return self.emu.memory.unsigned.read_long(self.pnt + 0x1c)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x1c)
 
     @property
+    def current_opcode_addr_relative(self) -> int:
+        """The current opcode address relative to the start of the SSB file (after header), in words."""
+        return int((self.current_opcode_addr - self.start_addr_routine_infos) / 2)
+
+    @property
+    @wrap_threadsafe_emu()
     def target_type(self) -> SsbRoutineType:
-        return SsbRoutineType(self.emu.memory.unsigned.read_short(self.pnt + 8))
+        return SsbRoutineType(self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 8))
 
     @property
+    @wrap_threadsafe_emu()
     def hanger_ssb(self):
         # The number of the SSB script this operation is in!
-        return self.emu.memory.unsigned.read_short(self.pnt + 0x10)
+        if not self.valid:
+            return -1
+        return self.emu_thread.emu.memory.signed.read_short(self.pnt + 0x10)
 
     @property
+    @wrap_threadsafe_emu()
     def target_id(self) -> int:
-        script_target_id = script_target_address = self.emu.memory.unsigned.read_long(self.pnt + 4)
+        script_target_id = script_target_address = self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 4)
         if script_target_address != 0:
-            script_target_id = self.emu.memory.unsigned.read_short(script_target_address)
+            script_target_id = self.emu_thread.emu.memory.unsigned.read_short(script_target_address)
         return script_target_id
+
+    def __eq__(self, other):
+        if not isinstance(other, ScriptRuntimeStruct):
+            return False
+        return self.pnt == other.pnt

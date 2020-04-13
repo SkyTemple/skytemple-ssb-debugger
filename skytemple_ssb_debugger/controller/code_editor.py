@@ -15,14 +15,15 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple
 
 from gi.repository import Gtk, Pango
 
+from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_files.common.script_util import SCRIPT_DIR
 from skytemple_ssb_debugger.controller.ssb_editor import SSBEditorController
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
 
@@ -35,6 +36,9 @@ class CodeEditorController:
         self._open_editors: Dict[str, SSBEditorController] = {}
         self._open_editors_by_page_num: Dict[int, SSBEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
+        self._cached_hanger_halt_lines = {}
+        self._cached_active_halted_filename = None
+        self._cached_active_halted_opcode = None
 
     def init(self, file_manager: SsbFileManager, breakpoint_manager: BreakpointManager, rom_data: Pmd2Data):
         self.file_manager = file_manager
@@ -54,9 +58,14 @@ class CodeEditorController:
                 self._notebook.set_current_page(self._open_editors[filename])
             else:
                 editor_controller = SSBEditorController(
-                    self, self.breakpoint_manager, self.file_manager.open_in_editor(SCRIPT_DIR + '/' + filename),
+                    self, self.breakpoint_manager, self.file_manager.open_in_editor(filename),
                     self.rom_data, self.on_ssb_editor_modified
                 )
+                if filename in self._cached_hanger_halt_lines:
+                    editor_controller.insert_hanger_halt_lines(self._cached_hanger_halt_lines[filename])
+                if self._cached_active_halted_filename == filename:
+                    editor_controller.toggle_debugging_controls(True)
+                    editor_controller.halted_at_opcode(self._cached_active_halted_opcode)
                 current_page = self._notebook.get_current_page()
                 root = editor_controller.get_root_object()
                 pnum = self._notebook.insert_page(
@@ -93,21 +102,62 @@ class CodeEditorController:
                     return False
                 return True
 
-            if not self.file_manager.close_in_editor(SCRIPT_DIR + '/' + filename, warning_callback):
+            if not self.file_manager.close_in_editor(filename, warning_callback):
                 return
 
             self._notebook.remove_page(pnum)
             controller.destroy()
             del self._open_editors[filename]
             del self._open_editors_by_page_num[pnum]
+            
+    def focus_by_opcode_addr(self, filename: str, opcode_addr: int):
+        """
+        Pull an editor into focus and tell it to jump to opcode_addr. 
+        If the editor is not open, it's opened before.
+        """
+        if filename not in self._open_editors:
+            self.open(filename)
+        else:
+            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
+        self._open_editors[filename].focus_opcode(opcode_addr)
 
-    def on_breakpoint_added(self, filename, routine_id, opcode_offset):
-        if filename[7:] in self._open_editors:
-            self._open_editors[filename[7:]].on_breakpoint_added(routine_id, opcode_offset)
+    def break_pulled(self, state: BreakpointState, filename: str, opcode_addr: int):
+        """The debugger paused. Enable debugger controls for file_name."""
+        if filename in self._open_editors:
+            self._open_editors[filename].toggle_debugging_controls(True)
+            self._open_editors[filename].halted_at_opcode(opcode_addr)
+        self._cached_active_halted_filename = filename
+        self._cached_active_halted_opcode = opcode_addr
+        state.add_release_hook(self.break_released)
 
-    def on_breakpoint_removed(self, filename, routine_id, opcode_offset):
-        if filename[7:] in self._open_editors:
-            self._open_editors[filename[7:]].on_breakpoint_removed(routine_id, opcode_offset)
+    def break_released(self, state: BreakpointState):
+        """The debugger is no longer paused, disable all debugging controls."""
+        for editor in self._open_editors.values():
+            editor.toggle_debugging_controls(False)
+            editor.halted_at_opcode(-1)
+        self._cached_active_halted_filename = None
+        self._cached_active_halted_opcode = None
+
+    def insert_hanger_halt_lines(self, halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]]):
+        """Mark the current execution position for all running scripts. Dict filename -> list (type, id, opcode_addr)"""
+        for filename, lines in halt_lines.items():
+            self._cached_hanger_halt_lines[filename] = lines
+            if filename in self._open_editors.keys():
+                self._open_editors[filename].insert_hanger_halt_lines(lines)
+
+    def remove_hanger_halt_lines(self):
+        """Remove the marks for the current script execution points"""
+        self._cached_hanger_halt_lines = {}
+        for editor in self._open_editors.values():
+            editor.remove_hanger_halt_lines()
+
+    def on_breakpoint_added(self, filename, opcode_offset):
+        if filename in self._open_editors:
+            self._open_editors[filename].on_breakpoint_added(opcode_offset)
+
+    def on_breakpoint_removed(self, filename, opcode_offset):
+        if filename in self._open_editors:
+            self._open_editors[filename].on_breakpoint_removed(opcode_offset)
 
     def on_ssb_editor_modified(self, controller: SSBEditorController, modified: bool):
         lbl_box: Gtk.Box = self._notebook.get_tab_label(controller.get_root_object())

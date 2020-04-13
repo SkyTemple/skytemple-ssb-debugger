@@ -14,17 +14,26 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-
+import threading
 from functools import partial
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+from gi.repository import Gio
 
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.sandbox.sandbox import read_ssb_str_mem
+from skytemple_ssb_debugger.threadsafe import threadsafe_gtk_nonblocking, threadsafe_emu, synchronized
+
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.controller.main import MainController
 
 
 class NdsStrPnt(int):
@@ -45,13 +54,23 @@ class NdsStrPnt(int):
         return self.mem.read_string(self.pnt)
 
 
+debugger_state_lock = threading.Lock()
+
+
 class DebuggerController:
-    def __init__(self, emu: DeSmuME, print_callback):
-        self.emu = emu
+    def __init__(self, emu_thread: EmulatorThread, print_callback, parent: 'MainController'):
+        self.emu_thread = emu_thread
         self.is_active = False
         self.rom_data = None
-        self.print_callback = print_callback
+        self._print_callback_fn = print_callback
         self.ground_engine_state: Optional[GroundEngineState] = None
+        self.parent: 'MainController' = parent
+        self.breakpoint_manager: Optional[BreakpointManager] = None
+
+        # Flag to completely disable breaking
+        self._breakpoints_disabled = False
+        # Flag to disable breaking for one single tick. This is reset to -1 if the tick number changes.
+        self._breakpoints_disabled_for_tick = -1
 
         self._log_operations = False
         self._log_debug_print = False
@@ -59,61 +78,105 @@ class DebuggerController:
         self._debug_mode = False
         self._log_ground_engine_state = False
 
-    def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager):
+    def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager, breakpoint_manager: BreakpointManager):
         self.rom_data = rom_data
+        self.breakpoint_manager = breakpoint_manager
 
         arm9 = self.rom_data.binaries['arm9.bin']
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
-        self.emu.memory.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, self.hook__log_operations)
-        self.emu.memory.register_exec(arm9.functions['DebugPrint'].begin_absolute, partial(self.hook__log_printfs, 1))
-        self.emu.memory.register_exec(arm9.functions['DebugPrint2'].begin_absolute, partial(self.hook__log_printfs, 0))
-        self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
-        self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
+        self.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, self.hook__breaking_point)
+        self.register_exec(arm9.functions['DebugPrint'].begin_absolute, partial(self.hook__log_printfs, 1))
+        self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, partial(self.hook__log_printfs, 0))
+        self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
+        self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
 
-        self.ground_engine_state = GroundEngineState(self.emu, self.rom_data, self.print_callback, ssb_file_manager)
+        self.ground_engine_state = GroundEngineState(self.emu_thread, self.rom_data, self.print_callback, ssb_file_manager)
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
         self.ground_engine_state.watch()
 
     def disable(self):
         arm9 = self.rom_data.binaries['arm9.bin']
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
-        self.emu.memory.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, None)
-        self.emu.memory.register_exec(arm9.functions['DebugPrint'].begin_absolute, None)
-        self.emu.memory.register_exec(arm9.functions['DebugPrint2'].begin_absolute, None)
-        self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, None)
-        self.emu.memory.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, None)
+        self.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, None)
+        self.register_exec(arm9.functions['DebugPrint'].begin_absolute, None)
+        self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, None)
+        self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, None)
+        self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, None)
         self.is_active = False
         self.rom_data = None
         self.ground_engine_state.remove_watches()
         self.ground_engine_state = None
 
+    def register_exec(self, pnt, cb):
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(pnt, cb))
+
+    @synchronized(debugger_state_lock)
     def log_operations(self, value: bool):
         self._log_operations = value
 
+    @synchronized(debugger_state_lock)
     def log_debug_print(self, value: bool):
         self._log_debug_print = value
 
+    @synchronized(debugger_state_lock)
     def log_printfs(self, value: bool):
         self._log_printfs = value
 
+    @synchronized(debugger_state_lock)
     def log_ground_engine_state(self, value: bool):
         self._log_ground_engine_state = value
         if self.ground_engine_state:
             self.ground_engine_state.logging_enabled = value
 
+    @synchronized(debugger_state_lock)
     def debug_mode(self, value: bool):
         self._debug_mode = value
 
-    def hook__log_operations(self, address, size):
-        if self._log_operations:
-            srs = ScriptRuntimeStruct(self.emu, self.rom_data, self.emu.memory.register_arm9.r6)
+    # >>> ALL CALLBACKS BELOW ARE RUNNING IN THE EMULATOR THREAD <<<
 
+    def hook__breaking_point(self, address, size):
+        """MAIN DEBUGGER HOOK. The emulator thread pauses here and publishes it's state via BreakpointState."""
+        debugger_state_lock.acquire()
+        srs = ScriptRuntimeStruct(self.emu_thread.emu.memory, self.rom_data, self.emu_thread.emu.memory.register_arm9.r6)
+        if self._log_operations:
             self.print_callback(f"> {srs.target_type.name}({srs.target_id}): {srs.current_opcode.name} @{srs.current_opcode_addr:0x}")
 
+        if self.breakpoint_manager:
+            if not self._breakpoints_disabled and self._breakpoints_disabled_for_tick != self.emu_thread.current_frame_id:
+                debugger_state_lock.release()
+                self._breakpoints_disabled_for_tick = -1
+
+                ssb = self.ground_engine_state.loaded_ssb_files[srs.hanger_ssb]
+                if ssb is not None and self.breakpoint_manager.has(ssb.file_name, srs.current_opcode_addr_relative):
+                    state = BreakpointState(srs.hanger_ssb)
+                    state.acquire()
+                    threadsafe_gtk_nonblocking(lambda: self.parent.break_pulled(state, srs))
+                    while not state.wait(0.0005) or state.state == BreakpointStateType.STOPPED:
+                        # We haven't gotten the signal to resume yet, process pending events.
+                        self.emu_thread.run_one_pending_task()
+                    state.release()
+                    if state.state == BreakpointStateType.FAIL_HARD:
+                        # Ok, we won't pause again this tick.
+                        self._breakpoints_disabled_for_tick = self.emu_thread.current_frame_id
+                    elif state.state == BreakpointStateType.RESUME:
+                        # We just resume, this is easy :)
+                        pass
+                    elif state.state == BreakpointStateType.STEP_INTO:
+                        pass  # todo
+                    elif state.state == BreakpointStateType.STEP_OUT:
+                        pass  # todo
+                    elif state.state == BreakpointStateType.STEP_OVER:
+                        pass  # todo
+            else:
+                debugger_state_lock.release()
+        else:
+            debugger_state_lock.release()
+
+    @synchronized(debugger_state_lock)
     def hook__log_printfs(self, register_offset, address, size):
         if not self._log_printfs:
             return
-        emu = self.emu
+        emu = self.emu_thread.emu
         dbg_string = str(NdsStrPnt(emu, emu.memory.register_arm9[register_offset]))
 
         # TODO: There's got to be a better way!(tm)
@@ -195,10 +258,11 @@ class DebuggerController:
                 NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 9])
             ))
 
+    @synchronized(debugger_state_lock)
     def hook__log_debug_print(self, address, size):
         if not self._log_debug_print:
             return
-        emu = self.emu
+        emu = self.emu_thread.emu
 
         ssb_str_table_pointer = emu.memory.unsigned.read_long(emu.memory.register_arm9.r4 + 0x20)
         current_op_pnt = emu.memory.register_arm9.r5
@@ -224,6 +288,10 @@ class DebuggerController:
             self.print_callback(f"debug_PrintScenario: {const_string} - {game_var_name.name} = "
                                 f"scenario:{game_var_value}, level:{game_var_value}")
 
+    @synchronized(debugger_state_lock)
     def hook__debug_mode(self, address, size):
         if self._debug_mode:
-            self.emu.memory.register_arm9.r0 = 1 if self.emu.memory.register_arm9.r0 == 0 else 0
+            self.emu_thread.emu.memory.register_arm9.r0 = 1 if self.emu_thread.emu.memory.register_arm9.r0 == 0 else 0
+
+    def print_callback(self, text: str):
+        threadsafe_gtk_nonblocking(lambda: self._print_callback_fn(text))

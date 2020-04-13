@@ -18,18 +18,23 @@ import json
 import math
 import os
 from functools import partial
-from typing import Optional
+from threading import Lock
+from typing import Optional, List, Dict
 import gi
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar, GameVariableType
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.game_variable import GameVariable
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, synchronized, \
+    threadsafe_emu
 
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk
 
-from desmume.emulator import DeSmuME
+
+variables_lock = Lock()
 
 
 class VariableController:
@@ -70,32 +75,53 @@ class VariableController:
                  'RECYCLE_COUNT', 'TEAM_RANK_EVENT_LEVEL', 'PLAY_OLD_GAME', 'NOTE_MODIFY_FLAG'],
     }
 
-    def __init__(self, emu: Optional[DeSmuME], builder: Gtk.Builder):
-        self.emu = emu
+    def __init__(self, emu_thread: Optional[EmulatorThread], builder: Gtk.Builder):
+        super().__init__()
+        self.emu_thread = emu_thread
         self.builder = builder
         self.rom_data: Pmd2Data = None
         self.var_form_elements = None
         self._suppress_events = False
+        # Cached variable values
+        self._variable_cache: Dict[Pmd2ScriptGameVar, List[int]] = {}
 
         self.variables_changed_but_not_saved = False
 
     def sync(self):
-        if not self.emu:
+        if not self.emu_thread:
             return
+        notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
+        notebook.set_sensitive(False)
+        threadsafe_emu_nonblocking(self.emu_thread, self._do_sync)
+
+    # RUNNING IN EMULATOR THREAD:
+    @synchronized(variables_lock)
+    def _do_sync(self):
+        for var in self.rom_data.script_data.game_variables:
+            var_values = []
+            for offset in range(0, var.nbvalues):
+                _, val = GameVariable.read(self.emu_thread.emu.memory, self.rom_data, var.id, offset)
+                var_values.append(val)
+            self._variable_cache[self.rom_data.script_data.game_variables__by_id[var.id]] = var_values
+        threadsafe_gtk_nonblocking(self._do_sync_gtk)
+
+    @synchronized(variables_lock)
+    def _do_sync_gtk(self):
         self._suppress_events = True
         for i, sub in enumerate(self.var_form_elements):
             if sub is not None:
                 for offset, el in enumerate(sub):
                     if el is not None:
-                        _, val = GameVariable.read(self.emu.memory, self.rom_data, i, offset)
+                        val = self._variable_cache[self.rom_data.script_data.game_variables__by_id[i]][offset]
                         if isinstance(el, Gtk.Entry):
                             el.set_text(str(val))
                         else:
                             el.set_active(bool(val))
+        self.builder.get_object('variables_notebook').set_sensitive(True)
         self._suppress_events = False
 
     def init(self, rom_data: Pmd2Data):
-        if not self.emu:
+        if not self.emu_thread:
             return
         self.rom_data = rom_data
         self.var_form_elements = [None for _ in range(0, len(rom_data.script_data.game_variables))]
@@ -197,52 +223,55 @@ class VariableController:
     def on_var_changed_entry(self, var: Pmd2ScriptGameVar, offset: int, wdg: Gtk.Entry, *args):
         if self._suppress_events:
             return
-        self.variables_changed_but_not_saved = True
-        try:
+        with variables_lock:
+            self.variables_changed_but_not_saved = True
             try:
-                value = int(wdg.get_text())
+                try:
+                    value = int(wdg.get_text())
+                except ValueError as err:
+                    raise ValueError("The variable must have a number as value.") from err
+                if var.type == GameVariableType.BIT:
+                    if value < 0 or value > 1:
+                        raise ValueError("This variable must have one of these values: 0, 1.")
+                elif var.type == GameVariableType.UINT8:
+                    if value < 0 or value > 255:
+                        raise ValueError("This variable must have a value between: 0 and 255.")
+                elif var.type == GameVariableType.INT8:
+                    if value < -128 or value > 127:
+                        raise ValueError("This variable must have a value between: -128 and 127.")
+                elif var.type == GameVariableType.UINT16:
+                    if value < 0 or value > 65535:
+                        raise ValueError("This variable must have a value between: 0 and 65535.")
+                elif var.type == GameVariableType.INT16:
+                    if value < -32768 or value > 32767:
+                        raise ValueError("This variable must have a value between: -32768 and 32767.")
+                elif var.type == GameVariableType.UINT32:
+                    if value < 0 or value > 4294967295:
+                        raise ValueError("This variable must have a value between: 0 and 4294967295.")
+                elif var.type == GameVariableType.INT32:
+                    if value < -2147483648 or value > 2147483647:
+                        raise ValueError("This variable must have a value between: -2147483648 and 2147483647.")
             except ValueError as err:
-                raise ValueError("The variable must have a number as value.") from err
-            if var.type == GameVariableType.BIT:
-                if value < 0 or value > 1:
-                    raise ValueError("This variable must have one of these values: 0, 1.")
-            elif var.type == GameVariableType.UINT8:
-                if value < 0 or value > 255:
-                    raise ValueError("This variable must have a value between: 0 and 255.")
-            elif var.type == GameVariableType.INT8:
-                if value < -128 or value > 127:
-                    raise ValueError("This variable must have a value between: -128 and 127.")
-            elif var.type == GameVariableType.UINT16:
-                if value < 0 or value > 65535:
-                    raise ValueError("This variable must have a value between: 0 and 65535.")
-            elif var.type == GameVariableType.INT16:
-                if value < -32768 or value > 32767:
-                    raise ValueError("This variable must have a value between: -32768 and 32767.")
-            elif var.type == GameVariableType.UINT32:
-                if value < 0 or value > 4294967295:
-                    raise ValueError("This variable must have a value between: 0 and 4294967295.")
-            elif var.type == GameVariableType.INT32:
-                if value < -2147483648 or value > 2147483647:
-                    raise ValueError("This variable must have a value between: -2147483648 and 2147483647.")
-        except ValueError as err:
-            md = Gtk.MessageDialog(self.builder.get_object('main_window'),
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, f"Invalid variable value:\n{err}\nThe value was not written to RAM.",
-                                   title="Error!")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+                md = Gtk.MessageDialog(self.builder.get_object('main_window'),
+                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                       Gtk.ButtonsType.OK, f"Invalid variable value:\n{err}\nThe value was not written to RAM.",
+                                       title="Error!")
+                md.set_position(Gtk.WindowPosition.CENTER)
+                md.run()
+                md.destroy()
+                return True
+            self._queue_variable_write(var.id, offset, value)
             return True
-        GameVariable.write(self.emu.memory, self.rom_data, var.id, offset, value)
-        return True
 
     def on_var_changed_check(self, var: Pmd2ScriptGameVar, offset: int, wdg: Gtk.CheckButton, *args):
         if self._suppress_events:
             return
-        self.variables_changed_but_not_saved = True
-        GameVariable.write(self.emu.memory, self.rom_data, var.id, offset, 1 if wdg.get_active() else 0)
-        return True
+        with variables_lock:
+            self.variables_changed_but_not_saved = True
+            self._queue_variable_write(var.id, offset, 1 if wdg.get_active() else 0)
+            return True
 
+    @synchronized(variables_lock)
     def load(self, index: int, config_dir: str):
         # TODO: Not very efficient at the moment but ok.
         self.variables_changed_but_not_saved = False
@@ -255,7 +284,7 @@ class VariableController:
             for name, values in vars.items():
                 var_id = self.rom_data.script_data.game_variables__by_name[name].id
                 for i, value in enumerate(values):
-                    GameVariable.write(self.emu.memory, self.rom_data, var_id, i, value)
+                    self._queue_variable_write(var_id, i, value)
             self.sync()
         except BaseException as err:
             md = Gtk.MessageDialog(None,
@@ -267,13 +296,20 @@ class VariableController:
             md.destroy()
             return
 
+    @synchronized(variables_lock)
     def save(self, index: int, config_dir: str):
         self.variables_changed_but_not_saved = False
-        vars = {}
-        for var in self.rom_data.script_data.game_variables:
-            var_values = []
-            for i in range(0, var.nbvalues):
-                var_values.append(GameVariable.read(self.emu.memory, self.rom_data, var.id, i)[1])
-            vars[var.name] = var_values
+        vars = {k.name: v for k, v in self._variable_cache.items()}
         with open(os.path.join(config_dir, f'vars.{index}.json'), 'w') as f:
             json.dump(vars, f)
+
+    def _queue_variable_write(self, var_id: int, offset: int, value: int):
+        threadsafe_emu(
+            self.emu_thread, lambda: GameVariable.write(self.emu_thread.emu.memory, self.rom_data, var_id, offset, value)
+        )
+
+        # Also update the cached values
+        for var in self._variable_cache.keys():
+            if var.id == var_id:
+                self._variable_cache[var][offset] = value
+                break

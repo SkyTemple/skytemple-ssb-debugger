@@ -33,3 +33,37 @@ def create_breakpoint_icon():
 
     pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
     return pixbuf
+
+
+def create_breaked_line_icon():
+    w = h = 12
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+    cr = cairo.Context(surface)
+
+    cr.move_to(0, 0)
+    cr.line_to(w, h/2)
+    cr.line_to(0, h)
+    cr.close_path()
+
+    cr.set_source_rgb(1.0, 0, 0)
+    cr.fill_preserve()
+
+    pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
+    return pixbuf
+
+
+def create_execution_line_icon():
+    w = h = 12
+    surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
+    cr = cairo.Context(surface)
+
+    cr.move_to(0, 0)
+    cr.line_to(w, h/2)
+    cr.line_to(0, h)
+    cr.close_path()
+
+    cr.set_source_rgb(129 / 255, 105 / 255, 43 / 255)
+    cr.fill_preserve()
+
+    pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
+    return pixbuf

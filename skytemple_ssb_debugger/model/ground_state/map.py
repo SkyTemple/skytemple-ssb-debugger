@@ -16,21 +16,31 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu, wrap_threadsafe_emu
 
 
 class Map:
-    def __init__(self, mem: DeSmuME_Memory, rom_data: Pmd2Data, pnt: int):
-        self.mem = mem
+    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int):
+        super().__init__()
+        self.emu_thread = emu_thread
         self.rom_data = rom_data
-        self.pnt = pnt
-
+        self.pnt_to_block_start = pnt_to_block_start
 
     @property
+    def pnt(self):
+        return threadsafe_emu(
+            self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
+        )
+
+    @property
+    @wrap_threadsafe_emu()
     def camera_x_pos(self):
         """Returns the center position of the camera"""
-        return self.mem.unsigned.read_long(self.pnt + 0x200)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x200)
 
     @property
+    @wrap_threadsafe_emu()
     def camera_y_pos(self):
         """Returns the center position of the camera"""
-        return self.mem.unsigned.read_long(self.pnt + 0x204)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x204)

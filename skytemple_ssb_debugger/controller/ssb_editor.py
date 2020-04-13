@@ -21,10 +21,11 @@ import threading
 from functools import partial
 from typing import Tuple, List, Optional, TYPE_CHECKING
 
-from gi.repository import Gtk, GtkSource, GLib, Gdk
+from gi.repository import Gtk, GtkSource, GLib, Gdk, GObject
 from gi.repository.GtkSource import StyleSchemeManager, LanguageManager
 
 from explorerscript.parse_error import ParseError
+from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssb.script_compiler import SsbCompilerError
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -32,13 +33,13 @@ from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import Cal
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
-from skytemple_ssb_debugger.pixbuf.breakpoint_icon import create_breakpoint_icon
+from skytemple_ssb_debugger.pixbuf.icons import *
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
 
-MARK_PATTERN = re.compile('routine_(\\d+)_opcode_(\\d+)')
-MARK_PATTERN_TMP = re.compile('TMP_routine_(\\d+)_opcode_(\\d+)')
+MARK_PATTERN = re.compile('opcode_(\\d+)')
+MARK_PATTERN_TMP = re.compile('TMP_opcode_(\\d+)')
 
 
 class SSBEditorController:
@@ -79,12 +80,23 @@ class SSBEditorController:
         self._ssb_script_search_context: GtkSource.SearchContext = None
         self._explorerscript_search_context: GtkSource.SearchContext = None
 
+        self._still_loading = True
+        self._foucs_opcode_after_load = None
+        self._halted_at_opcode_after_load = None
+        self._hanger_halt_lines_after_load = None
+
         self._loaded_search_window: Optional[Gtk.Dialog] = None
         self._active_search_context: Optional[GtkSource.SearchContext] = None
 
         self._mrk_attrs__breakpoint: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
-        self._mrk_attrs__breakpoint.set_background(self._mix_breakpoint_colors())
+        self._mrk_attrs__breakpoint.set_background(self._mix_breakpoint_colors('def:error', 51, 204))
         self._mrk_attrs__breakpoint.set_pixbuf(create_breakpoint_icon())
+
+        self._mrk_attrs__breaked_line: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
+        self._mrk_attrs__breaked_line.set_background(self._mix_breakpoint_colors('def:note', 81, 174))
+
+        self._mrk_attrs__execution_line: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
+        self._mrk_attrs__execution_line.set_background(self._mix_breakpoint_colors('def:note', 21, 234))
 
         self.load_views(
             self.builder.get_object('page_ssbscript'), self.builder.get_object('page_explorerscript')
@@ -116,6 +128,77 @@ class SSBEditorController:
     @property
     def filename(self):
         return self._ssb.filename
+
+    def toggle_debugging_controls(self, val):
+        self.builder.get_object('code_editor_cntrls_resume').set_sensitive(val)
+        self.builder.get_object('code_editor_cntrls_step_over').set_sensitive(val)
+        self.builder.get_object('code_editor_cntrls_step_into').set_sensitive(val)
+        self.builder.get_object('code_editor_cntrls_step_out').set_sensitive(val)
+
+    def halted_at_opcode(self, opcode_addr):
+        """Mark the currently actively halted opcode."""
+        if self._still_loading:
+            self._halted_at_opcode_after_load = opcode_addr
+        else:
+            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'breaked-line')
+            expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'breaked-line')
+            if opcode_addr != -1:
+                m = ssbsb.get_mark(f'opcode_{opcode_addr}')
+                if m is not None:
+                    ssbsb.create_source_mark('breaked-line', 'breaked-line', ssbsb.get_iter_at_mark(m))
+                m = expsb.get_mark(f'opcode_{opcode_addr}')
+                if m is not None:
+                    expsb.create_source_mark('breaked-line', 'breaked-line', expsb.get_iter_at_mark(m))
+
+    def insert_hanger_halt_lines(self, lines: List[Tuple[SsbRoutineType, int, int]]):
+        """Mark the current execution position for all running scripts. List is tuples (type, id, opcode_addr)"""
+        if self._still_loading:
+            self._hanger_halt_lines_after_load = lines
+        else:
+            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'execution-line')
+            expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'execution-line')
+            for type, slot_id, opcode_addr in lines:
+                m = ssbsb.get_mark(f'opcode_{opcode_addr}')
+                if m is not None:
+                    ssbsb.create_source_mark(
+                        f'execution_{type.value}_{slot_id}', 'execution-line', ssbsb.get_iter_at_mark(m)
+                    )
+                m = expsb.get_mark(f'opcode_{opcode_addr}')
+                if m is not None:
+                    expsb.create_source_mark(
+                        f'execution_{type.value}_{slot_id}', 'execution-line', expsb.get_iter_at_mark(m)
+                    )
+
+    def remove_hanger_halt_lines(self):
+        """Remove the marks for the current script execution points"""
+        if self._still_loading:
+            self._hanger_halt_lines_after_load = None
+        else:
+            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'execution-line')
+            expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'execution-line')
+
+    def focus_opcode(self, opcode_addr):
+        """Put a textmark representing an opcode into the center of view."""
+        if self._still_loading:
+            self._foucs_opcode_after_load = opcode_addr
+        else:
+            b: Gtk.TextBuffer = self._ssb_script_view.get_buffer()
+            m = b.get_mark(f'opcode_{opcode_addr}')
+            if m:
+                self._ssb_script_view.scroll_to_mark(m, 0.1, False, 0.5, 0.5)
+                b.place_cursor(b.get_iter_at_mark(m))
+
+            b: Gtk.TextBuffer = self._explorerscript_view.get_buffer()
+            m = b.get_mark(f'opcode_{opcode_addr}')
+            if m:
+                self._explorerscript_view.scroll_to_mark(m, 0.1, False, 0.5, 0.5)
+                b.place_cursor(b.get_iter_at_mark(m))
 
     def save(self):
         """
@@ -169,26 +252,26 @@ class SSBEditorController:
             # the real ones with those in on_ssb_reloaded
             for model, view in [(self._ssb.ssbs, self._ssb_script_view), (self._ssb.exps, self._explorerscript_view)]:
                 buffer: Gtk.TextBuffer = view.get_buffer()
-                for routine_id, opcode_offset, line, column in model.source_map:
+                for opcode_offset, line, column in model.source_map:
                     textiter = buffer.get_iter_at_line_offset(line, column)
-                    buffer.create_mark(f'TMP_routine_{routine_id}_opcode_{opcode_offset}', textiter)
-                    print(f'TMP_routine_{routine_id}_opcode_{opcode_offset}', '@', line - 1, ',', column)
+                    buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
+                    print(f'TMP_opcode_{opcode_offset}', '@', line - 1, ',', column)
 
             buffer = self._ssb_script_view.get_buffer()
             if self._explorerscript_active:
                 buffer = self._explorerscript_view.get_buffer()
             # Resync the breakpoints at the Breakpoint Manager.
-            # Collect all line marks and check which is the first TMP_routine text mark in it, this is
+            # Collect all line marks and check which is the first TMP_opcode text mark in it, this is
             # the opcode to break on.
             breakpoints_to_resync = []
             for line in range(0, modified_buffer.get_line_count()):
                 marks = modified_buffer.get_source_marks_at_line(line, 'breakpoint')
                 if len(marks) > 0:
-                    routine_id_and_opcode_offset = self._get_opcode_in_line(buffer, line)
-                    if routine_id_and_opcode_offset is None:
+                    opcode_offset = self._get_opcode_in_line(buffer, line)
+                    if opcode_offset is None:
                         continue
 
-                    breakpoints_to_resync.append(list(routine_id_and_opcode_offset))
+                    breakpoints_to_resync.append(opcode_offset)
             self.breakpoint_manager.resync(self._ssb.filename, breakpoints_to_resync)
 
             # If the file manager told us, then we can immediately trigger the SSB reloading,
@@ -219,10 +302,10 @@ class SSBEditorController:
             buffer.set_language(self._lm.get_language(language))
             buffer.set_highlight_syntax(True)
 
-            for routine_id, opcode_offset, line, column in model.source_map:
+            for opcode_offset, line, column in model.source_map:
                 textiter = buffer.get_iter_at_line_offset(line, column)
-                buffer.create_mark(f'routine_{routine_id}_opcode_{opcode_offset}', textiter)
-                print(f'routine_{routine_id}_opcode_{opcode_offset}', '@', line - 1, ',', column)
+                buffer.create_mark(f'opcode_{opcode_offset}', textiter)
+                print(f'opcode_{opcode_offset}', '@', line - 1, ',', column)
 
             bx.pack_start(ovl, True, True, 0)
 
@@ -238,8 +321,18 @@ class SSBEditorController:
                 process_loaded, exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps'
             ))
             GLib.idle_add(self._load_breakpoints_from_manager)
+            GLib.idle_add(self._after_views_loaded)
 
         threading.Thread(target=load_thread).start()
+
+    def _after_views_loaded(self):
+        self._still_loading = False
+        if self._foucs_opcode_after_load:
+            self.focus_opcode(self._foucs_opcode_after_load)
+        if self._halted_at_opcode_after_load:
+            self.halted_at_opcode(self._halted_at_opcode_after_load)
+        if self._hanger_halt_lines_after_load:
+            self.insert_hanger_halt_lines(self._hanger_halt_lines_after_load)
 
     def add_breakpoint(self, line_number: int, view: GtkSource.View):
         # This workflow is a bit complicacted, here's an outline.
@@ -269,39 +362,37 @@ class SSBEditorController:
         opcode_offset = self._get_opcode_in_line(buffer, line_number - 1)
         if opcode_offset is None:
             return
-        routine_id = opcode_offset[0]
-        opcode_offset = opcode_offset[1]
 
-        self.breakpoint_manager.add(self._ssb.filename, routine_id, opcode_offset)
+        self.breakpoint_manager.add(self._ssb.filename, opcode_offset)
 
     def remove_breakpoint(self, mark: GtkSource.Mark):
         match = MARK_PATTERN.match(mark.get_name()[4:])
-        routine_id, opcode_offset = match.group(1), match.group(2)
+        opcode_offset = match.group(1)
 
-        self.breakpoint_manager.remove(self._ssb.filename, routine_id, opcode_offset)
+        self.breakpoint_manager.remove(self._ssb.filename, opcode_offset)
 
-    def on_breakpoint_added(self, routine_id, opcode_offset):
+    def on_breakpoint_added(self, opcode_offset):
         print(f"{self.filename}: On breakpoint added")
         view: GtkSource.View
         for view in (self._ssb_script_view, self._explorerscript_view):
             buffer: GtkSource.Buffer = view.get_buffer()
-            m: Gtk.TextMark = buffer.get_mark(f'routine_{routine_id}_opcode_{opcode_offset}')
+            m: Gtk.TextMark = buffer.get_mark(f'opcode_{opcode_offset}')
             # TODO: proper logging and warnings!
             if m is None:
-                print(f"WARNING: Mark not found routine_{routine_id}_opcode_{opcode_offset}.")
+                print(f"WARNING: Mark not found opcode_{opcode_offset}.")
                 continue
             line_iter = buffer.get_iter_at_line(buffer.get_iter_at_mark(m).get_line())
-            lm: Gtk.TextMark = buffer.get_mark(f'for:routine_{routine_id}_opcode_{opcode_offset}')
+            lm: Gtk.TextMark = buffer.get_mark(f'for:opcode_{opcode_offset}')
             if lm is not None:
-                print(f"WARNING: Line mark already found for:routine_{routine_id}_opcode_{opcode_offset}.")
+                print(f"WARNING: Line mark already found for:opcode_{opcode_offset}.")
                 continue
-            buffer.create_source_mark(f'for:routine_{routine_id}_opcode_{opcode_offset}', 'breakpoint', line_iter)
+            buffer.create_source_mark(f'for:opcode_{opcode_offset}', 'breakpoint', line_iter)
 
-    def on_breakpoint_removed(self, routine_id, opcode_offset):
+    def on_breakpoint_removed(self, opcode_offset):
         view: GtkSource.View
         for view in (self._ssb_script_view, self._explorerscript_view):
             buffer: GtkSource.Buffer = view.get_buffer()
-            m: Gtk.TextMark = buffer.get_mark(f'for:routine_{routine_id}_opcode_{opcode_offset}')
+            m: Gtk.TextMark = buffer.get_mark(f'for:opcode_{opcode_offset}')
             if m is None:
                 continue
             buffer.remove_source_marks(buffer.get_iter_at_mark(m), buffer.get_iter_at_mark(m))
@@ -328,10 +419,10 @@ class SSBEditorController:
                 # TODO: This is probably pretty slow
                 while textiter.forward_char():
                     old_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('routine_')
+                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
                     ]
                     new_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_routine_')
+                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
                     ]
                     for m in old_marks_at_pos:
                         buffer.delete_mark(m)
@@ -343,12 +434,12 @@ class SSBEditorController:
                             buffer.delete_mark(om)
                         # Move by deleting and re-creating.
                         match = MARK_PATTERN_TMP.match(m.get_name())
-                        buffer.create_mark(f'routine_{int(match.group(1))}_opcode_{int(match.group(2))}', textiter)
+                        buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
                         buffer.delete_mark(m)
 
             # Re-add all breakpoints:
-            for rtn_id, opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-                self.on_breakpoint_added(rtn_id, opcode_offset)
+            for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
+                self.on_breakpoint_added(opcode_offset)
 
     def on_ssb_property_change(self, *args):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
@@ -555,13 +646,13 @@ class SSBEditorController:
     # Utility
 
     def _load_breakpoints_from_manager(self):
-        for routine_id, opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-            self.on_breakpoint_added(routine_id, opcode_offset)
+        for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
+            self.on_breakpoint_added(opcode_offset)
 
-    def _mix_breakpoint_colors(self):
+    def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
-        breakpoint_bg = color_hex_to_rgb(self._active_scheme.get_style('def:error').props.background, 51)
-        text_bg = color_hex_to_rgb(self._active_scheme.get_style('text').props.background, 204)
+        breakpoint_bg = color_hex_to_rgb(self._active_scheme.get_style(mix_style_name).props.background, mix_style_alpha)
+        text_bg = color_hex_to_rgb(self._active_scheme.get_style('text').props.background, text_style_alpha)
         return Gdk.RGBA(*get_mixed_color(
             breakpoint_bg, text_bg
         ))
@@ -572,8 +663,11 @@ class SSBEditorController:
         view: GtkSource.View = GtkSource.View.new()
 
         view.set_mark_attributes('breakpoint', self._mrk_attrs__breakpoint, 1)
+        view.set_mark_attributes('execution-line', self._mrk_attrs__execution_line, 10)
+        view.set_mark_attributes('breaked-line', self._mrk_attrs__breaked_line, 100)
 
         buffer: GtkSource.Buffer = view.get_buffer()
+        gutter: GtkSource.Gutter = view.get_gutter(Gtk.TextWindowType.LEFT)
         view.set_show_line_numbers(True)
         view.set_show_line_marks(True)
         view.set_auto_indent(True)
@@ -588,11 +682,12 @@ class SSBEditorController:
         buffer.set_highlight_matching_brackets(True)
         buffer.set_style_scheme(self._active_scheme)
 
+        gutter.insert(PlayIconRenderer(view), -100)
+
         view.connect("line-mark-activated", self.on_sourceview_line_mark_activated)
         view.connect("key-press-event", self.on_sourceview_key_press_event)
         buffer.connect("delete-range", self.on_sourcebuffer_delete_range)
 
-        # TODO: One of the two vies should not be editable!
         buffer.connect("modified-changed", self.on_text_buffer_modified)
 
         sw.add(view)
@@ -643,11 +738,11 @@ class SSBEditorController:
         bx.pack_start(spinner, True, False, 0)
 
     @staticmethod
-    def _get_opcode_in_line(buffer: Gtk.TextBuffer, line_number_0_indexed, use_temp_markers=False) -> Optional[Tuple[int, int]]:
-        marker_prefix = 'routine_'
+    def _get_opcode_in_line(buffer: Gtk.TextBuffer, line_number_0_indexed, use_temp_markers=False) -> Optional[int]:
+        marker_prefix = 'opcode_'
         marker_pattern = MARK_PATTERN
         if use_temp_markers:
-            marker_prefix = 'TMP_routine_'
+            marker_prefix = 'TMP_opcode_'
             marker_pattern = MARK_PATTERN_TMP
         i = buffer.get_iter_at_line(line_number_0_indexed)
         while i.get_line() == line_number_0_indexed:
@@ -656,7 +751,7 @@ class SSBEditorController:
             ]
             if len(marks_at_pos) > 0:
                 match = marker_pattern.match(marks_at_pos[0].get_name())
-                return int(match.group(1)), int(match.group(2))
+                return int(match.group(1))
             if not i.forward_char():  # TODO: the other forwards might also work!
                 return None
         return None
@@ -721,3 +816,28 @@ def get_mixed_color(color_rgba1, color_rgba2):
 
 def color_hex_to_rgb(hexx, alpha):
     return tuple(int(hexx.lstrip('#')[i:i+2], 16) for i in (0, 2, 4)) + (alpha,)
+
+
+class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
+    def __init__(self, view, **properties):
+        super().__init__(**properties)
+        self.view = view
+        self.breaked_icon = create_breaked_line_icon()
+        self.execution_icon = create_execution_line_icon()
+        self.empty = Gdk.pixbuf_get_from_surface(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1), 0, 0, 1, 1)
+        self.set_size(24)
+        self.set_padding(5, 3)
+
+    def do_query_data(self, start: Gtk.TextIter, end: Gtk.TextIter, state: GtkSource.GutterRendererState):
+        view: GtkSource.View = self.get_view()
+        buffer: GtkSource.Buffer = view.get_buffer()
+        breaked_marks = buffer.get_source_marks_at_line(start.get_line(), 'breaked-line')
+
+        if len(breaked_marks) > 0:
+            self.set_pixbuf(self.breaked_icon)
+            return
+        execution_marks = buffer.get_source_marks_at_line(start.get_line(), 'execution-line')
+        if len(execution_marks) > 0:
+            self.set_pixbuf(self.execution_icon)
+            return
+        self.set_pixbuf(self.empty)

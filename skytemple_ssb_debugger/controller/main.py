@@ -16,6 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import os
+import traceback
 from typing import Optional
 
 import cairo
@@ -23,8 +24,7 @@ import gi
 from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask, load_configured_config
-from desmume.emulator import DeSmuME, SCREEN_WIDTH, SCREEN_HEIGHT
-from desmume.frontend.gtk_drawing_impl.software import SoftwareRenderer
+from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
 from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
@@ -33,8 +33,13 @@ from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayControll
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController
 from skytemple_ssb_debugger.controller.variable import VariableController
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking
 
 gi.require_version('Gtk', '3.0')
 
@@ -42,7 +47,6 @@ from gi.repository import Gtk, Gdk, GLib
 from gi.repository.Gtk import *
 
 
-TICKS_PER_FRAME = 17
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
 
@@ -51,24 +55,20 @@ class MainController:
     def __init__(self, builder: Builder, window: Window):
         self.builder = builder
         self.window = window
-        self.emu: Optional[DeSmuME] = None
+        self.emu_thread: Optional[EmulatorThread] = None
         self.rom: Optional[NintendoDSRom] = None
         self.ssb_file_manager: Optional[SsbFileManager] = None
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_filename = None
+        self._emu_is_running = False
 
         self.debugger: Optional[DebuggerController] = None
         self.debug_overlay: Optional[DebugOverlayController] = None
+        self.breakpoint_state: Optional[BreakpointState] = None
 
         self.config_dir = os.path.join(skytemple_config_dir(), 'debugger')
         os.makedirs(self.config_dir, exist_ok=True)
 
-        self._registered_main_loop = False
-        self._fps_frame_count = 0
-        self._fps_sec_start = 0
-        self._fps = 0
-        self._ticks_prev_frame = 0
-        self._ticks_cur_frame = 0
         self._click = False
         self._debug_log_scroll_to_bottom = False
         self._suppress_event = False
@@ -94,29 +94,33 @@ class MainController:
         self._filter_any.set_name("All files")
         self._filter_any.add_pattern("*")
 
-        self._main_draw = builder.get_object("draw_main")
-        self._main_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
-        self._main_draw.show()
-        self._sub_draw = builder.get_object("draw_sub")
-        self._sub_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
-        self._sub_draw.show()
+        self.main_draw = builder.get_object("draw_main")
+        self.main_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
+        self.main_draw.show()
+        self.sub_draw = builder.get_object("draw_sub")
+        self.sub_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
+        self.sub_draw.show()
 
+        self.renderer = None
         self.init_emulator()
 
-        if self.emu:
+        if self.emu_thread:
 
-            self.debugger = DebuggerController(self.emu, self._debugger_print_callback)
+            self.debugger = DebuggerController(self.emu_thread, self._debugger_print_callback, self)
 
-            self.debug_overlay = DebugOverlayController(self.emu, self.debugger)
-            self.renderer = SoftwareRenderer(self.emu, self.debug_overlay.draw)
+            self.debug_overlay = DebugOverlayController(self.debugger)
+            self.renderer = AsyncSoftwareRenderer(self.emu_thread, self.main_draw, self.sub_draw, self.debug_overlay.draw)
             self.renderer.init()
+            self.renderer.start()
 
-            self._keyboard_cfg, self._joystick_cfg = load_configured_config(self.emu)
+            self._keyboard_cfg, self._joystick_cfg = threadsafe_emu(
+                self.emu_thread, lambda: load_configured_config(self.emu_thread.emu)
+            )
             self._keyboard_tmp = self._keyboard_cfg
 
         self.code_editor: CodeEditorController = CodeEditorController(self.builder)
-        self.variable_controller: VariableController = VariableController(self.emu, self.builder)
-        self.ground_state_controller = GroundStateController(self.emu, self.debugger, self.builder)
+        self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
+        self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
         # Load more initial settings
         self.on_debug_log_cntrl_ops_toggled(builder.get_object('debug_log_cntrl_ops'))
@@ -147,16 +151,34 @@ class MainController:
         # DEBUG
         self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
 
+    @property
+    def emu_is_running(self):
+        """
+        Keeps track of whether the emulator is running or not, via self._emu_is_running.
+        Always returns false, if a breakpoint_state is active and breaking.
+        """
+        if self.breakpoint_state and self.breakpoint_state.is_stopped():
+            return False
+        return self._emu_is_running
+
+    @emu_is_running.setter
+    def emu_is_running(self, value):
+        self._emu_is_running = value
+
     def init_emulator(self):
         try:
             # Load desmume
             # TODO: Dummy
-            self.emu = DeSmuME("../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
+            self.emu_thread = EmulatorThread(self, "../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
+            self.emu_thread.start()
 
             # Init joysticks
-            self.emu.input.joy_init()
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.joy_init())
         except BaseException as ex:
-            self.emu = None
+            print("DeSmuME load error:")
+            print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
+
+            self.emu_thread = None
             md = Gtk.MessageDialog(self.window,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK, f"DeSmuME couldn't be loaded. "
@@ -169,11 +191,17 @@ class MainController:
             return
 
     def on_main_window_destroy(self, *args):
-        self.emu.destroy()
+        if self.breakpoint_state:
+            self.breakpoint_state.fail_hard()
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.destroy())
+        self.emu_thread.stop()
         Gtk.main_quit()
 
     def gtk_main_quit(self, *args):
-        self.emu.destroy()
+        if self.breakpoint_state:
+            self.breakpoint_state.fail_hard()
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.destroy())
+        self.emu_thread.stop()
         Gtk.main_quit()
 
     def gtk_widget_hide_on_delete(self, w: Gtk.Widget, *args):
@@ -186,12 +214,13 @@ class MainController:
     # EMULATOR
     def on_draw_aspect_frame_size_allocate(self, widget: Gtk.AspectFrame, *args):
         scale = widget.get_child().get_allocated_width() / SCREEN_WIDTH
-        self.renderer.set_scale(scale)
+        if self.renderer:
+            self.renderer.set_scale(scale)
         self._current_screen_height = SCREEN_HEIGHT * scale
         self._current_screen_width = SCREEN_WIDTH * scale
 
     def on_main_window_key_press_event(self, widget: Gtk.Widget, event: Gdk.EventKey, *args):
-        if self.emu:
+        if self.emu_thread:
             # Don't enable controls when in any entry or text view
             if isinstance(self.window.get_focus(), Gtk.Entry) or isinstance(self.window.get_focus(), Gtk.TextView):
                 return False
@@ -199,29 +228,33 @@ class MainController:
             # shift,ctrl, both alts
             mask = Gdk.ModifierType.SHIFT_MASK | Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.MOD1_MASK | Gdk.ModifierType.MOD5_MASK
             if event.state & mask == 0:
-                if key and self.emu.is_running():
-                    self.emu.input.keypad_add_key(key)
+                if key and self.emu_is_running:
+                    threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_add_key(key))
                     return True
             return False
 
     def on_main_window_key_release_event(self, widget: Gtk.Widget, event: Gdk.EventKey, *args):
-        if self.emu:
+        if self.emu_thread:
             key = self.lookup_key(event.keyval)
-            if key and self.emu.is_running():
-                self.emu.input.keypad_rm_key(key)
+            if key and self.emu_is_running:
+                threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_rm_key(key))
 
     def on_draw_main_draw(self, widget: Gtk.DrawingArea, ctx: cairo.Context, *args):
-        return self.renderer.screen(self._current_screen_width, self._current_screen_height, ctx, 0)
+        if self.renderer:
+            return self.renderer.screen(self._current_screen_width, self._current_screen_height, ctx, 0)
 
     def on_draw_main_configure_event(self, widget: Gtk.DrawingArea, *args):
-        self.renderer.reshape(widget, 0)
+        if self.renderer:
+            self.renderer.reshape(widget, 0)
         return True
 
     def on_draw_sub_draw(self, widget: Gtk.DrawingArea, ctx: cairo.Context, *args):
-        return self.renderer.screen(self._current_screen_width, self._current_screen_height, ctx, 1)
+        if self.renderer:
+            return self.renderer.screen(self._current_screen_width, self._current_screen_height, ctx, 1)
 
     def on_draw_sub_configure_event(self, widget: Gtk.DrawingArea, *args):
-        self.renderer.reshape(widget, 1)
+        if self.renderer:
+            self.renderer.reshape(widget, 1)
         return True
 
     def on_draw_main_motion_notify_event(self, widget: Gtk.Widget, event: Gdk.EventMotion, *args):
@@ -243,7 +276,7 @@ class MainController:
         return self.on_draw_button_press_event(widget, event, 1)
 
     def on_draw_motion_notify_event(self, widget: Gtk.Widget, event: Gdk.EventMotion, display_id: int):
-        if self.emu:
+        if self.emu_thread:
             if display_id == 1 and self._click:
                 if event.is_hint:
                     _, x, y, state = widget.get_window().get_pointer()
@@ -255,17 +288,17 @@ class MainController:
                     self.set_touch_pos(x, y)
 
     def on_draw_button_release_event(self, widget: Gtk.Widget, event: Gdk.EventButton, display_id: int):
-        if self.emu:
+        if self.emu_thread:
             if display_id == 1 and self._click:
                 self._click = False
-                self.emu.input.touch_release()
+                threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.touch_release())
             return True
 
     def on_draw_button_press_event(self, widget: Gtk.Widget, event: Gdk.EventButton, display_id: int):
         widget.grab_focus()
-        if self.emu:
+        if self.emu_thread:
             if event.button == 1:
-                if display_id == 1 and self.emu.is_running():
+                if display_id == 1 and self.emu_is_running:
                     self._click = True
                     _, x, y, state = widget.get_window().get_pointer()
                     if state & Gdk.ModifierType.BUTTON1_MASK:
@@ -279,7 +312,7 @@ class MainController:
 
     # MENU FILE
     def on_menu_open_activate(self, *args):
-        self.emu.pause()
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
 
         response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, "Open...", (self._filter_nds, self._filter_gba_ds, self._filter_any))
 
@@ -298,7 +331,7 @@ class MainController:
 
     # EMULATOR CONTROLS
     def on_emulator_controls_playstop_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             if not self._stopped:
                 self.emu_stop()
             else:
@@ -307,46 +340,46 @@ class MainController:
                     self.emu_resume()
 
     def on_emulator_controls_pause_clicked(self, button: Gtk.Button):
-        if self.emu:
-            if self.emu.is_running() and self._registered_main_loop:
+        if self.emu_thread:
+            if self.emu_is_running and self.emu_thread.registered_main_loop:
                 self.emu_pause()
             elif not self._stopped:
                 self.emu_resume()
 
     def on_emulator_controls_reset_clicked(self, button: Gtk.Button):
-        if self.emu:
-            self.emu.reset()
+        if self.emu_thread:
+            self.emu_reset()
             self.emu_resume()
 
     def on_emulator_controls_volume_toggled(self, button: Gtk.ToggleButton):
-        if self.emu:
+        if self.emu_thread:
             if button.get_active():
-                self.emu.volume_set(100)
+                threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
             else:
-                self.emu.volume_set(0)
+                threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(0))
 
     def on_emulator_controls_savestate1_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.savestate(1)
 
     def on_emulator_controls_savestate2_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.savestate(2)
 
     def on_emulator_controls_savestate3_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.savestate(3)
 
     def on_emulator_controls_loadstate1_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.loadstate(1)
 
     def on_emulator_controls_loadstate2_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.loadstate(2)
 
     def on_emulator_controls_loadstate3_clicked(self, button: Gtk.Button):
-        if self.emu:
+        if self.emu_thread:
             self.loadstate(3)
 
     # OPTION TOGGLES
@@ -395,7 +428,7 @@ class MainController:
                 if model[treeiter][0] == '':
                     tree.expand_row(model[treeiter].path, False)
                 else:
-                    self.code_editor.open(model[treeiter][0])
+                    self.code_editor.open(SCRIPT_DIR + '/' + model[treeiter][0])
 
     def init_file_tree(self):
         ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
@@ -467,14 +500,15 @@ class MainController:
         try:
             self.rom = NintendoDSRom.fromFile(fn)
             rom_data = get_ppmdu_config_for_rom(self.rom)
-            self.ssb_file_manager = SsbFileManager(self.rom, rom_data, fn)
+            self.ssb_file_manager = SsbFileManager(self.rom, rom_data, fn, self.debugger)
             self.breakpoint_manager = BreakpointManager(
                 os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_file_manager
             )
             # Immediately save, because the module packs the ROM differently.
             self.rom.saveToFile(fn)
             self.rom_filename = fn
-            self.debugger.enable(rom_data, self.ssb_file_manager)
+            if self.debugger:
+                self.debugger.enable(rom_data, self.ssb_file_manager, self.breakpoint_manager)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
             self.code_editor.init(self.ssb_file_manager, self.breakpoint_manager, rom_data)
@@ -488,7 +522,7 @@ class MainController:
             md.destroy()
         else:
             self.enable_editing_features()
-            if self.emu:
+            if self.emu_thread:
                 self.enable_debugging_features()
             self.emu_stop()
 
@@ -512,33 +546,38 @@ class MainController:
         self._set_sensitve("emulator_controls_volume", True)
 
     def toggle_paused_debugging_features(self, on_off):
+        if not on_off:
+            if self.code_editor:
+                self.code_editor.remove_hanger_halt_lines()
         self._set_sensitve("variables_save1", on_off)
         self._set_sensitve("variables_save2", on_off)
         self._set_sensitve("variables_save3", on_off)
         self._set_sensitve("variables_load1", on_off)
         self._set_sensitve("variables_load2", on_off)
         self._set_sensitve("variables_load3", on_off)
-        self._set_sensitve("variables_notebook", on_off)
+        self._set_sensitve("variables_notebook_parent", on_off)
         self._set_sensitve("ground_state_files_tree_sw", on_off)
         self._set_sensitve("ground_state_entities_tree_sw", on_off)
 
-    def load_debugger_state(self):
+    def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None):
         self.toggle_paused_debugging_features(True)
         # Load Variables
         self.variable_controller.sync()
         # Load Ground State
-        self.ground_state_controller.sync()
+        self.ground_state_controller.sync(self.code_editor, breaked_for)
 
     def savestate(self, i: int):
         """Save both the emulator state and the ground engine state to files."""
-        rom_basename = os.path.basename(self.rom_filename)
-        desmume_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}')
-        ground_engine_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}')
-
         try:
+            #if self.breakpoint_state.is_stopped():
+            #    raise RuntimeError("Savestates can not be created while debugging.")
+            rom_basename = os.path.basename(self.rom_filename)
+            desmume_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}')
+            ground_engine_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}')
+
             with open(ground_engine_savestate_path, 'w') as f:
                 json.dump(self.debugger.ground_engine_state.serialize(), f)
-            self.emu.savestate.save_file(desmume_savestate_path)
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.save_file(desmume_savestate_path))
         except BaseException as err:
             md = Gtk.MessageDialog(self.window,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
@@ -557,21 +596,24 @@ class MainController:
 
         if os.path.exists(ground_engine_savestate_path):
             try:
-                was_running = self.emu.is_running()
+                was_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
                 self._stopped = False
                 self.emu_reset()
-                self.emu.savestate.load_file(desmume_savestate_path)
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.load_file(desmume_savestate_path))
                 with open(ground_engine_savestate_path, 'r') as f:
                     self.debugger.ground_engine_state.deserialize(json.load(f))
-                self.ground_state_controller.sync()
+                self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
+                self.load_debugger_state()
                 if was_running:
                     self._set_buttons_running()
                 else:
                     self._set_buttons_paused()
-            except BaseException as err:
+            except BaseException as ex:
+                print("Savestate load error:")
+                print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
                 md = Gtk.MessageDialog(self.window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, str(err),
+                                       Gtk.ButtonsType.OK, str(ex),
                                        title="Unable to load savestate!")
                 md.set_position(Gtk.WindowPosition.CENTER)
                 md.run()
@@ -599,7 +641,7 @@ class MainController:
         elif emu_y > SCREEN_HEIGHT:
             emu_y = SCREEN_HEIGHT
 
-        self.emu.input.touch_set_pos(int(emu_x), int(emu_y))
+        threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.touch_set_pos(int(emu_x), int(emu_y)))
 
     def lookup_key(self, keyval):
         key = False
@@ -610,11 +652,14 @@ class MainController:
         return key
 
     def emu_reset(self):
-        if self.emu:
+        if self.emu_thread:
+            if self.breakpoint_state:
+                self.breakpoint_state.fail_hard()
             if self.debugger.ground_engine_state:
                 self.debugger.ground_engine_state.reset()
             try:
-                self.emu.open(self.rom_filename)
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.rom_filename))
+                self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
             except RuntimeError:
                 md = Gtk.MessageDialog(self.window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
@@ -628,64 +673,83 @@ class MainController:
         self._stopped = False
         self.toggle_paused_debugging_features(False)
         self.clear_info_bar()
-        if self.emu:
+        if self.emu_thread:
             self._set_buttons_running()
-            self.emu.resume()
-            self.emu.input.keypad_update(0)
-            if not self._registered_main_loop:
-                self._registered_main_loop = True
-                GLib.idle_add(self.emu_cycle)
+            if not self._emu_is_running:
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.resume())
+            if self.breakpoint_state:
+                self.breakpoint_state.resume()
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_update(0))
+            self.emu_thread.register_main_loop()
+            self.emu_is_running = True
 
     def emu_stop(self):
         self._stopped = True
-        if self.emu:
+        if self.emu_thread:
+            if self.breakpoint_state:
+                self.breakpoint_state.fail_hard()
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.reset())
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
+            self.emu_is_running = False
+
             self._set_buttons_stopped()
             self.load_debugger_state()
             self.write_info_bar(Gtk.MessageType.WARNING, "The game is stopped.")
-            self.emu.reset()
-            self.emu.pause()
 
     def emu_pause(self):
+        if self.breakpoint_state and self.breakpoint_state.is_stopped():
+            # This shouldn't happen...? It would lead to an invalid state, so just return.
+            return
+        if self.emu_is_running:
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
         self.load_debugger_state()
         self.write_info_bar(Gtk.MessageType.INFO, "The game is paused.")
 
         self._set_buttons_paused()
-        if self.emu.is_running():
-            self.emu.pause()
+        self.emu_is_running = False
 
-    def emu_cycle(self):
-        if not self.emu:
-            self._registered_main_loop = False
-            return False
+    def break_pulled(self, state: BreakpointState, srs: ScriptRuntimeStruct):
+        """
+        The DebuggerController has paused at an instruction.
+        - Update reference to state object.
+        - Update the main UI (info bar, emulator controls).
+        - Tell the GroundStateController about the hanger, to mark it in the list.
+        - Tell the code editor about which file to open and which instruction to jump to.
+        - Add release hook.
+        """
+        threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(0))
 
-        if self.emu.is_running():
-            self._fps_frame_count += 1
+        ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]
+        opcode_addr = srs.current_opcode_addr_relative
+        self.breakpoint_state = state
+        self._set_buttons_paused()
+        self.write_info_bar(Gtk.MessageType.WARNING, f"The debugger is halted at {ssb.file_name}.")
+        # This will mark the hanger as being breaked:
+        self.debugger.ground_engine_state.break_pulled(state)
+        # This will tell the code editor to refresh the debugger controls for all open editors
+        self.code_editor.break_pulled(state, ssb.file_name, opcode_addr)
+        self.code_editor.focus_by_opcode_addr(ssb.file_name, opcode_addr)
+        self.load_debugger_state(srs)
+        self.debug_overlay.break_pulled()
 
-            if not self._fps_sec_start:
-                self._fps_sec_start = self.emu.get_ticks()
-            if self.emu.get_ticks() - self._fps_sec_start >= 1000:
-                self._fps_sec_start = self.emu.get_ticks()
-                self._fps = self._fps_frame_count
-                self._fps_frame_count = 0
+        state.add_release_hook(self.break_released)
 
-            self.emu.cycle()
-
-            self._main_draw.queue_draw()
-            self._sub_draw.queue_draw()
-
-            self._ticks_cur_frame = self.emu.get_ticks()
-
-            if self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
-                while self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
-                    self._ticks_cur_frame = self.emu.get_ticks()
-
-            self._ticks_prev_frame = self.emu.get_ticks()
-            return True
-
-        self._main_draw.queue_draw()
-        self._sub_draw.queue_draw()
-        self._registered_main_loop = False
-        return False
+    def break_released(self, state: BreakpointState):
+        """
+        The BreakpointState went into a resuming state (hook added via BreakpointState.add_release_hook).
+        - Delete local reference to state object
+        - Update the main UI (info bar, emulator controls).
+        - The ground state controller and code editors have their own hooks for the releasing.
+        """
+        if self.builder.get_object('emulator_controls_volume').get_active():
+            threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
+        self.breakpoint_state = None
+        self._set_buttons_running()
+        self.toggle_paused_debugging_features(False)
+        self.clear_info_bar()
+        # This is faster than syncing the entire debugger state again.
+        self.ground_state_controller.sync_break_hanger()
+        self.debug_overlay.break_released()
 
     def _ssb_item_filter_visible_func(self, model, iter, data):
         return self._recursive_filter_func(self._search_text, model, iter)

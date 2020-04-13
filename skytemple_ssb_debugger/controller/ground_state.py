@@ -18,7 +18,9 @@ from typing import Optional
 import gi
 from gi.repository.Gtk import TreeViewColumn
 
+from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
+from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
 gi.require_version('Gtk', '3.0')
 
@@ -47,6 +49,8 @@ class GroundStateController:
         self._files__not_loaded: Gtk.Viewport = builder.get_object('ground_state_files_tree_engine_not_loaded')
         self._entities__not_loaded: Gtk.Viewport = builder.get_object('ground_state_entities_tree_engine_not_loaded')
 
+        self._ssb_tree_store_iters: Dict[int, Gtk.TreeIter] = {}
+
         self._files__tree: Gtk.TreeView = builder.get_object('ground_state_files_tree')
         icon = Gtk.CellRendererPixbuf()
         path = Gtk.CellRendererText()
@@ -61,7 +65,14 @@ class GroundStateController:
 
         self._entities__tree: Gtk.TreeView = builder.get_object('ground_state_entities_tree')
         #self._files__tree.append_column(resizable(TreeViewColumn("Preview", Gtk.CellRendererPixbuf(), xxx=4)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("ID", Gtk.CellRendererText(), text=0)))
+        icon = Gtk.CellRendererPixbuf()
+        slot_id = Gtk.CellRendererText()
+        column = TreeViewColumn("ID")
+        column.pack_start(icon, True)
+        column.pack_start(slot_id, True)
+        column.add_attribute(icon, "icon_name", 6)
+        column.add_attribute(slot_id, "text", 0)
+        self._entities__tree.append_column(resizable(column))
         self._entities__tree.append_column(resizable(TreeViewColumn("Kind", Gtk.CellRendererText(), text=5)))
         self._entities__tree.append_column(resizable(TreeViewColumn("Hanger", Gtk.CellRendererText(), text=1)))
         self._entities__tree.append_column(resizable(TreeViewColumn("Sector", Gtk.CellRendererText(), text=2)))
@@ -70,7 +81,24 @@ class GroundStateController:
         self._files__tree_store: Gtk.TreeStore = builder.get_object('ground_state_files_tree_store')
         self._entities__tree_store: Gtk.TreeStore = builder.get_object('ground_state_entities_store')
 
-    def sync(self):
+    def sync_break_hanger(self):
+        """
+        Only sync the "breaked" property of all loaded SSB files and update them in the views.
+        The views must be built already.
+        """
+        ground_state = self.debugger.ground_engine_state
+        for ssb in ground_state.loaded_ssb_files:
+            if ssb is not None and ssb.hanger in self._ssb_tree_store_iters:
+                if ssb.breaked:
+                    self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = 'media-playback-pause'
+                else:
+                    self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = ''
+
+    def sync(self, code_editor=None, breaked_for: ScriptRuntimeStruct = None):
+        """
+        Synchronize the ground engine state to the UI. If code_editor is set, send the opcodes that currently being
+        run by the engine to the editor.
+        """
         if self.debugger and self.debugger.ground_engine_state:
             ground_state = self.debugger.ground_engine_state
             if ground_state.running and not self._was_running_last_sync:
@@ -91,6 +119,38 @@ class GroundStateController:
             if ground_state.running:
                 # Is running
                 global_script, ssb, ssx, actors, objects, performers, events = ground_state.collect()
+
+                if code_editor:
+                    # Sync the code editor execution lines
+                    files = {}
+                    if global_script.script_struct.hanger_ssb > -1:
+                        if ssb[global_script.script_struct.hanger_ssb].file_name not in files:
+                            files[ssb[global_script.script_struct.hanger_ssb].file_name] = []
+                        files[ssb[global_script.script_struct.hanger_ssb].file_name].append((
+                            SsbRoutineType.GENERIC, 0, global_script.script_struct.current_opcode_addr_relative
+                        ))
+                    for i, actor in enumerate(actors):
+                        if actor is not None and actor.script_struct.hanger_ssb > -1:
+                            if ssb[actor.script_struct.hanger_ssb].file_name not in files:
+                                files[ssb[actor.script_struct.hanger_ssb].file_name] = []
+                            files[ssb[actor.script_struct.hanger_ssb].file_name].append((
+                                SsbRoutineType.ACTOR, i, actor.script_struct.current_opcode_addr_relative
+                            ))
+                    for i, object in enumerate(objects):
+                        if object is not None and object.script_struct.hanger_ssb > -1:
+                            if ssb[object.script_struct.hanger_ssb].file_name not in files:
+                                files[ssb[object.script_struct.hanger_ssb].file_name] = []
+                            files[ssb[object.script_struct.hanger_ssb].file_name].append((
+                                SsbRoutineType.OBJECT, i, object.script_struct.current_opcode_addr_relative
+                            ))
+                    for i, performer in enumerate(performers):
+                        if performer is not None and performer.script_struct.hanger_ssb > -1:
+                            if ssb[performer.script_struct.hanger_ssb].file_name not in files:
+                                files[ssb[performer.script_struct.hanger_ssb].file_name] = []
+                            files[ssb[performer.script_struct.hanger_ssb].file_name].append((
+                                SsbRoutineType.PERFORMER, i, performer.script_struct.current_opcode_addr_relative
+                            ))
+                    code_editor.insert_hanger_halt_lines(files)
 
                 # File tree store
                 self._files__tree_store.clear()
@@ -137,48 +197,64 @@ class GroundStateController:
 
                 # Entities store
                 self._entities__tree_store.clear()
+                breaked = False
+                if global_script.script_struct.hanger_ssb > -1:
+                    breaked = ssb[global_script.script_struct.hanger_ssb].breaked and global_script.script_struct == breaked_for
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
-                    self.get_short_sname(ssb, global_script.current_script_hanger), None, ''
+                    self.get_short_sname(ssb, global_script.script_struct.hanger_ssb), None, '',
+                    'media-playback-pause' if breaked else ''
                 ])
                 actors_node = self._entities__tree_store.append(None, [
-                    'Actors', '', '', '', None, ''
+                    'Actors', '', '', '', None, '', ''
                 ])
                 for actor in actors:
+                    breaked = False
+                    if actor.script_struct.hanger_ssb > -1:
+                        breaked = ssb[actor.script_struct.hanger_ssb].breaked and actor.script_struct == breaked_for
                     self._entities__tree_store.append(actors_node, [
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
-                        self.get_short_sname(ssb, actor.current_script_hanger), None, f'{actor.kind.name}'
+                        self.get_short_sname(ssb, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
+                        'media-playback-pause' if breaked else ''
                     ])
                 objects_node = self._entities__tree_store.append(None, [
-                    'Objects', '', '', '', None, ''
+                    'Objects', '', '', '', None, '', ''
                 ])
                 for object in objects:
                     kind_name = object.kind.name
                     if kind_name == 'NULL':
                         kind_name = f'{object.kind.name} ({object.kind.id})'
+                    breaked = False
+                    if object.script_struct.hanger_ssb > -1:
+                        breaked = ssb[object.script_struct.hanger_ssb].breaked and object.script_struct == breaked_for
                     self._entities__tree_store.append(objects_node, [
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
-                        self.get_short_sname(ssb, object.current_script_hanger), None, kind_name
+                        self.get_short_sname(ssb, object.script_struct.hanger_ssb), None, kind_name,
+                        'media-playback-pause' if breaked else ''
                     ])
                 performers_node = self._entities__tree_store.append(None, [
-                    'Performers', '', '', '', None, ''
+                    'Performers', '', '', '', None, '', ''
                 ])
                 for performer in performers:
+                    breaked = False
+                    if performer.script_struct.hanger_ssb > -1:
+                        breaked = ssb[performer.script_struct.hanger_ssb].breaked and performer.script_struct == breaked_for
                     self._entities__tree_store.append(performers_node, [
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
-                        self.get_short_sname(ssb, performer.current_script_hanger), None, f'{performer.kind}'
+                        self.get_short_sname(ssb, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
+                        'media-playback-pause' if breaked else ''
                     ])
                 events_node = self._entities__tree_store.append(None, [
-                    'Events', '', '', '', None, ''
+                    'Events', '', '', '', None, '', ''
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [
                         f'{event.id}', f'{event.hanger}', f'{event.sector}',
-                        '', None, f'{event.kind}'
+                        '', None, f'{event.kind}', ''
                     ])
 
                 pos_marks_node = self._entities__tree_store.append(None, [
-                    'Position Markers', '', '', '', None, ''
+                    'Position Markers', '', '', '', None, '', ''
                 ])
                 # TODO
 

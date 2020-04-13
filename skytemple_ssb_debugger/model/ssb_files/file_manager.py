@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import hashlib
-from typing import Dict
+from typing import Dict, TYPE_CHECKING
 
 from ndspy.rom import NintendoDSRom
 
@@ -24,12 +24,16 @@ from skytemple_files.common.types.file_types import FileType
 from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.controller.debugger import DebuggerController
+
 
 class SsbFileManager:
-    def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str):
+    def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str, debugger: 'DebuggerController'):
         self.rom = rom
         self.rom_data = rom_data
         self.rom_filename = rom_filename
+        self.debugger = debugger
         # TODO: Mechanism to close files again!
         self._open_files: Dict[str, SsbLoadedFile] = {}
 
@@ -54,6 +58,7 @@ class SsbFileManager:
         """
         self.get(filename)
         compiler = ScriptCompiler(self.rom_data)
+        # TODO: SOURCE MAP UPDATING MISSING!
         self._open_files[filename].ssb_model = compiler.compile_ssbscript(code)
         self.rom.setFileByName(
             filename, FileType.SSB.serialize(self._open_files[filename].ssb_model)
@@ -120,6 +125,7 @@ class SsbFileManager:
         """
         # - If the file is no longer loaded in Ground Engine: Regenerate text marks from source map.
         """
+        self.get(filename)
         self._open_files[filename].opened_in_ground_engine = False
         self._open_files[filename].not_breakable = False
         if not self._open_files[filename].ram_state_up_to_date:

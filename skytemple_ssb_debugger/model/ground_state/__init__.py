@@ -16,7 +16,10 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from abc import abstractmethod, ABC
 
-from desmume.emulator import DeSmuME_Memory
+from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu
 
 
 def pos_for_display_camera(pos: int, camera_pos: int) -> float:
@@ -29,9 +32,17 @@ def pos_for_display_camera(pos: int, camera_pos: int) -> float:
 
 class AbstractScriptRuntimeState(ABC):
     """TODO: For more see sandbox.sandbox. """
-    def __init__(self, mem: DeSmuME_Memory, pnt: int):
-        self.mem = mem
-        self.pnt = pnt
+    def __init__(self, emu_thread: EmulatorThread, pnt_to_block_start: int, rom_data: Pmd2Data):
+        super().__init__()
+        self.emu_thread: EmulatorThread = emu_thread
+        self.pnt_to_block_start = pnt_to_block_start
+        self.rom_data = rom_data
+
+    @property
+    def pnt(self):
+        return threadsafe_emu(
+            self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
+        )
 
     @property
     @abstractmethod
@@ -39,5 +50,7 @@ class AbstractScriptRuntimeState(ABC):
         pass
 
     @property
-    def current_script_hanger(self):
-        return self.mem.unsigned.read_short(self.pnt + self._script_struct_offset + 0x10)
+    def script_struct(self):
+        return ScriptRuntimeStruct(
+            self.emu_thread, self.rom_data.script_data, lambda: self.pnt + self._script_struct_offset, self
+        )

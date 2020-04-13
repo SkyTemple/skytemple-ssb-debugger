@@ -27,10 +27,10 @@ class BreakpointManager:
         self._breakpoint_filename = breakpoint_filename
         self.file_manager = file_manager
 
-        self.temporary_breakpoint_mapping: Dict[str, List[List[int]]] = {}
+        self.temporary_breakpoint_mapping: Dict[str, List[int]] = {}
 
         if not os.path.exists(breakpoint_filename):
-            self.breakpoint_mapping: Dict[str, List[List[int]]] = {}
+            self.breakpoint_mapping: Dict[str, List[int]] = {}
         else:
             try:
                 with open(breakpoint_filename, 'r') as f:
@@ -45,7 +45,7 @@ class BreakpointManager:
         self._callbacks_added.append(open)
         self._callbacks_remvoed.append(remove)
 
-    def resync(self, fn, list_breakpoints: List[List[int]]):
+    def resync(self, fn, list_breakpoints: List[int]):
         """
         Re-sync the breakpoints for this file.
         This is triggered, after a ssb file was saved.
@@ -85,52 +85,57 @@ class BreakpointManager:
 
         ssb.unregister_reload_event_manager(self.wait_for_ssb_update)
 
-    def add(self, fn, rtn_id, op_off):
-        rtn_id = int(rtn_id)
+    def add(self, fn, op_off):
         op_off = int(op_off)
         if fn not in self.breakpoint_mapping:
             self.breakpoint_mapping[fn] = []
-        if self._get(self.breakpoint_mapping[fn], rtn_id, op_off) is not None:
+        if self._get(self.breakpoint_mapping[fn], op_off) is not None:
             return
-        self.breakpoint_mapping[fn].append([rtn_id, op_off])
+        self.breakpoint_mapping[fn].append(op_off)
         for cb in self._callbacks_added:
-            cb(fn, rtn_id, op_off)
+            cb(fn, op_off)
         with open(self._breakpoint_filename, 'w') as f:
             json.dump(self.breakpoint_mapping, f)
 
-    def remove(self, fn, rtn_id, op_off):
-        rtn_id = int(rtn_id)
+    def remove(self, fn, op_off):
         op_off = int(op_off)
         if fn not in self.breakpoint_mapping:
             return
-        idx = self._get(self.breakpoint_mapping[fn], rtn_id, op_off)
+        idx = self._get(self.breakpoint_mapping[fn], op_off)
         if idx is None:
             return
         del self.breakpoint_mapping[fn][idx]
         for cb in self._callbacks_remvoed:
-            cb(fn, rtn_id, op_off)
+            cb(fn, op_off)
         with open(self._breakpoint_filename, 'w') as f:
             json.dump(self.breakpoint_mapping, f)
+
+    def has(self, fn, op_off):
+        if fn not in self.breakpoint_mapping:
+            return False
+        if self.file_manager.get(fn).not_breakable:
+            return False
+        return op_off in self.breakpoint_mapping[fn]
 
     def saved_in_rom_get_for(self, fn):
         """Return the breakpoints that are saved in RAM for fn. These might be the tempoary breakpoints we stored!"""
         if fn in self.temporary_breakpoint_mapping:
-            for rid, opoff in self.temporary_breakpoint_mapping[fn]:
-                yield rid, opoff
+            for opoff in self.temporary_breakpoint_mapping[fn]:
+                yield opoff
         if fn in self.breakpoint_mapping:
-            for rid, opoff in self.breakpoint_mapping[fn]:
-                yield rid, opoff
+            for opoff in self.breakpoint_mapping[fn]:
+                yield opoff
         return
 
     def loaded_in_rom_get_for(self, fn):
         """Return the active loaded breakpoints for fn."""
         if fn in self.breakpoint_mapping:
-            for rid, opoff in self.breakpoint_mapping[fn]:
-                yield rid, opoff
+            for opoff in self.breakpoint_mapping[fn]:
+                yield opoff
         return
 
-    def _get(self, t, rtn_id, op_off):
-        for idx, (i_rtn_id, i_op_off) in enumerate(t):
-            if rtn_id == i_rtn_id and op_off == i_op_off:
+    def _get(self, t, op_off):
+        for idx, i_op_off in enumerate(t):
+            if op_off == i_op_off:
                 return idx
         return None

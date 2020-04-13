@@ -16,49 +16,72 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera
 from skytemple_ssb_debugger.model.ground_state.map import Map
+from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu, threadsafe_emu
 
 EVENT_EXISTS_CHECK_OFFSET = 0x02
 
 
 class Event:
-    def __init__(self, mem: DeSmuME_Memory, rom_data: Pmd2Data, pnt: int):
-        self.mem = mem
+    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
+        super().__init__()
+        self.emu_thread = emu_thread
         self.rom_data = rom_data
-        self.pnt = pnt
+        self.pnt_to_block_start = pnt_to_block_start
+        self.offset = offset
 
     @property
+    def pnt(self):
+        return threadsafe_emu(
+            self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
+        ) + self.offset
+
+    @property
+    @wrap_threadsafe_emu()
+    def valid(self):
+        return self.emu_thread.emu.memory.signed.read_short(self.pnt + EVENT_EXISTS_CHECK_OFFSET) > 0
+
+    @property
+    @wrap_threadsafe_emu()
     def id(self):
-        return self.mem.unsigned.read_short(self.pnt + 0x00)
+        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x00)
 
     @property
+    @wrap_threadsafe_emu()
     def kind(self):
-        return self.mem.unsigned.read_short(self.pnt + 0x02)
+        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x02)
 
     @property
+    @wrap_threadsafe_emu()
     def hanger(self):
-        return self.mem.unsigned.read_short(self.pnt + 0x04)
+        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x04)
 
     @property
+    @wrap_threadsafe_emu()
     def sector(self):
-        return self.mem.unsigned.read_byte(self.pnt + 0x06)
+        return self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x06)
 
     @property
+    @wrap_threadsafe_emu()
     def x_north(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x10)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x10)
 
     @property
+    @wrap_threadsafe_emu()
     def y_west(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x14)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x14)
 
     @property
+    @wrap_threadsafe_emu()
     def x_south(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x18)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x18)
 
     @property
+    @wrap_threadsafe_emu()
     def y_east(self):
-        return self.mem.unsigned.read_long(self.pnt + 0x1C)
+        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x1C)
 
     def get_bounding_box_camera(self, map: Map):
         return (
