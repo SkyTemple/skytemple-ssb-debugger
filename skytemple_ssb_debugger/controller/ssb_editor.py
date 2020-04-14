@@ -32,6 +32,7 @@ from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
+from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.pixbuf.icons import *
 
@@ -40,6 +41,7 @@ if TYPE_CHECKING:
 
 MARK_PATTERN = re.compile('opcode_(\\d+)')
 MARK_PATTERN_TMP = re.compile('TMP_opcode_(\\d+)')
+EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 
 
 class SSBEditorController:
@@ -165,12 +167,12 @@ class SSBEditorController:
                 m = ssbsb.get_mark(f'opcode_{opcode_addr}')
                 if m is not None:
                     ssbsb.create_source_mark(
-                        f'execution_{type.value}_{slot_id}', 'execution-line', ssbsb.get_iter_at_mark(m)
+                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line', ssbsb.get_iter_at_mark(m)
                     )
                 m = expsb.get_mark(f'opcode_{opcode_addr}')
                 if m is not None:
                     expsb.create_source_mark(
-                        f'execution_{type.value}_{slot_id}', 'execution-line', expsb.get_iter_at_mark(m)
+                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line', expsb.get_iter_at_mark(m)
                     )
 
     def remove_hanger_halt_lines(self):
@@ -819,25 +821,34 @@ def color_hex_to_rgb(hexx, alpha):
 
 
 class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
+    """Renders a play"""
     def __init__(self, view, **properties):
         super().__init__(**properties)
-        self.view = view
-        self.breaked_icon = create_breaked_line_icon()
-        self.execution_icon = create_execution_line_icon()
+        self.view: GtkSource.View = view
         self.empty = Gdk.pixbuf_get_from_surface(cairo.ImageSurface(cairo.FORMAT_ARGB32, 1, 1), 0, 0, 1, 1)
-        self.set_size(24)
+        self.set_size(12 * 3)
         self.set_padding(5, 3)
+        icon_theme: Gtk.IconTheme = Gtk.IconTheme.get_for_screen(self.view.get_screen())
+        self._icon_actor = icon_theme.load_icon(ICON_ACTOR, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_object = icon_theme.load_icon(ICON_OBJECT, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_performer = icon_theme.load_icon(ICON_PERFORMER, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
 
     def do_query_data(self, start: Gtk.TextIter, end: Gtk.TextIter, state: GtkSource.GutterRendererState):
         view: GtkSource.View = self.get_view()
         buffer: GtkSource.Buffer = view.get_buffer()
+        execution_marks = buffer.get_source_marks_at_line(start.get_line(), 'execution-line')
         breaked_marks = buffer.get_source_marks_at_line(start.get_line(), 'breaked-line')
 
         if len(breaked_marks) > 0:
-            self.set_pixbuf(self.breaked_icon)
+            type_id = -1
+            slot_id = -1
+            if len(execution_marks) > 0:
+                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+            self.set_pixbuf(create_breaked_line_icon(int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer))
             return
-        execution_marks = buffer.get_source_marks_at_line(start.get_line(), 'execution-line')
         if len(execution_marks) > 0:
-            self.set_pixbuf(self.execution_icon)
+            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+            # Don't show for global
+            self.set_pixbuf(create_execution_line_icon(int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer))
             return
         self.set_pixbuf(self.empty)

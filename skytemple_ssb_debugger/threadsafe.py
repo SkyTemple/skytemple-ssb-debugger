@@ -59,7 +59,7 @@ def threadsafe_gtk_nonblocking(cb: Callable) -> None:
 
 def threadsafe_emu(emu_thread, cb: Callable):
     """
-    Non-blocking call on the emulator thread. Must be called from GTK thread.
+    Blocking call on the emulator thread. If run from emulator thread, cb is just executed.
     The return value is the return value of cb.
     """
     if current_thread() == emu_thread._thread_instance:
@@ -134,8 +134,8 @@ def synchronized_now(lock):
 
 
 def wrap_threadsafe_emu():
-    from .emulator_thread import EmulatorThread
     """Wrap the entire method call in a threadsafe_emu call."""
+    from .emulator_thread import EmulatorThread
     def decorator(f):
 
         @functools.wraps(f)

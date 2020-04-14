@@ -22,6 +22,7 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import *
 from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT
 
 
 class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvider):
@@ -80,9 +81,9 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         item.set_label(const.name)
 
         if isinstance(const.value, Pmd2ScriptEntity):
-            item.set_icon_name('user-available-symbolic')
+            item.set_icon_name(ICON_ACTOR)
         elif isinstance(const.value, Pmd2ScriptObject):
-            item.set_icon_name('package-x-generic-symbolic')
+            item.set_icon_name(ICON_OBJECT)
         elif isinstance(const.value, Pmd2ScriptRoutine):
             item.set_icon_name('system-run-symbolic')
         elif isinstance(const.value, Pmd2ScriptFaceName):

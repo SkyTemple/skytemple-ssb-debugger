@@ -17,7 +17,9 @@
 import math
 
 import cairo
-from gi.repository import Gdk
+from gi.repository import Gdk, Pango, Gtk
+
+from skytemple_ssb_debugger.controller.debug_overlay import COLOR_ACTOR, COLOR_OBJECTS, COLOR_PERFORMER
 
 
 def create_breakpoint_icon():
@@ -35,16 +37,19 @@ def create_breakpoint_icon():
     return pixbuf
 
 
-def create_breaked_line_icon():
-    w = h = 12
+def create_breaked_line_icon(type_id, slot_id, icon_actor, icon_object, icon_performer):
+    h = 12
+    w = h * 3
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     cr = cairo.Context(surface)
 
-    cr.move_to(0, 0)
-    cr.line_to(w, h/2)
-    cr.line_to(0, h)
-    cr.close_path()
+    _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer)
 
+    # Play Icon
+    cr.move_to(12 * 2, 0)
+    cr.line_to(w, h/2)
+    cr.line_to(12 * 2, h)
+    cr.close_path()
     cr.set_source_rgb(1.0, 0, 0)
     cr.fill_preserve()
 
@@ -52,18 +57,48 @@ def create_breaked_line_icon():
     return pixbuf
 
 
-def create_execution_line_icon():
-    w = h = 12
+def create_execution_line_icon(type_id, slot_id, icon_actor, icon_object, icon_performer):
+    h = 12
+    w = h * 3
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     cr = cairo.Context(surface)
 
-    cr.move_to(0, 0)
-    cr.line_to(w, h/2)
-    cr.line_to(0, h)
-    cr.close_path()
+    _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer)
 
+    # Play Icon
+    cr.move_to(12 * 2, 0)
+    cr.line_to(w, h/2)
+    cr.line_to(12 * 2, h)
+    cr.close_path()
     cr.set_source_rgb(129 / 255, 105 / 255, 43 / 255)
     cr.fill_preserve()
 
     pixbuf = Gdk.pixbuf_get_from_surface(surface, 0, 0, w, h)
     return pixbuf
+
+
+def _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer):
+    # Slot Type
+    if type_id > 1:
+        cr.translate(10, -1)
+        if type_id == 3:
+            Gdk.cairo_set_source_pixbuf(cr, icon_actor, 0, 0)
+            cr.paint()
+            cr.set_source_rgb(*COLOR_ACTOR[:3])
+        elif type_id == 4:
+            Gdk.cairo_set_source_pixbuf(cr, icon_object, 0, 0)
+            cr.paint()
+            cr.set_source_rgb(*COLOR_OBJECTS[:3])
+        elif type_id == 5:
+            Gdk.cairo_set_source_pixbuf(cr, icon_performer, 0, 0)
+            cr.paint()
+            cr.set_source_rgb(*COLOR_PERFORMER[:3])
+        cr.translate(-10, 1)
+
+    # Slot ID
+    if slot_id > -1 and type_id > 1:
+        cr.move_to(0, 11)
+        cr.select_font_face("cairo:monospace", cairo.FONT_SLANT_NORMAL,
+                            cairo.FONT_WEIGHT_NORMAL)
+        cr.set_font_size(12)
+        cr.show_text(str(slot_id))
