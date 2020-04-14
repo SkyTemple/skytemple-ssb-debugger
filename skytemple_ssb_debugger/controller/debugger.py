@@ -137,7 +137,10 @@ class DebuggerController:
     def hook__breaking_point(self, address, size):
         """MAIN DEBUGGER HOOK. The emulator thread pauses here and publishes it's state via BreakpointState."""
         debugger_state_lock.acquire()
-        srs = ScriptRuntimeStruct(self.emu_thread.emu.memory, self.rom_data, self.emu_thread.emu.memory.register_arm9.r6)
+        srs = ScriptRuntimeStruct(
+            self.emu_thread.emu.memory, self.rom_data,
+            self.emu_thread.emu.memory.register_arm9.r6, self.ground_engine_state.unionall_load_addr
+        )
         if self._log_operations:
             self.print_callback(f"> {srs.target_type.name}({srs.target_id}): {srs.current_opcode.name} @{srs.current_opcode_addr:0x}")
 

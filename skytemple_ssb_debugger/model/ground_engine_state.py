@@ -23,6 +23,7 @@ from gi.repository import Gtk
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
@@ -60,29 +61,31 @@ class GroundEngineState:
         self.pnt_objects = base_pnt + 12
         self.pnt_performers = base_pnt + 16
         self.pnt_events = base_pnt + 20
+        self.pnt_unionall_load_addr = rom_data.binaries['overlay/overlay_0011.bin'].pointers['UnionallRAMAddress'].begin_absolute
+        self.unionall_load_addr = AddressContainer(0)
 
         self._load_ssb_for = None
 
         self._running = False
         self._print_callback = print_callback
 
-        self._global_script = GlobalScript(self.emu_thread, self.rom_data, self.pnt_main_script_struct)
+        self._global_script = GlobalScript(self.emu_thread, self.rom_data, self.pnt_main_script_struct, self.unionall_load_addr)
         self._map = Map(self.emu_thread, self.rom_data, self.pnt_map)
 
         self._actors = []
         info = self.rom_data.script_data.ground_state_structs['Actors']
         for i in range(0, info.maxentries):
-            self._actors.append(Actor(self.emu_thread, self.rom_data, self.pnt_actors, i * info.entrylength))
+            self._actors.append(Actor(self.emu_thread, self.rom_data, self.pnt_actors, i * info.entrylength, self.unionall_load_addr))
 
         self._objects = []
         info = self.rom_data.script_data.ground_state_structs['Objects']
         for i in range(0, info.maxentries):
-            self._objects.append(Object(self.emu_thread, self.rom_data, self.pnt_objects, i * info.entrylength))
+            self._objects.append(Object(self.emu_thread, self.rom_data, self.pnt_objects, i * info.entrylength, self.unionall_load_addr))
 
         self._performers = []
         info = self.rom_data.script_data.ground_state_structs['Performers']
         for i in range(0, info.maxentries):
-            self._performers.append(Performer(self.emu_thread, self.rom_data, self.pnt_performers, i * info.entrylength))
+            self._performers.append(Performer(self.emu_thread, self.rom_data, self.pnt_performers, i * info.entrylength, self.unionall_load_addr))
 
         self._events = []
         info = self.rom_data.script_data.ground_state_structs['Events']
@@ -192,6 +195,9 @@ class GroundEngineState:
         self.register_exec(ov11.functions['SsbLoad2'].begin_absolute, self.hook__ssb_load)
         self.register_exec(ov11.functions['StationLoadHanger'].begin_absolute + 0xC0, self.hook__ssx_load)
         self.register_exec(ov11.functions['ScriptStationLoadTalk'].begin_absolute, self.hook__talk_load)
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_write(
+            self.pnt_unionall_load_addr, self.hook__write_unionall_address, 4
+        ))
 
     def remove_watches(self):
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
@@ -267,6 +273,9 @@ class GroundEngineState:
                     self.ssb_file_manager.mark_invalid(ssb.file_name)
         self._loaded_ssx_files = [LoadedSsxFile(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]
 
+        # Also update the load address for unionall
+        threadsafe_emu(self.emu_thread, lambda: self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr)))
+
     def _print(self, string):
         if self.logging_enabled:
             self._print_callback(f"Ground Event >> {string}")
@@ -325,3 +334,8 @@ class GroundEngineState:
             hanger += TALK_HANGER_OFFSET
         self._print(f"Talk Load for hanger {hanger}")
         self._load_ssb_for = hanger
+
+    @synchronized_now(ground_engine_lock)
+    def hook__write_unionall_address(self, address, size):
+        """Write the location of the unionall script into the container object for this"""
+        self.unionall_load_addr.set(self.emu_thread, self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))

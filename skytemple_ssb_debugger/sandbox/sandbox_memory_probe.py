@@ -160,9 +160,9 @@ class MemoryProbeManager:
 
 
 if __name__ == '__main__':
-    emu = DeSmuME("../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
+    emu = DeSmuME("../../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
 
-    emu.open("../../skyworkcopy_edit.nds")
+    emu.open("../../../skyworkcopy_edit.nds")
     win = emu.create_sdl_window(use_opengl_if_possible=True)
 
     emu.volume_set(0)
@@ -235,7 +235,7 @@ if __name__ == '__main__':
     //      0x07 perfunk0x0C
     //      0x08 perfunk0x0E    
     """
-    #emu.memory.register_exec(start_of_call_to_opcode_parsing, partial(hook__primary_opcode_parsing, emu))
+    emu.memory.register_exec(start_of_call_to_opcode_parsing, partial(hook__primary_opcode_parsing, emu))
     #emu.memory.register_exec(debug_print_start, partial(hook__debug_print, 1, emu))
     #emu.memory.register_exec(debug_print2_start, partial(hook__debug_print, 0, emu))
     #emu.memory.register_exec(point_to_print_print_debug, partial(hook__debug_print_script_engine, emu))
@@ -248,16 +248,16 @@ if __name__ == '__main__':
         ##(PointerProbe, 0x0232583C, 'ACT',       2 * 0x250),  # == starting with 0x38 -> _act0S
         ##(PointerProbe, 0x02325840, 'OBJ',       2 * 0x218),
         ##(PointerProbe, 0x02325844, 'PRF',       2 * 0x214),
-        (PointerProbe, 0x02325848, 'EVT',       2 * 0x32),
+        #(PointerProbe, 0x02325848, 'EVT',       2 * 0x32),
         ##(PointerProbe, 0x020a8890, 'act1',      0x20),       # == fn2e4_1
         ##(PointerProbe, 0x023226b0, 'act2',      0x20),
-        #(MemoryProbe,  0x023257ac, 'fn83c_1',   0x20), ??? Overlaps with SSBFile1
-        #(PointerProbe, 0x023257e4, 'fn8f8_1',   0x20),
-        #(PointerProbe, 0x02325800, 'fn8ac_1',   0x220),
-        #(PointerProbe, 0x02317424, 'fn62c_1',   0x20),
-        #(PointerProbe, 0x02094f50, 'fn2e4_1',   0x20),
-        #(PointerProbe, 0x02094f54, 'fn2e4_2',   0x20),
-        #(PointerProbe, 0x02094f5C, 'fn2e4_3',   0x20),
+        #(MemoryProbe,  0x023257ac, 'fn83c_1',   0x04), #??? Overlaps with SSBFile1
+        (PointerProbe, 0x023257e4, 'fn8f8_1',   0x20),
+        (PointerProbe, 0x02325800, 'fn8ac_1',   0x220),
+        (PointerProbe, 0x02317424, 'fn62c_1',   0x20),
+        (PointerProbe, 0x02094f50, 'fn2e4_1',   0x20),
+        (PointerProbe, 0x02094f54, 'fn2e4_2',   0x20),
+        (PointerProbe, 0x02094f5C, 'fn2e4_3',   0x20),
 
         #(MemoryProbe,  0x0211617c, '_mainS',    0xF0),
         #(MemoryProbe,  0x02111f48, '_act0S',    0xF0),

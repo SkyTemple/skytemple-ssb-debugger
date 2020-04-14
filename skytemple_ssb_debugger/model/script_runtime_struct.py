@@ -21,11 +21,12 @@ from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
 
 
 class ScriptRuntimeStruct:
-    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt: Union[int, Callable], parent=None):
+    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt: Union[int, Callable], unionall_load_addr: AddressContainer, parent=None):
         super().__init__()
         self.emu_thread = emu_thread
         self.rom_data = rom_data
@@ -34,6 +35,7 @@ class ScriptRuntimeStruct:
         self._pnt = pnt
         # for debugging
         self._parent = parent
+        self.unionall_load_addr = unionall_load_addr
 
     @property
     def pnt(self):
@@ -80,9 +82,15 @@ class ScriptRuntimeStruct:
     @property
     @wrap_threadsafe_emu()
     def hanger_ssb(self):
-        # The number of the SSB script this operation is in!
+        """
+        The number of the SSB script this operation is in!
+        Normally just returns the value stored in RAM for this field. If the current loaded address of the script
+        is the same as unionall it will return 0 instead.
+        """
         if not self.valid:
             return -1
+        if self.start_addr_routine_infos == self.unionall_load_addr.get() and self.unionall_load_addr.get() != 0:
+            return 0
         return self.emu_thread.emu.memory.signed.read_short(self.pnt + 0x10)
 
     @property

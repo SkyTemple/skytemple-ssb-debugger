@@ -18,6 +18,7 @@ from abc import abstractmethod, ABC
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu
 
@@ -32,11 +33,12 @@ def pos_for_display_camera(pos: int, camera_pos: int) -> float:
 
 class AbstractScriptRuntimeState(ABC):
     """TODO: For more see sandbox.sandbox. """
-    def __init__(self, emu_thread: EmulatorThread, pnt_to_block_start: int, rom_data: Pmd2Data):
+    def __init__(self, emu_thread: EmulatorThread, pnt_to_block_start: int, rom_data: Pmd2Data, unionall_load_addr: AddressContainer):
         super().__init__()
         self.emu_thread: EmulatorThread = emu_thread
         self.pnt_to_block_start = pnt_to_block_start
         self.rom_data = rom_data
+        self.unionall_load_addr = unionall_load_addr
 
     @property
     def pnt(self):
@@ -52,5 +54,5 @@ class AbstractScriptRuntimeState(ABC):
     @property
     def script_struct(self):
         return ScriptRuntimeStruct(
-            self.emu_thread, self.rom_data.script_data, lambda: self.pnt + self._script_struct_offset, self
+            self.emu_thread, self.rom_data.script_data, lambda: self.pnt + self._script_struct_offset, self.unionall_load_addr, self
         )

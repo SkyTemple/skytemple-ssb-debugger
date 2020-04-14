@@ -17,6 +17,7 @@
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractScriptRuntimeState
 from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
@@ -25,8 +26,8 @@ PERFORMER_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
 class Performer(AbstractScriptRuntimeState):
-    def __init__(self, emulator_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
-        super().__init__(emulator_thread, pnt_to_block_start, rom_data)
+    def __init__(self, emulator_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int, unionall_load_addr: AddressContainer):
+        super().__init__(emulator_thread, pnt_to_block_start, rom_data, unionall_load_addr)
         self.offset = offset
 
     @property

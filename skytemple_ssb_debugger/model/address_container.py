@@ -14,17 +14,22 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from desmume.emulator import DeSmuME_Memory
-from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.model.address_container import AddressContainer
-from skytemple_ssb_debugger.model.ground_state import AbstractScriptRuntimeState
+from threading import Lock
+
+from skytemple_ssb_debugger.threadsafe import synchronized_now
+
+container_lock = Lock()
 
 
-class GlobalScript(AbstractScriptRuntimeState):
-    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, unionall_load_addr: AddressContainer):
-        super().__init__(emu_thread, pnt_to_block_start, rom_data, unionall_load_addr)
+class AddressContainer:
+    """A very simple container for a single value (an address)"""
+    def __init__(self, address):
+        self._address = address
 
-    @property
-    def _script_struct_offset(self):
-        return 0
+    @synchronized_now(container_lock)
+    def get(self):
+        return self._address
+
+    @synchronized_now(container_lock)
+    def set(self, value):
+        self._address = value
