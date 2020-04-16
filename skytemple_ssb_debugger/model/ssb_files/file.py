@@ -14,8 +14,10 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, List, Optional
 
+from explorerscript.source_map import SourceMapPositionMark
+from skytemple_files.script.ssa_sse_sss.position_marker import SsaPositionMarker
 from skytemple_files.script.ssb.model import Ssb
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
@@ -49,6 +51,20 @@ class SsbLoadedFile:
         self._event_handlers_property_change = []
 
         self.register_property_callback(ssb_print_handler)
+
+    @property
+    def position_markers(self) -> Optional[List[SourceMapPositionMark]]:
+        """
+        Returns the position markers. Either from the ExplorerScript file or the SSB model,
+        if ExplorerScript is not available.
+        """
+        if self.exps.loaded:
+            pass  # todo!
+            # return
+        if not self.ssbs.source_map:
+            self.ssbs.load()
+        return self.ssbs.source_map.position_marks
+
 
     @property
     def opened_in_editor(self):

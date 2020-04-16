@@ -19,6 +19,8 @@ import gi
 from gi.repository.Gtk import TreeViewColumn
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
+from skytemple_ssb_debugger.model.constants import ICON_GLOBAL_SCRIPT, ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, \
+    ICON_POSITION_MARKER, ICON_EVENTS
 from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
@@ -66,15 +68,18 @@ class GroundStateController:
         self._entities__tree: Gtk.TreeView = builder.get_object('ground_state_entities_tree')
         #self._files__tree.append_column(resizable(TreeViewColumn("Preview", Gtk.CellRendererPixbuf(), xxx=4)))
         icon = Gtk.CellRendererPixbuf()
+        debug_icon = Gtk.CellRendererPixbuf()
         slot_id = Gtk.CellRendererText()
         column = TreeViewColumn("ID")
         column.pack_start(icon, True)
+        column.pack_start(debug_icon, True)
         column.pack_start(slot_id, True)
-        column.add_attribute(icon, "icon_name", 6)
+        column.add_attribute(debug_icon, "icon_name", 6)
+        column.add_attribute(icon, "icon_name", 7)
         column.add_attribute(slot_id, "text", 0)
         self._entities__tree.append_column(resizable(column))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Kind", Gtk.CellRendererText(), text=5)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Hanger", Gtk.CellRendererText(), text=1)))
+        self._entities__tree.append_column(resizable(TreeViewColumn("Kind / X", Gtk.CellRendererText(), text=5)))
+        self._entities__tree.append_column(resizable(TreeViewColumn("Hanger / Y", Gtk.CellRendererText(), text=1)))
         self._entities__tree.append_column(resizable(TreeViewColumn("Sector", Gtk.CellRendererText(), text=2)))
         self._entities__tree.append_column(resizable(TreeViewColumn("Script", Gtk.CellRendererText(), text=3)))
 
@@ -203,10 +208,10 @@ class GroundStateController:
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
                     self.get_short_sname(ssb, global_script.script_struct.hanger_ssb), None, '',
-                    'media-playback-pause' if breaked else ''
+                    'media-playback-pause' if breaked else '', ICON_GLOBAL_SCRIPT
                 ])
                 actors_node = self._entities__tree_store.append(None, [
-                    'Actors', '', '', '', None, '', ''
+                    'Actors', '', '', '', None, '', '', ICON_ACTOR
                 ])
                 for actor in actors:
                     breaked = False
@@ -215,10 +220,10 @@ class GroundStateController:
                     self._entities__tree_store.append(actors_node, [
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
                         self.get_short_sname(ssb, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
-                        'media-playback-pause' if breaked else ''
+                        'media-playback-pause' if breaked else '', ''
                     ])
                 objects_node = self._entities__tree_store.append(None, [
-                    'Objects', '', '', '', None, '', ''
+                    'Objects', '', '', '', None, '', '', ICON_OBJECT
                 ])
                 for object in objects:
                     kind_name = object.kind.name
@@ -230,10 +235,10 @@ class GroundStateController:
                     self._entities__tree_store.append(objects_node, [
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
                         self.get_short_sname(ssb, object.script_struct.hanger_ssb), None, kind_name,
-                        'media-playback-pause' if breaked else ''
+                        'media-playback-pause' if breaked else '', ''
                     ])
                 performers_node = self._entities__tree_store.append(None, [
-                    'Performers', '', '', '', None, '', ''
+                    'Performers', '', '', '', None, '', '', ICON_PERFORMER
                 ])
                 for performer in performers:
                     breaked = False
@@ -242,21 +247,28 @@ class GroundStateController:
                     self._entities__tree_store.append(performers_node, [
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
                         self.get_short_sname(ssb, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
-                        'media-playback-pause' if breaked else ''
+                        'media-playback-pause' if breaked else '', ''
                     ])
                 events_node = self._entities__tree_store.append(None, [
-                    'Events', '', '', '', None, '', ''
+                    'Events', '', '', '', None, '', '', ICON_EVENTS
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [
                         f'{event.id}', f'{event.hanger}', f'{event.sector}',
-                        '', None, f'{event.kind}', ''
+                        '', None, f'{event.kind}', '', ''
                     ])
 
                 pos_marks_node = self._entities__tree_store.append(None, [
-                    'Position Markers', '', '', '', None, '', ''
+                    'Pos. Marks', '', '', '', None, '', '', ICON_POSITION_MARKER
                 ])
-                # TODO
+                for ssb in ground_state.loaded_ssb_files:
+                    if ssb is not None:
+                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:
+                            self._entities__tree_store.append(pos_marks_node, [
+                                f'{mark.name}', f'{mark.y_with_offset}', '',
+                                ssb.file_name.split('/')[-1], None,
+                                f'{mark.x_with_offset}', '', ''
+                            ])
 
                 self._files__tree.expand_all()
                 self._entities__tree.expand_all()

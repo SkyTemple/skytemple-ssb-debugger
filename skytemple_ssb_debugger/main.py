@@ -15,6 +15,20 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
+"""
+TODO:
+- Position markers
+- Source maps on save of ssbs
+- Step into / step over / step out
+- Switch to step for single / step for all
+- Stepping buttons
+- Clicking on entities in the tree view, opening the script for it / changing active debugging target
+
+- Running scripts
+- ExplorerScript
+- Don't crash on stop
+"""
+
 
 import os
 
@@ -22,6 +36,7 @@ import gi
 
 from desmume.emulator import DeSmuME
 from skytemple_ssb_debugger.controller.main import MainController
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 
 gi.require_version('Gtk', '3.0')
 
@@ -30,23 +45,27 @@ from gi.repository.Gtk import Window
 
 
 def main():
-    path = os.path.abspath(os.path.dirname(__file__))
+    try:
+        path = os.path.abspath(os.path.dirname(__file__))
 
-    # Load Builder and Window
-    builder = Gtk.Builder()
-    builder.add_from_file(os.path.join(path, "debugger.glade"))
-    main_window: Window = builder.get_object("main_window")
-    main_window.set_role("SkyTemple Script Engine Debugger")
-    GLib.set_application_name("SkyTemple Script Engine Debugger")
-    GLib.set_prgname("skytemple_ssb_debugger")
-    # TODO: Deprecated but the only way to set the app title on GNOME...?
-    main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
+        # Load Builder and Window
+        builder = Gtk.Builder()
+        builder.add_from_file(os.path.join(path, "debugger.glade"))
+        main_window: Window = builder.get_object("main_window")
+        main_window.set_role("SkyTemple Script Engine Debugger")
+        GLib.set_application_name("SkyTemple Script Engine Debugger")
+        GLib.set_prgname("skytemple_ssb_debugger")
+        # TODO: Deprecated but the only way to set the app title on GNOME...?
+        main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
 
-    # Load main window + controller
-    MainController(builder, main_window)
+        # Load main window + controller
+        MainController(builder, main_window)
 
-    main_window.present()
-    Gtk.main()
+        main_window.present()
+        Gtk.main()
+    finally:
+        if EmulatorThread.instance():
+            EmulatorThread.instance().stop()
 
 
 if __name__ == '__main__':

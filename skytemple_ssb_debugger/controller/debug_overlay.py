@@ -20,11 +20,10 @@ from typing import Iterable
 
 import cairo
 
-from desmume.emulator import DeSmuME
+from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.emulator_thread import FRAMES_PER_SECOND
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, synchronized, \
-    threadsafe_emu_nonblocking_coro
+from skytemple_ssb_debugger.threadsafe import  synchronized, threadsafe_emu_nonblocking_coro
 
 ALPHA_T = 0.7
 COLOR_ACTOR = (255, 0, 255, ALPHA_T)
@@ -53,6 +52,7 @@ class DebugOverlayController:
         self._object_bbox_cache = []
         self._perf_bbox_cache = []
         self._event_bbox_cache = []
+        self._camera_pos_cache = (0, 0)
 
     def toggle(self, state):
         self.enabled = state
@@ -95,7 +95,34 @@ class DebugOverlayController:
                         bbox[2] - bbox[0], bbox[3] - bbox[1]
                     )
                     ctx.fill()
-                # TODO: Position markers
+
+                if self.debugger.ground_engine_state:
+                    ground_state = self.debugger.ground_engine_state
+                    for ssb in ground_state.loaded_ssb_files:
+                        if ssb is not None:
+                            for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:
+                                x_absolute = (mark.x_with_offset * TILE_SIZE) - self._camera_pos_cache[0]
+                                y_absolute = (mark.y_with_offset * TILE_SIZE) - self._camera_pos_cache[1]
+                                ctx.set_source_rgba(*COLOR_POS_MARKERS)
+                                ctx.rectangle(
+                                    x_absolute, y_absolute,
+                                    TILE_SIZE, TILE_SIZE
+                                )
+                                ctx.fill_preserve()
+                                ctx.set_source_rgb(0, 0, 0)
+                                ctx.set_line_width(1)
+                                ctx.stroke()
+                                ctx.set_source_rgba(*COLOR_POS_MARKERS)
+                                ctx.move_to(x_absolute, y_absolute + 18)
+                                ctx.select_font_face("cairo:monospace", cairo.FONT_SLANT_NORMAL,
+                                                    cairo.FONT_WEIGHT_NORMAL)
+                                ctx.set_font_size(8)
+                                ctx.text_path(mark.name)
+                                ctx.fill_preserve()
+                                ctx.set_source_rgb(0, 0, 0)
+                                ctx.set_line_width(0.3)
+                                ctx.stroke()
+
 
     def break_pulled(self):
         """The debugger is stopped, the emulator is frozen."""
@@ -123,6 +150,7 @@ class DebugOverlayController:
                     self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
                 for event in not_none(ges.events):
                     self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
+                self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache:
             await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop    )

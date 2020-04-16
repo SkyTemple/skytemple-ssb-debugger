@@ -23,9 +23,13 @@ class ExplorerScriptFile(AbstractScriptFile):
         pass  # TODO
 
     @property
+    def loaded(self):
+        return False  # TODO
+
+    @property
     def text(self):
         return ''  # TODO
 
     @property
     def source_map(self):
-        return SourceMap({})  # TODO
+        return SourceMap({}, [])  # TODO

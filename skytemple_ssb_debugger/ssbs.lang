@@ -32,6 +32,8 @@
     <style id="base-n-integer"    name="Base-N number"         map-to="def:base-n-integer"/>
     <style id="constant"          name="Constant"              map-to="def:constant"/>
     <style id="lang-string-key"   name="Language String Key"   map-to="def:special-constant"/>
+    <style id="position-marker"   name="Position Marker"       map-to="def:special-constant"/>
+    <style id="position-marker-plus" name="Position Marker Plus"  map-to="def:decimal"/>
     <style id="label"             name="Label"                 map-to="def:preprocessor"/>
     <style id="label-jump"        name="Label Jump"            map-to="def:preprocessor"/>
   </styles>
@@ -54,6 +56,24 @@
       <include>
         <context ref="def:line-continue"/>
       </include>
+    </context>
+
+    <context id="position-marker" style-ref="position-marker">
+      <start>Position&lt;</start>
+      <end>&gt;</end>
+      <include>
+          <context ref="single-quoted-string"/>
+          <context ref="double-quoted-string"/>
+          <context ref="decimal"/>
+          <context ref="octal"/>
+          <context ref="hex"/>
+          <context ref="binary"/>
+          <context ref="position-marker-plus"/>
+      </include>
+    </context>
+
+    <context id="position-marker-plus" style-ref="position-marker-plus">
+      <match>\+</match>
     </context>
 
     <context id="lang-string-key" style-ref="lang-string-key">
@@ -108,6 +128,7 @@
         <context ref="binary"/>
         <context ref="keywords"/>
         <context ref="lang-string-key"/>
+        <context ref="position-marker"/>
         <context ref="label"/>
         <context ref="label-jump"/>
         <context ref="constant"/>

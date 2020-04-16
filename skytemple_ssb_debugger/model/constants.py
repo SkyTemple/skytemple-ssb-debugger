@@ -20,3 +20,6 @@
 ICON_ACTOR = 'user-available-symbolic'
 ICON_OBJECT = 'package-x-generic-symbolic'
 ICON_PERFORMER = 'input-gaming-symbolic'
+ICON_GLOBAL_SCRIPT = 'system-run-symbolic'
+ICON_EVENTS = 'dialog-information-symbolic'
+ICON_POSITION_MARKER = 'find-location-symbolic'

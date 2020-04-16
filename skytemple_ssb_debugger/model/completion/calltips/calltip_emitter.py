@@ -90,9 +90,12 @@ class CalltipEmitter:
             if cursor.get_char() == ')':
                 # We are not in a function, for sure!
                 return None
-            if cursor.get_char() == '{':
-                # Handle middle of language string
+            if cursor.get_char() == '{' or cursor.get_char() == '<':
+                # Handle middle of language string or a pos marker
                 count_commas -= count_commas_since_last_lang_string_begin_mark
+                count_commas_since_last_lang_string_begin_mark = 0
+            if cursor.get_char() == '}' or cursor.get_char() == '>':
+                # Handle end of language string or a pos marker
                 count_commas_since_last_lang_string_begin_mark = 0
             if cursor.get_char() == '(':
                 # Handle the opcode/function name

@@ -55,7 +55,7 @@ class CodeEditorController:
     def open(self, filename: str):
         if self.file_manager:
             if filename in self._open_editors:
-                self._notebook.set_current_page(self._open_editors[filename])
+                self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
             else:
                 editor_controller = SSBEditorController(
                     self, self.breakpoint_manager, self.file_manager.open_in_editor(filename),

@@ -32,7 +32,7 @@ from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
-from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER
+from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.pixbuf.icons import *
 
@@ -562,6 +562,10 @@ class SSBEditorController:
         found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))
         if found:
             buffer.select_range(match_start, match_end)
+            if buffer == self._ssb_script_view.get_buffer():
+                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            else:
+                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_search_down_button_clicked(self, widget: Gtk.Button, search: Gtk.SearchEntry):
         view = self._explorerscript_view
@@ -581,6 +585,10 @@ class SSBEditorController:
                 found, match_start, match_end, wrap = context.forward(match_end)
             if found:
                 buffer.select_range(match_start, match_end)
+                if buffer == self._ssb_script_view.get_buffer():
+                    self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+                else:
+                    self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_sr_dialog_close(self, dialog: Gtk.Dialog, *args):
         self._loaded_search_window = None
@@ -619,6 +627,10 @@ class SSBEditorController:
                 # Repeat once, to really get down
                 found, match_start, match_end, wrap = self._active_search_context.forward(match_end)
             buffer.select_range(match_start, match_end)
+            if buffer == self._ssb_script_view.get_buffer():
+                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            else:
+                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_sr_replace_clicked(self, btn: Gtk.Button, *args):
         buffer: Gtk.TextBuffer = self._active_search_context.get_buffer()
@@ -832,6 +844,7 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
         self._icon_actor = icon_theme.load_icon(ICON_ACTOR, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
         self._icon_object = icon_theme.load_icon(ICON_OBJECT, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
         self._icon_performer = icon_theme.load_icon(ICON_PERFORMER, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_global_script = icon_theme.load_icon(ICON_GLOBAL_SCRIPT, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
 
     def do_query_data(self, start: Gtk.TextIter, end: Gtk.TextIter, state: GtkSource.GutterRendererState):
         view: GtkSource.View = self.get_view()
@@ -844,11 +857,15 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
             slot_id = -1
             if len(execution_marks) > 0:
                 _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
-            self.set_pixbuf(create_breaked_line_icon(int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer))
+            self.set_pixbuf(create_breaked_line_icon(
+                int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script
+            ))
             return
         if len(execution_marks) > 0:
             _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
             # Don't show for global
-            self.set_pixbuf(create_execution_line_icon(int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer))
+            self.set_pixbuf(create_execution_line_icon(
+                int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script
+            ))
             return
         self.set_pixbuf(self.empty)

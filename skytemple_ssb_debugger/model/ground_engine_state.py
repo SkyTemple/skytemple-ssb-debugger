@@ -338,4 +338,4 @@ class GroundEngineState:
     @synchronized_now(ground_engine_lock)
     def hook__write_unionall_address(self, address, size):
         """Write the location of the unionall script into the container object for this"""
-        self.unionall_load_addr.set(self.emu_thread, self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))
+        self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))

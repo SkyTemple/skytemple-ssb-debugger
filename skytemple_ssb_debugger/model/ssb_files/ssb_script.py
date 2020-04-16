@@ -25,9 +25,15 @@ class SsbScriptFile(AbstractScriptFile):
         super().__init__(parent)
         self._text: str = ''
         self._source_map: Optional[SourceMap] = None
+        self._loaded = False
 
     def load(self):
         self._text, self._source_map = self.parent.ssb_model.to_ssb_script()
+        self._loaded = True
+
+    @property
+    def loaded(self):
+        return self._loaded
 
     @property
     def text(self):

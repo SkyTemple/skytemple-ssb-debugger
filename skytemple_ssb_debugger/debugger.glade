@@ -24,6 +24,8 @@
       <column type="gchararray"/>
       <!-- column-name debugger_icon -->
       <column type="gchararray"/>
+      <!-- column-name general_icon -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkTreeView" id="ground_state_entities_tree">
