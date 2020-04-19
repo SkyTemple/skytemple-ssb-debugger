@@ -22,6 +22,7 @@ from gi.repository import Gio
 
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
@@ -71,6 +72,8 @@ class DebuggerController:
         self._breakpoints_disabled = False
         # Flag to disable breaking for one single tick. This is reset to -1 if the tick number changes.
         self._breakpoints_disabled_for_tick = -1
+        # Force a halt at the breakpoint hook
+        self._breakpoint_force = False
 
         self._log_operations = False
         self._log_debug_print = False
@@ -150,7 +153,12 @@ class DebuggerController:
                 self._breakpoints_disabled_for_tick = -1
 
                 ssb = self.ground_engine_state.loaded_ssb_files[srs.hanger_ssb]
-                if ssb is not None and self.breakpoint_manager.has(ssb.file_name, srs.current_opcode_addr_relative):
+                if ssb is not None and (self._breakpoint_force or self.breakpoint_manager.has(
+                    ssb.file_name, srs.current_opcode_addr_relative, srs.is_in_unionall,
+                        srs.script_target_type, srs.script_target_slot_id
+                )):
+                    self.breakpoint_manager.reset_temporary()
+                    self._breakpoint_force = False
                     state = BreakpointState(srs.hanger_ssb)
                     state.acquire()
                     threadsafe_gtk_nonblocking(lambda: self.parent.break_pulled(state, srs))
@@ -164,12 +172,30 @@ class DebuggerController:
                     elif state.state == BreakpointStateType.RESUME:
                         # We just resume, this is easy :)
                         pass
+                    elif state.state == BreakpointStateType.STEP_NEXT:
+                        # We force a break at the next run of this hook.
+                        self._breakpoint_force = True
                     elif state.state == BreakpointStateType.STEP_INTO:
-                        pass  # todo
-                    elif state.state == BreakpointStateType.STEP_OUT:
-                        pass  # todo
+                        # We break at whatever is executed next for the current script target.
+                        self.breakpoint_manager.set_temporary(
+                            srs.script_target_type, srs.script_target_slot_id
+                        )
                     elif state.state == BreakpointStateType.STEP_OVER:
-                        pass  # todo
+                        # We break at the next opcode in the current script file
+                        self.breakpoint_manager.set_temporary(
+                            srs.script_target_type, srs.script_target_slot_id,
+                            is_in_unionall=srs.is_in_unionall
+                        )
+                    elif state.state == BreakpointStateType.STEP_OUT:
+                        if srs.has_call_stack:
+                            # We break at the opcode address stored on the call stack position.
+                            self.breakpoint_manager.set_temporary(
+                                srs.script_target_type, srs.script_target_slot_id,
+                                opcode_addr=srs.call_stack__current_opcode_addr_relative
+                            )
+                        else:
+                            # We just resume
+                            pass
             else:
                 debugger_state_lock.release()
         else:
@@ -298,3 +324,17 @@ class DebuggerController:
 
     def print_callback(self, text: str):
         threadsafe_gtk_nonblocking(lambda: self._print_callback_fn(text))
+
+    def _get_next_opcode_addr(self, current_opcode_addr: int, current_opcode_addr_relative: int):
+        """ Returns current_opcode_addr_relative + the length of the current opcode. """
+        current_opcode = self.rom_data.script_data.op_codes__by_id[
+            self.emu_thread.emu.memory.unsigned.read_short(current_opcode_addr)
+        ]
+        # the length is at least 2 (for the opcode itself
+        len = 2
+        if current_opcode.params == -1:
+            # if the opcode is var length, the first parameter contains that length
+            len += 2 + self.emu_thread.emu.memory.unsigned.read_short(current_opcode_addr + 0x02)
+        else:
+            len += 2 * current_opcode.params
+        return current_opcode_addr_relative + len

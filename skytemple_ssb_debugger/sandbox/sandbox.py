@@ -54,10 +54,10 @@ class ScriptStruct:
         op_code: Pmd2ScriptOpCode = static_data.script_data.op_codes__by_id[self.mem.unsigned.read_short(address_current_opcode)]
 
         ssb_file_str_table_addr = self.mem.unsigned.read_long(self.pnt + 0x20)
-        unk24 = self.mem.unsigned.read_long(self.pnt + 0x24)  # Possibly has something to do with parent ssb file state -> we are in unionall!
-        unk28 = self.mem.unsigned.read_long(self.pnt + 0x28)  # see above
-        unk2c = self.mem.unsigned.read_long(self.pnt + 0x2c)  # see above
-        unk30 = self.mem.unsigned.read_long(self.pnt + 0x30)  # see above
+        stack_ssb_file_grp_addr = self.mem.unsigned.read_long(self.pnt + 0x24)  # Possibly has something to do with parent ssb file state -> we are in unionall!
+        stack_ssb_file_opc_addr = self.mem.unsigned.read_long(self.pnt + 0x28)  # see above
+        stack_address_opcode = self.mem.unsigned.read_long(self.pnt + 0x2c)  # see above
+        stack_ssb_file_str_table_addr = self.mem.unsigned.read_long(self.pnt + 0x30)  # see above
         unk34 = self.mem.unsigned.read_long(self.pnt + 0x34)  # Previous opcode?
         unk38 = self.mem.unsigned.read_long(self.pnt + 0x38)  # Previous opcode + 2
         unk3c = self.mem.unsigned.read_short(self.pnt + 0x3c)
@@ -79,8 +79,8 @@ class ScriptStruct:
         str = f"AT 0x{self.pnt:>8x}: **script_target_id:{script_target_id} - script_target_type:{script_target_type} - " \
                f"unkC:{unkC} - unkE:{unkE} - hanger:{hanger} - sector:{sector} - ssb_file_grp_addr:0x{ssb_file_grp_addr:0x} " \
                f"- ssb_file_opc_addr:0x{ssb_file_opc_addr:0x} - *current_op_code:{op_code.name:<30} (@0x{address_current_opcode:>8x}) - " \
-               f"ssb_file_str_table_addr:0x{ssb_file_str_table_addr:0x} - unk24:0x{unk24:>8x} - unk28:0x{unk28:>8x} - " \
-               f"unk2c:0x{unk2c:>8x} - unk30:0x{unk30:>8x} - unk34:0x{unk34:>8x} - unk38:0x{unk38:>8x} - unk3c:{unk3c} - " \
+               f"ssb_file_str_table_addr:0x{ssb_file_str_table_addr:0x} - stack_ssb_file_grp_addr:0x{stack_ssb_file_grp_addr:>8x} - stack_ssb_file_opc_addr:0x{stack_ssb_file_opc_addr:>8x} - " \
+               f"stack_address_opcode:0x{stack_address_opcode:>8x} - stack_ssb_file_str_table_addr:0x{stack_ssb_file_str_table_addr:>8x} - unk34:0x{unk34:>8x} - unk38:0x{unk38:>8x} - unk3c:{unk3c} - " \
                f"unk40:0x{unk40:>8x} - unk42:0x{unk42:>8x} - unk44:0x:{unk44:>8x} -unk48:0x{unk48:>8x} - " \
                f"unk4c:0x{unk4c:>8x} - unk6c-unk6f:0x {unk6c:0x} {unk6d:0x} {unk6e:0x} {unk6f:0x}"
 
@@ -449,32 +449,32 @@ if __name__ == '__main__':
     # emu = DeSmuME("Y:\\dev\\desmume\\desmume\\src\\frontend\\interface\\windows\\__bins\\DeSmuME Interface-VS2019-Debug.dll")
 
     emu.open("../../../skyworkcopy_edit.nds")
-    emu.savestate.load_file("/home/marco/.config/skytemple/debugger/skyworkcopy_edit.nds.save.3.ds")
+    #emu.savestate.load_file("/home/marco/.config/skytemple/debugger/skyworkcopy_edit.nds.save.3.ds")
     # emu.open("..\\skyworkcopy.nds")
     win = emu.create_sdl_window(use_opengl_if_possible=True)
 
     emu.volume_set(0)
 
     emu.memory.register_exec(start_of_call_to_opcode_parsing, partial(hook__primary_opcode_parsing, emu))
-    emu.memory.register_exec(start_of_switch_last_return_code, partial(hook__beginning_script_loop, emu))
-    emu.memory.register_exec(start_of_other_opcode_read_in_parsing, partial(hook__secondary_opcode_parsing, emu))
-    emu.memory.register_exec(debug_print_start, partial(hook__debug_print, 1, emu))
-    emu.memory.register_exec(debug_print2_start, partial(hook__debug_print, 0, emu))
-    emu.memory.register_exec(point_to_print_print_debug, partial(hook__debug_print_script_engine, emu))
+    #emu.memory.register_exec(start_of_switch_last_return_code, partial(hook__beginning_script_loop, emu))
+    #emu.memory.register_exec(start_of_other_opcode_read_in_parsing, partial(hook__secondary_opcode_parsing, emu))
+    #emu.memory.register_exec(debug_print_start, partial(hook__debug_print, 1, emu))
+    #emu.memory.register_exec(debug_print2_start, partial(hook__debug_print, 0, emu))
+    #emu.memory.register_exec(point_to_print_print_debug, partial(hook__debug_print_script_engine, emu))
     emu.memory.register_exec(point_where_branch_debug_decides, partial(hook__debug_enable_branch, emu))
-    emu.memory.register_exec(start_of_get_script_id_name, partial(hook__get_script_id_name, emu))
+    #emu.memory.register_exec(start_of_get_script_id_name, partial(hook__get_script_id_name, emu))
 
     #emu.memory.register_exec(start_of_get_script_variable_info_and_ptr, hook_print_lr)
-    emu.memory.register_exec(start_of_get_script_variable_value + 0x1C, partial(hook_get_script_variable_value, emu, False))
-    emu.memory.register_exec(start_of_get_script_variable_with_offset_value + 0x20, partial(hook_get_script_variable_value, emu, True))
+    #emu.memory.register_exec(start_of_get_script_variable_value + 0x1C, partial(hook_get_script_variable_value, emu, False))
+    #emu.memory.register_exec(start_of_get_script_variable_with_offset_value + 0x20, partial(hook_get_script_variable_value, emu, True))
     # TODO:
     #emu.memory.register_exec(start_of_get_script_variable_value + 0x1C, partial(hook_set_script_variable_value, False))
     #emu.memory.register_exec(start_of_get_script_variable_value + 0x1C, partial(hook_set_script_variable_value, True))
 
-    emu.memory.register_exec(fun_loop_call_pnt1, partial(hook__script_entry_point_determine, emu))
-    emu.memory.register_exec(fun_loop_call_pnt2, partial(hook__script_entry_point_determine, emu))
-    emu.memory.register_exec(fun_loop_call_pnt3, partial(hook__script_entry_point_determine, emu))
-    emu.memory.register_exec(fun_loop_call_pnt4, partial(hook__script_entry_point_determine, emu))
+    #emu.memory.register_exec(fun_loop_call_pnt1, partial(hook__script_entry_point_determine, emu))
+    #emu.memory.register_exec(fun_loop_call_pnt2, partial(hook__script_entry_point_determine, emu))
+    #emu.memory.register_exec(fun_loop_call_pnt3, partial(hook__script_entry_point_determine, emu))
+    #emu.memory.register_exec(fun_loop_call_pnt4, partial(hook__script_entry_point_determine, emu))
 
     while not win.has_quit():
         win.process_input()

@@ -29,6 +29,7 @@ from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssb.script_compiler import SsbCompilerError
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointStateType
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
@@ -136,6 +137,7 @@ class SSBEditorController:
         self.builder.get_object('code_editor_cntrls_step_over').set_sensitive(val)
         self.builder.get_object('code_editor_cntrls_step_into').set_sensitive(val)
         self.builder.get_object('code_editor_cntrls_step_out').set_sensitive(val)
+        self.builder.get_object('code_editor_cntrls_step_next').set_sensitive(val)
 
     def halted_at_opcode(self, opcode_addr):
         """Mark the currently actively halted opcode."""
@@ -238,6 +240,17 @@ class SSBEditorController:
             md.destroy()
             return
         except SsbCompilerError as err:
+            md = Gtk.MessageDialog(
+                None,
+                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
+                f"The script file {self.filename} could not be saved.\n"
+                f"{err}",
+                title="Warning!"
+            )
+            md.run()
+            md.destroy()
+            return
+        except ValueError as err:
             md = Gtk.MessageDialog(
                 None,
                 Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
@@ -656,6 +669,22 @@ class SSBEditorController:
     def on_text_buffer_modified(self, buffer: Gtk.TextBuffer, *args):
         if self._modified_handler:
             self._modified_handler(self, buffer.get_modified())
+
+    # Breapoint Buttons
+    def on_code_editor_cntrls_resume_clicked(self, btn: Gtk.Button, *args):
+        self.parent.parent.emu_resume(BreakpointStateType.RESUME)
+
+    def on_code_editor_cntrls_step_into_clicked(self, btn: Gtk.Button, *args):
+        self.parent.parent.emu_resume(BreakpointStateType.STEP_INTO)
+
+    def on_code_editor_cntrls_step_over_clicked(self, btn: Gtk.Button, *args):
+        self.parent.parent.emu_resume(BreakpointStateType.STEP_OVER)
+
+    def on_code_editor_cntrls_step_out_clicked(self, btn: Gtk.Button, *args):
+        self.parent.parent.emu_resume(BreakpointStateType.STEP_OUT)
+
+    def on_code_editor_cntrls_step_next_clicked(self, btn: Gtk.Button, *args):
+        self.parent.parent.emu_resume(BreakpointStateType.STEP_NEXT)
 
     # Utility
 

@@ -16,8 +16,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import os
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 
+from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
@@ -26,8 +27,11 @@ class BreakpointManager:
     def __init__(self, breakpoint_filename: str, file_manager: SsbFileManager):
         self._breakpoint_filename = breakpoint_filename
         self.file_manager = file_manager
+        # This temporary breakpoint is set by the debugger while stepping
+        # (is_in_unionall, opcode offset, script target type, script target slot)
+        self.temporary_breakpoint: Optional[Tuple[Optional[bool], Optional[int], SsbRoutineType, int]] = None
 
-        self.temporary_breakpoint_mapping: Dict[str, List[int]] = {}
+        self.new_breakpoint_mapping: Dict[str, List[int]] = {}
 
         if not os.path.exists(breakpoint_filename):
             self.breakpoint_mapping: Dict[str, List[int]] = {}
@@ -64,7 +68,7 @@ class BreakpointManager:
             self.breakpoint_mapping[fn] = list_breakpoints
         else:
             # We need to use a temporary mapping for now!
-            self.temporary_breakpoint_mapping[fn] = list_breakpoints
+            self.new_breakpoint_mapping[fn] = list_breakpoints
             ssb.register_reload_event_manager(self.wait_for_ssb_update)
             mapping_to_write_to_file = self.breakpoint_mapping.copy()
             mapping_to_write_to_file[fn] = list_breakpoints
@@ -75,10 +79,10 @@ class BreakpointManager:
             json.dump(mapping_to_write_to_file, f)
 
     def wait_for_ssb_update(self, ssb: SsbLoadedFile):
-        if ssb.filename in self.temporary_breakpoint_mapping:
+        if ssb.filename in self.new_breakpoint_mapping:
             # We can switch now update.
-            self.breakpoint_mapping[ssb.filename] = self.temporary_breakpoint_mapping[ssb.filename]
-            del self.temporary_breakpoint_mapping[ssb.filename]
+            self.breakpoint_mapping[ssb.filename] = self.new_breakpoint_mapping[ssb.filename]
+            del self.new_breakpoint_mapping[ssb.filename]
 
             with open(self._breakpoint_filename, 'w') as f:
                 json.dump(self.breakpoint_mapping, f)
@@ -110,7 +114,22 @@ class BreakpointManager:
         with open(self._breakpoint_filename, 'w') as f:
             json.dump(self.breakpoint_mapping, f)
 
-    def has(self, fn, op_off):
+    def has(self, fn: str,
+            op_off: int, is_in_unionall: bool,
+            script_target_type: SsbRoutineType, script_target_slot: int):
+        """
+        Checks if the breakpoint is in the active mapping or is the temporary breakpoint.
+        script_target_* are only relevant for checking the temporary breakpoint.
+        """
+        if self.temporary_breakpoint:
+            if self.temporary_breakpoint == (None, None, script_target_type, script_target_slot):
+                return True
+            if self.temporary_breakpoint == (None, op_off, script_target_type, script_target_slot):
+                return True
+            if self.temporary_breakpoint == (is_in_unionall, None, script_target_type, script_target_slot):
+                return True
+            if self.temporary_breakpoint == (is_in_unionall, op_off, script_target_type, script_target_slot):
+                return True
         if fn not in self.breakpoint_mapping:
             return False
         if self.file_manager.get(fn).not_breakable:
@@ -119,8 +138,8 @@ class BreakpointManager:
 
     def saved_in_rom_get_for(self, fn):
         """Return the breakpoints that are saved in RAM for fn. These might be the tempoary breakpoints we stored!"""
-        if fn in self.temporary_breakpoint_mapping:
-            for opoff in self.temporary_breakpoint_mapping[fn]:
+        if fn in self.new_breakpoint_mapping:
+            for opoff in self.new_breakpoint_mapping[fn]:
                 yield opoff
         if fn in self.breakpoint_mapping:
             for opoff in self.breakpoint_mapping[fn]:
@@ -133,6 +152,26 @@ class BreakpointManager:
             for opoff in self.breakpoint_mapping[fn]:
                 yield opoff
         return
+
+    def reset_temporary(self):
+        self.temporary_breakpoint = None
+
+    def set_temporary(
+            self, script_target_type: SsbRoutineType, script_target_slot: int, is_in_unionall=None, opcode_addr=None
+    ):
+        """
+        Set a temporary breakpoint.
+        is_in_unionall is optional:
+        - If None, will break at any opcode for the script target
+        - If True, will only break in unionall
+        - If False, will not break in unionall, but all other scripts.
+
+        opcode_addr is also optional, if set will only break at this opcode addr. Please note, that is_in_unionall
+        is still checked in that case.
+
+        See has.
+        """
+        self.temporary_breakpoint = (is_in_unionall, opcode_addr, script_target_type, script_target_slot)
 
     def _get(self, t, op_off):
         for idx, i_op_off in enumerate(t):

@@ -123,7 +123,6 @@ class DebugOverlayController:
                                 ctx.set_line_width(0.3)
                                 ctx.stroke()
 
-
     def break_pulled(self):
         """The debugger is stopped, the emulator is frozen."""
         self._refresh_cache = False
@@ -153,7 +152,7 @@ class DebugOverlayController:
                 self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache:
-            await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop    )
+            await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop)
             threadsafe_emu_nonblocking_coro(self.debugger.emu_thread, self._update_cache())
         else:
             self._cache_redrawing_registered = False

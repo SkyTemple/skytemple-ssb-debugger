@@ -35,7 +35,7 @@ from skytemple_ssb_debugger.controller.ground_state import GroundStateController
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
@@ -118,7 +118,7 @@ class MainController:
             )
             self._keyboard_tmp = self._keyboard_cfg
 
-        self.code_editor: CodeEditorController = CodeEditorController(self.builder)
+        self.code_editor: CodeEditorController = CodeEditorController(self.builder, self)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
@@ -669,7 +669,8 @@ class MainController:
                 md.run()
                 md.destroy()
 
-    def emu_resume(self):
+    def emu_resume(self, state_type = BreakpointStateType.RESUME):
+        """Resume the emulator. If the debugger is currently breaked, the state will transition to state_type."""
         self._stopped = False
         self.toggle_paused_debugging_features(False)
         self.clear_info_bar()
@@ -678,7 +679,7 @@ class MainController:
             if not self._emu_is_running:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.resume())
             if self.breakpoint_state:
-                self.breakpoint_state.resume()
+                self.breakpoint_state.transition(state_type)
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_update(0))
             self.emu_thread.register_main_loop()
             self.emu_is_running = True
@@ -741,6 +742,9 @@ class MainController:
         - Update the main UI (info bar, emulator controls).
         - The ground state controller and code editors have their own hooks for the releasing.
         """
+        # TODO: Don't resume / reset everything until the next tick, so save some time / resources during stepping.
+        #       Because of race conditions, it's probably best not to call break_pulled until tick end
+        #       but we may still need to update variables?
         if self.builder.get_object('emulator_controls_volume').get_active():
             threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
         self.breakpoint_state = None

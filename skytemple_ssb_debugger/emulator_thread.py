@@ -99,8 +99,9 @@ class EmulatorThread(Thread):
 
     def register_main_loop(self):
         start_lock.acquire()
-        self.loop.call_soon_threadsafe(self._emu_cycle)
-        self.registered_main_loop = True
+        if not self.registered_main_loop:
+            self.loop.call_soon_threadsafe(self._emu_cycle)
+            self.registered_main_loop = True
         start_lock.release()
 
     def run_task(self, coro) -> Future:

@@ -29,6 +29,7 @@ class BreakpointStateType(Enum):
     STEP_OVER = 3
     STEP_INTO = 4
     STEP_OUT = 5
+    STEP_NEXT = 6
 
 
 breakpoint_state_state_lock = threading.Lock()
@@ -83,6 +84,34 @@ class BreakpointState:
     def resume(self):
         """Resume normal code execution."""
         self.state = BreakpointStateType.RESUME
+        self._wakeup()
+
+    def step_into(self):
+        """Step into the current call (if it's a call that creates a call stack), otherwise same as step over."""
+        self.state = BreakpointStateType.STEP_INTO
+        self._wakeup()
+        self._wakeup()
+
+    def step_over(self):
+        """Step over the current call (remain in the current script file + skip debugging any calls to subroutines)."""
+        self.state = BreakpointStateType.STEP_OVER
+        self._wakeup()
+
+    def step_out(self):
+        """Step out of the current routine, if there's a call stack, otherwise same as resume."""
+        self.state = BreakpointStateType.STEP_OUT
+        self._wakeup()
+
+    def step_out(self):
+        """Break at the next opcode, even if it's for a different script target."""
+        self.state = BreakpointStateType.STEP_NEXT
+        self._wakeup()
+
+    def transition(self, state_type: BreakpointStateType):
+        """Transition to the specified state. Can not transition to STOPPED."""
+        if state_type == BreakpointStateType.STOPPED:
+            raise ValueError("Can not transition breakpoint state to stopped.")
+        self.state = state_type
         self._wakeup()
 
     def _wakeup(self):

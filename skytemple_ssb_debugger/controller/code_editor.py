@@ -15,7 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List, Tuple, TYPE_CHECKING
 
 from gi.repository import Gtk, Pango
 
@@ -27,9 +27,14 @@ from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
 
+if TYPE_CHECKING:
+    from .main import MainController
+
+
 class CodeEditorController:
-    def __init__(self, builder: Gtk.Builder):
+    def __init__(self, builder: Gtk.Builder, parent: 'MainController'):
         self.builder = builder
+        self.parent = parent
         self.file_manager: Optional[SsbFileManager] = None
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_data: Optional[Pmd2Data] = None

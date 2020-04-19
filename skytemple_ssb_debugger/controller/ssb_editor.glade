@@ -24,32 +24,6 @@
           </packing>
         </child>
         <child>
-          <object class="GtkToolButton" id="code_editor_cntrls_stop">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="tooltip_text" translatable="yes">Stop the emulator.</property>
-            <property name="label" translatable="yes">Stop</property>
-            <property name="use_underline">True</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="homogeneous">True</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkToolButton" id="code_editor_cntrls_reset">
-            <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="tooltip_text" translatable="yes">Reset the game and run this script.</property>
-            <property name="label" translatable="yes">Reset</property>
-            <property name="use_underline">True</property>
-          </object>
-          <packing>
-            <property name="expand">False</property>
-            <property name="homogeneous">True</property>
-          </packing>
-        </child>
-        <child>
           <object class="GtkSeparatorToolItem">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
@@ -89,6 +63,7 @@
             <property name="can_focus">False</property>
             <property name="label" translatable="yes">Resume</property>
             <property name="use_underline">True</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_resume_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -103,6 +78,7 @@
             <property name="tooltip_text" translatable="yes">Step over the current instruction.</property>
             <property name="label" translatable="yes">Step Over</property>
             <property name="use_underline">True</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_step_over_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -117,6 +93,7 @@
             <property name="tooltip_text" translatable="yes">Step into the current instruction, if it's a call, otherwise step over.</property>
             <property name="label" translatable="yes">Step Into</property>
             <property name="use_underline">True</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_step_into_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -131,6 +108,31 @@
             <property name="tooltip_text" translatable="yes">Step out of the current function call.</property>
             <property name="label" translatable="yes">Step Out</property>
             <property name="use_underline">True</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_step_out_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="homogeneous">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkSeparatorToolItem">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="homogeneous">True</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkToolButton" id="code_editor_cntrls_step_next">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">Step Next</property>
+            <property name="use_underline">True</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_step_next_clicked" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>
