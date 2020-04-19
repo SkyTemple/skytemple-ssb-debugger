@@ -398,7 +398,7 @@ start_of_get_script_variable_with_offset_value = 0x0204b9b0
 start_of_set_script_variable_value = 0x0204bb58
 # SaveScriptVariableValue with offset?
 # For US: TODO
-start_of_set_script_variable_with_offset_value = 0x0204b9b0
+start_of_set_script_variable_with_offset_value = 0x0204bcc0
 
 # For US: 0x02064FFC
 start_of_get_script_id_name = 0x02065378

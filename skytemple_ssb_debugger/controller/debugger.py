@@ -81,7 +81,8 @@ class DebuggerController:
         self._debug_mode = False
         self._log_ground_engine_state = False
 
-    def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager, breakpoint_manager: BreakpointManager):
+    def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager,
+               breakpoint_manager: BreakpointManager, inform_ground_engine_start_cb):
         self.rom_data = rom_data
         self.breakpoint_manager = breakpoint_manager
 
@@ -93,7 +94,9 @@ class DebuggerController:
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
 
-        self.ground_engine_state = GroundEngineState(self.emu_thread, self.rom_data, self.print_callback, ssb_file_manager)
+        self.ground_engine_state = GroundEngineState(
+            self.emu_thread, self.rom_data, self.print_callback, inform_ground_engine_start_cb, ssb_file_manager
+        )
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
         self.ground_engine_state.watch()
 
@@ -153,6 +156,7 @@ class DebuggerController:
                 self._breakpoints_disabled_for_tick = -1
 
                 ssb = self.ground_engine_state.loaded_ssb_files[srs.hanger_ssb]
+                print(f"{ssb.file_name}: {srs.current_opcode_addr_relative}: ")
                 if ssb is not None and (self._breakpoint_force or self.breakpoint_manager.has(
                     ssb.file_name, srs.current_opcode_addr_relative, srs.is_in_unionall,
                         srs.script_target_type, srs.script_target_slot_id
@@ -162,7 +166,7 @@ class DebuggerController:
                     state = BreakpointState(srs.hanger_ssb)
                     state.acquire()
                     threadsafe_gtk_nonblocking(lambda: self.parent.break_pulled(state, srs))
-                    while not state.wait(0.0005) or state.state == BreakpointStateType.STOPPED:
+                    while not state.wait(0.0005) and state.state == BreakpointStateType.STOPPED:
                         # We haven't gotten the signal to resume yet, process pending events.
                         self.emu_thread.run_one_pending_task()
                     state.release()
@@ -182,6 +186,8 @@ class DebuggerController:
                         )
                     elif state.state == BreakpointStateType.STEP_OVER:
                         # We break at the next opcode in the current script file
+                        # TODO: If the current op is the last one (we will step out next) this will lead to issues.
+                        #       We need to alternatively break at the current stack opcode (see STEP_OUT).
                         self.breakpoint_manager.set_temporary(
                             srs.script_target_type, srs.script_target_slot_id,
                             is_in_unionall=srs.is_in_unionall

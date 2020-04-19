@@ -17,7 +17,7 @@
 
 """
 TODO:
-- Position markers
+- Position marker corrections
 - Source maps on save of ssbs
 - Step into / step over / step out
 - Switch to step for single / step for all
@@ -27,6 +27,8 @@ TODO:
 - Running scripts
 - ExplorerScript
 - Don't crash on stop
+
+- Psy's list patch
 """
 
 

@@ -45,7 +45,7 @@ ground_engine_lock = Lock()
 
 
 class GroundEngineState:
-    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, print_callback,
+    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, print_callback, inform_ground_engine_start_cb,
                  ssb_file_manager: SsbFileManager):
         super().__init__()
         self.emu_thread = emu_thread
@@ -68,6 +68,7 @@ class GroundEngineState:
 
         self._running = False
         self._print_callback = print_callback
+        self._inform_ground_engine_start_cb = inform_ground_engine_start_cb
 
         self._global_script = GlobalScript(self.emu_thread, self.rom_data, self.pnt_main_script_struct, self.unionall_load_addr)
         self._map = Map(self.emu_thread, self.rom_data, self.pnt_map)
@@ -288,6 +289,7 @@ class GroundEngineState:
         ground_engine_lock.acquire()
         self._running = True
         ground_engine_lock.release()
+        self._inform_ground_engine_start_cb()
 
     def hook__ground_quit(self, address, size):
         self._print("Ground Quit")

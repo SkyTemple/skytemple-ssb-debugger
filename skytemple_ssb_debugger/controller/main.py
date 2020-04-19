@@ -477,6 +477,9 @@ class MainController:
 
     # VARIABLES VIEW
 
+    def on_variables_reload_clicked(self, *args):
+        self.variable_controller.sync()
+
     def on_variables_load1_clicked(self, *args):
         self.variable_controller.load(1, self.config_dir)
 
@@ -508,7 +511,8 @@ class MainController:
             self.rom.saveToFile(fn)
             self.rom_filename = fn
             if self.debugger:
-                self.debugger.enable(rom_data, self.ssb_file_manager, self.breakpoint_manager)
+                self.debugger.enable(rom_data, self.ssb_file_manager, self.breakpoint_manager,
+                                     self.on_ground_engine_start)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
             self.code_editor.init(self.ssb_file_manager, self.breakpoint_manager, rom_data)
@@ -545,24 +549,31 @@ class MainController:
         self._set_sensitve("emulator_controls_loadstate3", True)
         self._set_sensitve("emulator_controls_volume", True)
 
+        self._set_sensitve("variables_save1", True)
+        self._set_sensitve("variables_save2", True)
+        self._set_sensitve("variables_save3", True)
+        self._set_sensitve("variables_load1", True)
+        self._set_sensitve("variables_load2", True)
+        self._set_sensitve("variables_load3", True)
+        self._set_sensitve("variables_notebook_parent", True)
+
     def toggle_paused_debugging_features(self, on_off):
         if not on_off:
             if self.code_editor:
                 self.code_editor.remove_hanger_halt_lines()
-        self._set_sensitve("variables_save1", on_off)
-        self._set_sensitve("variables_save2", on_off)
-        self._set_sensitve("variables_save3", on_off)
-        self._set_sensitve("variables_load1", on_off)
-        self._set_sensitve("variables_load2", on_off)
-        self._set_sensitve("variables_load3", on_off)
-        self._set_sensitve("variables_notebook_parent", on_off)
+        # These are always on for now. (mostly for performance reason. TODO: Does this lead to issues?)
+        #self._set_sensitve("variables_save1", on_off)
+        #self._set_sensitve("variables_save2", on_off)
+        #self._set_sensitve("variables_save3", on_off)
+        #self._set_sensitve("variables_load1", on_off)
+        #self._set_sensitve("variables_load2", on_off)
+        #self._set_sensitve("variables_load3", on_off)
+        #self._set_sensitve("variables_notebook_parent", on_off)
         self._set_sensitve("ground_state_files_tree_sw", on_off)
         self._set_sensitve("ground_state_entities_tree_sw", on_off)
 
     def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None):
         self.toggle_paused_debugging_features(True)
-        # Load Variables
-        self.variable_controller.sync()
         # Load Ground State
         self.ground_state_controller.sync(self.code_editor, breaked_for)
 
@@ -604,6 +615,7 @@ class MainController:
                     self.debugger.ground_engine_state.deserialize(json.load(f))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
                 self.load_debugger_state()
+                self.variable_controller.sync()
                 if was_running:
                     self._set_buttons_running()
                 else:
@@ -680,8 +692,9 @@ class MainController:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.resume())
             if self.breakpoint_state:
                 self.breakpoint_state.transition(state_type)
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_update(0))
-            self.emu_thread.register_main_loop()
+            else:
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_update(0))
+                self.emu_thread.register_main_loop()
             self.emu_is_running = True
 
     def emu_stop(self):
@@ -708,6 +721,16 @@ class MainController:
 
         self._set_buttons_paused()
         self.emu_is_running = False
+
+    def on_ground_engine_start(self):
+        """The ground engine started"""
+        # TODO: This is more a quick fix for some issue with the variable syncing.
+        self.variable_controller.sync()
+
+    def on_ground_engine_stop(self):
+        """The ground engine stopped"""
+        # TODO: This is more a quick fix for some issue with the variable syncing.
+        self.variable_controller.sync()
 
     def break_pulled(self, state: BreakpointState, srs: ScriptRuntimeStruct):
         """

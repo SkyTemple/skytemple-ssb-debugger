@@ -19,7 +19,7 @@ import math
 import os
 from functools import partial
 from threading import Lock
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Tuple
 import gi
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -88,6 +88,7 @@ class VariableController:
         self.variables_changed_but_not_saved = False
 
     def sync(self):
+        """Manual force sync of all variables"""
         if not self.emu_thread:
             return
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
@@ -127,6 +128,7 @@ class VariableController:
         self.var_form_elements = [None for _ in range(0, len(rom_data.script_data.game_variables))]
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
 
+        # Build the GTK form
         for category, items in self.CATEGORIES.items():
             tab_label = Gtk.Label.new(category)
             tab_label.show()
@@ -174,12 +176,31 @@ class VariableController:
                 row += 2
 
         notebook.show_all()
+        self.sync()
+
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
+            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValue'].begin_absolute,
+            self.hook__variable_set
+        ))
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
+            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValueWithOffset'].begin_absolute,
+            self.hook__variable_set_with_offset
+        ))
 
     def uninit(self):
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
         for _ in range(0, notebook.get_n_pages()):
             # TODO: Do the children need to be destroyed?
             notebook.remove_page(0)
+
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
+            self.rom_data.binaries['overlay/overlay_0011.bin'].functions['SaveScriptVariableValue'],
+            None
+        ))
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
+            self.rom_data.binaries['overlay/overlay_0011.bin'].functions['SaveScriptVariableValueWithOffset'],
+            None
+        ))
 
     def create_var_form_element(self, var: Pmd2ScriptGameVar, offset: int, label: str = None, no_label=False):
         box: Gtk.ButtonBox = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
@@ -211,8 +232,6 @@ class VariableController:
                 wgd.set_width_chars(6)
             else:
                 wgd.set_width_chars(4)
-            # TODO: Since this a focus-based event, we need to make sure other actions of resuming
-            #       the game also take away focus
             wgd.connect('focus-out-event', partial(self.on_var_changed_entry, var, offset))
 
         wgd.set_halign(Gtk.Align.END)
@@ -285,7 +304,6 @@ class VariableController:
                 var_id = self.rom_data.script_data.game_variables__by_name[name].id
                 for i, value in enumerate(values):
                     self._queue_variable_write(var_id, i, value)
-            self.sync()
         except BaseException as err:
             md = Gtk.MessageDialog(None,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
@@ -313,3 +331,36 @@ class VariableController:
             if var.id == var_id:
                 self._variable_cache[var][offset] = value
                 break
+
+    @synchronized(variables_lock)
+    def hook__variable_set(self, address: int, size: int):
+        var_id = self.emu_thread.emu.memory.register_arm9.r1
+        var_offset = 0
+        value_raw = self.emu_thread.emu.memory.register_arm9.r2
+        # TODO: Do we need to process the raw value...?
+
+        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw
+        threadsafe_gtk_nonblocking(partial(self.hook__variable_set_gtk, var_id, var_offset, value_raw))
+
+    @synchronized(variables_lock)
+    def hook__variable_set_with_offset(self, address: int, size: int):
+        var_id = self.emu_thread.emu.memory.register_arm9.r1
+        var_offset = self.emu_thread.emu.memory.register_arm9.r2
+        value_raw = self.emu_thread.emu.memory.register_arm9.r3
+        # TODO: Do we need to process the raw value...?
+
+        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw
+        threadsafe_gtk_nonblocking(partial(self.hook__variable_set_gtk, var_id, var_offset, value_raw))
+
+    @synchronized(variables_lock)
+    def hook__variable_set_gtk(self, var_id, var_offset, value):
+        self._suppress_events = True
+        entry_list = self.var_form_elements[var_id]
+        if entry_list is not None:
+            entry = self.var_form_elements[var_id][var_offset]
+            if entry is not None:
+                if isinstance(entry, Gtk.Entry):
+                    entry.set_text(str(value))
+                else:
+                    entry.set_active(bool(value))
+        self._suppress_events = False
