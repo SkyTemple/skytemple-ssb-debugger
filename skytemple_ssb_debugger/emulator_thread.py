@@ -87,6 +87,7 @@ class EmulatorThread(Thread):
             self.loop.run_forever()
         except (KeyboardInterrupt, SystemExit):
             pass
+        self.emu.destroy()
 
     def run_one_pending_task(self):
         self.loop.call_soon_threadsafe(self.loop.stop)

@@ -193,14 +193,12 @@ class MainController:
     def on_main_window_destroy(self, *args):
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.destroy())
         self.emu_thread.stop()
         Gtk.main_quit()
 
     def gtk_main_quit(self, *args):
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.destroy())
         self.emu_thread.stop()
         Gtk.main_quit()
 
