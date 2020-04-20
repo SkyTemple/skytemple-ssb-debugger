@@ -17,6 +17,7 @@
 from abc import abstractmethod, ABC
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
@@ -31,8 +32,17 @@ def pos_for_display_camera(pos: int, camera_pos: int) -> float:
     return pos_abs + pos_sub
 
 
-class AbstractScriptRuntimeState(ABC):
-    """TODO: For more see sandbox.sandbox. """
+def pos_in_map_coord(low_coord: int, high_coord: int):
+    """Translates a RAM map position of an entity into the map position in tiles (same units as poisition markers"""
+    # Positions are centered on hitbox:
+    center = low_coord + (high_coord - low_coord) / 2
+    # TODO: How exactly is the number calculated?
+    #       Theory: 256 subpixel precision and then 8 pixel per tile.
+    return round(center / 0x100 / TILE_SIZE, 1)
+
+
+class AbstractEntityWithScriptStruct(ABC):
+    """An entity that has a script struct embedded into it's data struct."""
     def __init__(self, emu_thread: EmulatorThread, pnt_to_block_start: int, rom_data: Pmd2Data, unionall_load_addr: AddressContainer):
         super().__init__()
         self.emu_thread: EmulatorThread = emu_thread

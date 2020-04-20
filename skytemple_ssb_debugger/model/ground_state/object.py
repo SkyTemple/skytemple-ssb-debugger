@@ -17,16 +17,18 @@
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptObject
+from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.address_container import AddressContainer
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractScriptRuntimeState
+from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
+    pos_in_map_coord
 from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
 
 OBJECT_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
-class Object(AbstractScriptRuntimeState):
+class Object(AbstractEntityWithScriptStruct):
     def __init__(self, emulator_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int, unionall_load_addr: AddressContainer):
         super().__init__(emulator_thread, pnt_to_block_start, rom_data, unionall_load_addr)
         self.offset = offset
@@ -92,6 +94,16 @@ class Object(AbstractScriptRuntimeState):
     @wrap_threadsafe_emu()
     def y_east(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x140)
+
+    @property
+    @wrap_threadsafe_emu()
+    def x_map(self):
+        return pos_in_map_coord(self.x_north, self.x_south)
+
+    @property
+    @wrap_threadsafe_emu()
+    def y_map(self):
+        return pos_in_map_coord(self.y_west, self.y_east)
 
     def get_bounding_box_camera(self, map: Map):
         return (

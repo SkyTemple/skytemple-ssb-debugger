@@ -18,10 +18,10 @@ from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.address_container import AddressContainer
-from skytemple_ssb_debugger.model.ground_state import AbstractScriptRuntimeState
+from skytemple_ssb_debugger.model.ground_state import AbstractEntityWithScriptStruct
 
 
-class GlobalScript(AbstractScriptRuntimeState):
+class GlobalScript(AbstractEntityWithScriptStruct):
     def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, unionall_load_addr: AddressContainer):
         super().__init__(emu_thread, pnt_to_block_start, rom_data, unionall_load_addr)
 

@@ -105,7 +105,8 @@ class DebugOverlayController:
                                 y_absolute = (mark.y_with_offset * TILE_SIZE) - self._camera_pos_cache[1]
                                 ctx.set_source_rgba(*COLOR_POS_MARKERS)
                                 ctx.rectangle(
-                                    x_absolute, y_absolute,
+                                    # They are centered.
+                                    x_absolute - 4, y_absolute - 4,
                                     TILE_SIZE, TILE_SIZE
                                 )
                                 ctx.fill_preserve()
