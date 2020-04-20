@@ -19,14 +19,10 @@
 TODO:
 - Position marker corrections
 - Source maps on save of ssbs
-- Step into / step over / step out
-- Switch to step for single / step for all
-- Stepping buttons
 - Clicking on entities in the tree view, opening the script for it / changing active debugging target
 
 - Running scripts
 - ExplorerScript
-- Don't crash on stop
 
 - Psy's list patch
 """

@@ -73,9 +73,25 @@ class CalltipEmitter:
                     markup = f'<b>{arg.name}: <i>{arg.type}</i></b>, '
                 else:
                     markup = f'<span weight="light">{arg.name}:  <i>{arg.type}</i></span>, '
-                if i == len(op.arguments) - 1:
+                if i == len(op.arguments) - 1 and not op.repeating_argument_group:
                     markup = markup.rstrip(', ')
                 lbl.set_markup(markup)
+                btn_box.pack_start(lbl, True, False, 0)
+            if op.repeating_argument_group:
+                lbl: Gtk.Label = Gtk.Label.new('[')
+                btn_box.pack_start(lbl, True, False, 0)
+                for i, arg in enumerate(op.repeating_argument_group.arguments):
+                    lbl: Gtk.Label = Gtk.Label.new('')
+                    # TODO: Support highlighting individual repeating args. (not really used though)
+                    if arg_index >= len(op.arguments):
+                        markup = f'<b>{arg.name}: <i>{arg.type}</i></b>, '
+                    else:
+                        markup = f'<span weight="light">{arg.name}:  <i>{arg.type}</i></span>, '
+                    if i == len(op.repeating_argument_group.arguments) - 1:
+                        markup = markup.rstrip(', ')
+                    lbl.set_markup(markup)
+                    btn_box.pack_start(lbl, True, False, 0)
+                lbl: Gtk.Label = Gtk.Label.new('... ]')
                 btn_box.pack_start(lbl, True, False, 0)
 
         self._active_widget.show_all()

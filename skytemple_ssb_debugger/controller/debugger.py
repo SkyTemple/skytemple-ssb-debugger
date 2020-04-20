@@ -156,7 +156,6 @@ class DebuggerController:
                 self._breakpoints_disabled_for_tick = -1
 
                 ssb = self.ground_engine_state.loaded_ssb_files[srs.hanger_ssb]
-                print(f"{ssb.file_name}: {srs.current_opcode_addr_relative}: ")
                 if ssb is not None and (self._breakpoint_force or self.breakpoint_manager.has(
                     ssb.file_name, srs.current_opcode_addr_relative, srs.is_in_unionall,
                         srs.script_target_type, srs.script_target_slot_id

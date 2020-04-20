@@ -39,7 +39,7 @@ from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, Break
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking
 
 gi.require_version('Gtk', '3.0')
 
@@ -720,15 +720,17 @@ class MainController:
         self._set_buttons_paused()
         self.emu_is_running = False
 
+    # Runs in emu thread
     def on_ground_engine_start(self):
         """The ground engine started"""
         # TODO: This is more a quick fix for some issue with the variable syncing.
-        self.variable_controller.sync()
+        threadsafe_gtk_nonblocking(lambda: self.variable_controller.sync())
 
+    # Runs in emu thread
     def on_ground_engine_stop(self):
         """The ground engine stopped"""
         # TODO: This is more a quick fix for some issue with the variable syncing.
-        self.variable_controller.sync()
+        threadsafe_gtk_nonblocking(lambda: self.variable_controller.sync())
 
     def break_pulled(self, state: BreakpointState, srs: ScriptRuntimeStruct):
         """
