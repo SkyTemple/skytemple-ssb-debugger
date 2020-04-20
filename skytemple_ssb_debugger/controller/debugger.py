@@ -180,21 +180,26 @@ class DebuggerController:
                         self._breakpoint_force = True
                     elif state.state == BreakpointStateType.STEP_INTO:
                         # We break at whatever is executed next for the current script target.
-                        self.breakpoint_manager.set_temporary(
+                        self.breakpoint_manager.add_temporary(
                             srs.script_target_type, srs.script_target_slot_id
                         )
                     elif state.state == BreakpointStateType.STEP_OVER:
                         # We break at the next opcode in the current script file
-                        # TODO: If the current op is the last one (we will step out next) this will lead to issues.
-                        #       We need to alternatively break at the current stack opcode (see STEP_OUT).
-                        self.breakpoint_manager.set_temporary(
+                        self.breakpoint_manager.add_temporary(
                             srs.script_target_type, srs.script_target_slot_id,
                             is_in_unionall=srs.is_in_unionall
                         )
+                        # If the current op is the last one (we will step out next) this will lead to issues.
+                        # We need to alternatively break at the current stack opcode (see STEP_OUT).
+                        if srs.has_call_stack:
+                            self.breakpoint_manager.add_temporary(
+                                srs.script_target_type, srs.script_target_slot_id,
+                                opcode_addr=srs.call_stack__current_opcode_addr_relative
+                            )
                     elif state.state == BreakpointStateType.STEP_OUT:
                         if srs.has_call_stack:
                             # We break at the opcode address stored on the call stack position.
-                            self.breakpoint_manager.set_temporary(
+                            self.breakpoint_manager.add_temporary(
                                 srs.script_target_type, srs.script_target_slot_id,
                                 opcode_addr=srs.call_stack__current_opcode_addr_relative
                             )

@@ -29,7 +29,7 @@ class BreakpointManager:
         self.file_manager = file_manager
         # This temporary breakpoint is set by the debugger while stepping
         # (is_in_unionall, opcode offset, script target type, script target slot)
-        self.temporary_breakpoint: Optional[Tuple[Optional[bool], Optional[int], SsbRoutineType, int]] = None
+        self._temporary_breakpoints: List[Tuple[Optional[bool], Optional[int], SsbRoutineType, int]] = []
 
         self.new_breakpoint_mapping: Dict[str, List[int]] = {}
 
@@ -121,14 +121,14 @@ class BreakpointManager:
         Checks if the breakpoint is in the active mapping or is the temporary breakpoint.
         script_target_* are only relevant for checking the temporary breakpoint.
         """
-        if self.temporary_breakpoint:
-            if self.temporary_breakpoint == (None, None, script_target_type, script_target_slot):
+        for tbp in self._temporary_breakpoints:
+            if tbp == (None, None, script_target_type, script_target_slot):
                 return True
-            if self.temporary_breakpoint == (None, op_off, script_target_type, script_target_slot):
+            if tbp == (None, op_off, script_target_type, script_target_slot):
                 return True
-            if self.temporary_breakpoint == (is_in_unionall, None, script_target_type, script_target_slot):
+            if tbp == (is_in_unionall, None, script_target_type, script_target_slot):
                 return True
-            if self.temporary_breakpoint == (is_in_unionall, op_off, script_target_type, script_target_slot):
+            if tbp == (is_in_unionall, op_off, script_target_type, script_target_slot):
                 return True
         if fn not in self.breakpoint_mapping:
             return False
@@ -154,9 +154,9 @@ class BreakpointManager:
         return
 
     def reset_temporary(self):
-        self.temporary_breakpoint = None
+        self._temporary_breakpoints = []
 
-    def set_temporary(
+    def add_temporary(
             self, script_target_type: SsbRoutineType, script_target_slot: int, is_in_unionall=None, opcode_addr=None
     ):
         """
@@ -171,7 +171,7 @@ class BreakpointManager:
 
         See has.
         """
-        self.temporary_breakpoint = (is_in_unionall, opcode_addr, script_target_type, script_target_slot)
+        self._temporary_breakpoints.append((is_in_unionall, opcode_addr, script_target_type, script_target_slot))
 
     def _get(self, t, op_off):
         for idx, i_op_off in enumerate(t):
