@@ -17,7 +17,6 @@
 
 """
 TODO:
-- Source maps on save of ssbs
 - Clicking on entities in the tree view, opening the script for it / changing active debugging target
 
 - Running scripts

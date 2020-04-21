@@ -58,10 +58,10 @@ class SsbFileManager:
         """
         self.get(filename)
         compiler = ScriptCompiler(self.rom_data)
-        # TODO: SOURCE MAP UPDATING MISSING!
-        self._open_files[filename].ssb_model = compiler.compile_ssbscript(code)
+        f = self._open_files[filename]
+        f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
         self.rom.setFileByName(
-            filename, FileType.SSB.serialize(self._open_files[filename].ssb_model)
+            filename, FileType.SSB.serialize(f.ssb_model)
         )
         self.rom.saveToFile(self.rom_filename)
         # After save:
