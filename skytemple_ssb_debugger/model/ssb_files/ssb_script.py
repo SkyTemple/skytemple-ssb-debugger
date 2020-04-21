@@ -42,3 +42,7 @@ class SsbScriptFile(AbstractScriptFile):
     @property
     def source_map(self):
         return self._source_map
+
+    @source_map.setter
+    def source_map(self, val):
+        self._source_map = val

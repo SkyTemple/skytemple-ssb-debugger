@@ -282,7 +282,7 @@ class SSBEditorController:
             for line in range(0, modified_buffer.get_line_count()):
                 marks = modified_buffer.get_source_marks_at_line(line, 'breakpoint')
                 if len(marks) > 0:
-                    opcode_offset = self._get_opcode_in_line(buffer, line)
+                    opcode_offset = self._get_opcode_in_line(buffer, line, True)
                     if opcode_offset is None:
                         continue
 
