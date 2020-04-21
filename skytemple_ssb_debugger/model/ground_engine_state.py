@@ -216,6 +216,7 @@ class GroundEngineState:
 
     @synchronized_now(ground_engine_lock)
     def reset(self, keep_global=False):
+        # ! Runs from either GTK or emu thread !
         self._loaded_ssx_files = [None for _ in range(0, MAX_SSX + 1)]
         if keep_global:
             glob = self._loaded_ssb_files[0]
@@ -299,7 +300,7 @@ class GroundEngineState:
 
     def hook__ground_map_change(self, address, size):
         self._print("Ground Map Change")
-        threadsafe_gtk_nonblocking(lambda: self.reset(keep_global=True))
+        self.reset(keep_global=True)
 
     @synchronized_now(ground_engine_lock)
     def hook__ssb_load(self, address, size):

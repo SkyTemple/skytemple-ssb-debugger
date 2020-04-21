@@ -57,6 +57,15 @@ def threadsafe_gtk_nonblocking(cb: Callable) -> None:
     GLib.idle_add(resolve_callback)
 
 
+def threadsafe_now_or_gtk_nonblocking(cb: Callable) -> None:
+    """If on GTK thread: Run now blocking. Else delegate to threadsafe_gtk_nonblocking."""
+    from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+    if current_thread() != EmulatorThread.instance()._thread_instance:
+        cb()
+    else:
+        threadsafe_gtk_nonblocking(cb)
+
+
 def threadsafe_emu(emu_thread, cb: Callable):
     """
     Blocking call on the emulator thread. If run from emulator thread, cb is just executed.

@@ -23,6 +23,7 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.types.file_types import FileType
 from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
+from skytemple_ssb_debugger.threadsafe import threadsafe_now_or_gtk_nonblocking
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.debugger import DebuggerController
@@ -124,12 +125,13 @@ class SsbFileManager:
     def close_in_ground_engine(self, filename: str):
         """
         # - If the file is no longer loaded in Ground Engine: Regenerate text marks from source map.
+        Is threadsafe.
         """
         self.get(filename)
         self._open_files[filename].opened_in_ground_engine = False
         self._open_files[filename].not_breakable = False
         if not self._open_files[filename].ram_state_up_to_date:
-            self._open_files[filename].signal_editor_reload()
+            threadsafe_now_or_gtk_nonblocking(lambda: self._open_files[filename].signal_editor_reload())
         self._open_files[filename].ram_state_up_to_date = True
         print(f"{filename}: Closed in Ground Engine")
         pass
