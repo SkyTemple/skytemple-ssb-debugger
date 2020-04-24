@@ -17,11 +17,10 @@
 
 """
 TODO:
-- Clicking on entities in the tree view, opening the script for it / changing active debugging target
-
 - Running scripts
 - ExplorerScript
 
+- Menus (emulator controls, emulator settings, search, replace, export, import, save all, open new file, help, explorerscript settings)
 - Psy's list patch
 """
 

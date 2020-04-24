@@ -30,6 +30,8 @@
       <column type="gchararray"/>
       <!-- column-name y -->
       <column type="gchararray"/>
+      <!-- column-name entity_type_id -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkTreeView" id="ground_state_entities_tree">
@@ -39,6 +41,7 @@
     <property name="rules_hint">True</property>
     <property name="search_column">1</property>
     <property name="enable_tree_lines">True</property>
+    <signal name="button-press-event" handler="on_ground_state_entities_tree_button_press_event" swapped="no"/>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
     </child>
@@ -62,6 +65,7 @@
     <property name="rules_hint">True</property>
     <property name="search_column">1</property>
     <property name="enable_tree_lines">True</property>
+    <signal name="button-press-event" handler="on_ground_state_files_tree_button_press_event" swapped="no"/>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
     </child>

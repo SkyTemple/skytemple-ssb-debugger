@@ -25,13 +25,14 @@ from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask, load_configured_config
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
+from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
 from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
-from skytemple_ssb_debugger.controller.ground_state import GroundStateController
+from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -495,6 +496,47 @@ class MainController:
 
     def on_variables_save3_clicked(self, *args):
         self.variable_controller.save(3, self.config_dir)
+
+    # TODO: A bit of weird coupling with those two signal handlers.
+    def on_ground_state_entities_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            model, treeiter = tree.get_selection().get_selected()
+            if treeiter is not None and model is not None:
+                script_entity_type = SsbRoutineType.create_for_index(model[treeiter][10])
+                script_entity_id = 0
+                try:
+                    script_entity_id = int(model[treeiter][0])
+                except ValueError:
+                    pass
+                ges = self.debugger.ground_engine_state
+                if ges:
+                    if script_entity_type == SsbRoutineType.GENERIC:
+                        ss = ges.global_script.script_struct
+                    elif script_entity_type == SsbRoutineType.ACTOR:
+                        ss = ges.get_actor(script_entity_id).script_struct
+                    elif script_entity_type == SsbRoutineType.OBJECT:
+                        ss = ges.get_object(script_entity_id).script_struct
+                    elif script_entity_type == SsbRoutineType.PERFORMER:
+                        ss = ges.get_performer(script_entity_id).script_struct
+                    else:
+                        return
+                    if ss.hanger_ssb == -1:
+                        return
+                    ssb = ges.loaded_ssb_files[ss.hanger_ssb]
+                    if not ssb:
+                        return
+                    self.code_editor.focus_by_opcode_addr(ssb.file_name, ss.current_opcode_addr_relative)
+
+
+    def on_ground_state_files_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
+        if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
+            model, treeiter = tree.get_selection().get_selected()
+            if treeiter is not None and model is not None:
+                entry_type = model[treeiter][2]
+                path = model[treeiter][1]
+                # TODO: SSA/SSS/SSE support
+                if entry_type == GE_FILE_STORE_SCRIPT and path and path != '':
+                    self.code_editor.open(SCRIPT_DIR + '/' + path)
 
     # More functions
     def open_rom(self, fn: str):

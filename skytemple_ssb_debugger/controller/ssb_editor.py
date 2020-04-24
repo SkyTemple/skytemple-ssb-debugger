@@ -195,13 +195,13 @@ class SSBEditorController:
             b: Gtk.TextBuffer = self._ssb_script_view.get_buffer()
             m = b.get_mark(f'opcode_{opcode_addr}')
             if m:
-                self._ssb_script_view.scroll_to_mark(m, 0.1, False, 0.5, 0.5)
+                self._ssb_script_view.scroll_to_mark(m, 0.1, False, 0.1, 0.1)
                 b.place_cursor(b.get_iter_at_mark(m))
 
             b: Gtk.TextBuffer = self._explorerscript_view.get_buffer()
             m = b.get_mark(f'opcode_{opcode_addr}')
             if m:
-                self._explorerscript_view.scroll_to_mark(m, 0.1, False, 0.5, 0.5)
+                self._explorerscript_view.scroll_to_mark(m, 0.1, False, 0.1, 0.1)
                 b.place_cursor(b.get_iter_at_mark(m))
 
     def save(self):
@@ -270,7 +270,6 @@ class SSBEditorController:
                 for opcode_offset, line, column in model.source_map:
                     textiter = buffer.get_iter_at_line_offset(line, column)
                     buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
-                    print(f'TMP_opcode_{opcode_offset}', '@', line - 1, ',', column)
 
             buffer = self._ssb_script_view.get_buffer()
             if self._explorerscript_active:
@@ -320,7 +319,6 @@ class SSBEditorController:
             for opcode_offset, line, column in model.source_map:
                 textiter = buffer.get_iter_at_line_offset(line, column)
                 buffer.create_mark(f'opcode_{opcode_offset}', textiter)
-                print(f'opcode_{opcode_offset}', '@', line - 1, ',', column)
 
             bx.pack_start(ovl, True, True, 0)
 

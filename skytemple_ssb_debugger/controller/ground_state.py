@@ -24,6 +24,8 @@ from skytemple_ssb_debugger.model.constants import ICON_GLOBAL_SCRIPT, ICON_ACTO
 from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
+GE_FILE_STORE_SCRIPT = 'Script'
+
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk
@@ -124,13 +126,14 @@ class GroundStateController:
             self._was_running_last_sync = ground_state.running
 
             if ground_state.running:
-                # Is running
+                # Is runningues
                 global_script, ssb, ssx, actors, objects, performers, events = ground_state.collect()
 
                 if code_editor:
                     # Sync the code editor execution lines
                     files = {}
                     if global_script.script_struct.hanger_ssb > -1:
+                        # TODO: Crash here on reset.
                         if ssb[global_script.script_struct.hanger_ssb].file_name not in files:
                             files[ssb[global_script.script_struct.hanger_ssb].file_name] = []
                         files[ssb[global_script.script_struct.hanger_ssb].file_name].append((
@@ -163,7 +166,7 @@ class GroundStateController:
                 self._files__tree_store.clear()
                 if ssb[0]:
                     self._files__tree_store.append(None, [
-                        'text-plain', self.short_fname(ssb[0].file_name), 'Script', '0 (Global)'
+                        'text-plain', self.short_fname(ssb[0].file_name), GE_FILE_STORE_SCRIPT, '0 (Global)'
                     ])
                 else:
                     self._files__tree_store.append(None, [
@@ -194,12 +197,12 @@ class GroundStateController:
                     if ssb[i]:
                         # SSB Slot for this is filled
                         self._files__tree_store.append(ssx_root, [
-                            'text-plain', self.short_fname(ssb[i].file_name), 'Script', hanger_str
+                            'text-plain', self.short_fname(ssb[i].file_name), GE_FILE_STORE_SCRIPT, hanger_str
                         ])
                     if ssb[i + TALK_HANGER_OFFSET]:
                         # SSB Talk slot for this is filled
                         self._files__tree_store.append(ssx_root, [
-                            'text-plain', self.short_fname(ssb[i+TALK_HANGER_OFFSET].file_name), 'Script', f'{i+TALK_HANGER_OFFSET} (Talk)'
+                            'text-plain', self.short_fname(ssb[i+TALK_HANGER_OFFSET].file_name), GE_FILE_STORE_SCRIPT, f'{i + TALK_HANGER_OFFSET} (Talk)'
                         ])
 
                 # Entities store
@@ -210,10 +213,10 @@ class GroundStateController:
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
                     self.get_short_sname(ssb, global_script.script_struct.hanger_ssb), None, '',
-                    'media-playback-pause' if breaked else '', ICON_GLOBAL_SCRIPT, '', ''
+                    'media-playback-pause' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
                 ])
                 actors_node = self._entities__tree_store.append(None, [
-                    'Actors', '', '', '', None, '', '', ICON_ACTOR, '', ''
+                    'Actors', '', '', '', None, '', '', ICON_ACTOR, '', '', -1
                 ])
                 for actor in actors:
                     breaked = False
@@ -223,10 +226,10 @@ class GroundStateController:
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
                         self.get_short_sname(ssb, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
                         'media-playback-pause' if breaked else '', '',
-                        f'{actor.x_map}', f'{actor.y_map}'
+                        f'{actor.x_map}', f'{actor.y_map}', SsbRoutineType.ACTOR.value
                     ])
                 objects_node = self._entities__tree_store.append(None, [
-                    'Objects', '', '', '', None, '', '', ICON_OBJECT, '', ''
+                    'Objects', '', '', '', None, '', '', ICON_OBJECT, '', '', -1
                 ])
                 for object in objects:
                     kind_name = object.kind.name
@@ -239,10 +242,10 @@ class GroundStateController:
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
                         self.get_short_sname(ssb, object.script_struct.hanger_ssb), None, kind_name,
                         'media-playback-pause' if breaked else '', '',
-                        f'{object.x_map}', f'{object.y_map}'
+                        f'{object.x_map}', f'{object.y_map}', SsbRoutineType.OBJECT.value
                     ])
                 performers_node = self._entities__tree_store.append(None, [
-                    'Performers', '', '', '', None, '', '', ICON_PERFORMER, '', ''
+                    'Performers', '', '', '', None, '', '', ICON_PERFORMER, '', '', -1
                 ])
                 for performer in performers:
                     breaked = False
@@ -252,19 +255,19 @@ class GroundStateController:
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
                         self.get_short_sname(ssb, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
                         'media-playback-pause' if breaked else '', '',
-                        f'{performer.x_map}', f'{performer.y_map}'
+                        f'{performer.x_map}', f'{performer.y_map}', SsbRoutineType.PERFORMER.value
                     ])
                 events_node = self._entities__tree_store.append(None, [
-                    'Events', '', '', '', None, '', '', ICON_EVENTS, '', ''
+                    'Events', '', '', '', None, '', '', ICON_EVENTS, '', '', -1
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [
                         f'{event.id}', f'{event.hanger}', f'{event.sector}',
-                        '', None, f'{event.kind}', '', '', '', ''
+                        '', None, f'{event.kind}', '', '', '', '', -1
                     ])
 
                 pos_marks_node = self._entities__tree_store.append(None, [
-                    'Pos. Marks', '', '', '', None, '', '', ICON_POSITION_MARKER, '', ''
+                    'Pos. Marks', '', '', '', None, '', '', ICON_POSITION_MARKER, '', '', -1
                 ])
                 for ssb in ground_state.loaded_ssb_files:
                     if ssb is not None:
@@ -273,7 +276,7 @@ class GroundStateController:
                                 f'{mark.name}', '', '',
                                 ssb.file_name.split('/')[-1], None,
                                 '', '', '',
-                                f'{mark.x_with_offset}', f'{mark.y_with_offset}'
+                                f'{mark.x_with_offset}', f'{mark.y_with_offset}', -1
                             ])
 
                 self._files__tree.expand_all()
