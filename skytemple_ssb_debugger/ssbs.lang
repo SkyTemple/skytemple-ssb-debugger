@@ -31,6 +31,7 @@
     <style id="decimal"           name="Decimal number"        map-to="def:decimal"/>
     <style id="base-n-integer"    name="Base-N number"         map-to="def:base-n-integer"/>
     <style id="constant"          name="Constant"              map-to="def:constant"/>
+    <style id="variable"          name="Variable"              map-to="def:identifier"/>
     <style id="lang-string-key"   name="Language String Key"   map-to="def:special-constant"/>
     <style id="position-marker"   name="Position Marker"       map-to="def:special-constant"/>
     <style id="position-marker-5" name="Position Marker .5"    map-to="def:decimal"/>
@@ -80,7 +81,7 @@
     </context>
 
     <context id="label" style-ref="label">
-      <match>\$\%{identifier}</match>
+      <match>\§\%{identifier}</match>
     </context>
 
     <context id="label-jump" style-ref="label-jump">
@@ -107,6 +108,10 @@
       <match>(?&lt;![\w\.])([A-Z_][A-Z0-9_]{2,})(?![\w\.])</match>
     </context>
 
+    <context id="variable" style-ref="variable">
+      <match>(?&lt;![\w\.])([$][A-Z_][A-Z0-9_]{2,})(?![\w\.])</match>
+    </context>
+
     <context id="keywords" style-ref="keyword">
       <keyword>coro</keyword>
       <keyword>def</keyword>
@@ -131,6 +136,7 @@
         <context ref="label"/>
         <context ref="label-jump"/>
         <context ref="constant"/>
+        <context ref="variable"/>
       </include>
     </context>
   </definitions>
