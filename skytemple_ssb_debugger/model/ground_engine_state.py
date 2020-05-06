@@ -39,6 +39,7 @@ from skytemple_ssb_debugger.threadsafe import threadsafe_gtk_nonblocking, thread
 TALK_HANGER_OFFSET = 3
 MAX_SSX = 3
 MAX_SSB = MAX_SSX + TALK_HANGER_OFFSET
+O11_BYTE_CHECK = bytes([0xf0, 0x4f, 0x2d, 0xe9, 0x34, 0xd0, 0x4d, 0xe2, 0x64, 0x2a, 0x9f, 0xe5])
 
 
 ground_engine_lock = Lock()
@@ -285,6 +286,8 @@ class GroundEngineState:
     # >>> ALL CALLBACKS BELOW ARE RUNNING IN THE EMULATOR THREAD <<<
 
     def hook__ground_start(self, address, size):
+        if not self.overlay11_loaded():
+            return
         self._print("Ground Start")
         threadsafe_gtk_nonblocking(lambda: self.reset())
         ground_engine_lock.acquire()
@@ -293,17 +296,23 @@ class GroundEngineState:
         self._inform_ground_engine_start_cb()
 
     def hook__ground_quit(self, address, size):
+        if not self.overlay11_loaded():
+            return
         self._print("Ground Quit")
         ground_engine_lock.acquire()
         self._running = False
         ground_engine_lock.release()
 
     def hook__ground_map_change(self, address, size):
+        if not self.overlay11_loaded():
+            return
         self._print("Ground Map Change")
         self.reset(keep_global=True)
 
     @synchronized_now(ground_engine_lock)
     def hook__ssb_load(self, address, size):
+        if not self.overlay11_loaded():
+            return
         name = self.emu_thread.emu.memory.read_string(self.emu_thread.emu.memory.register_arm9.r1)
         load_for = self._load_ssb_for if self._load_ssb_for is not None else 0
         self._print(f"SSB Load {name} for hanger {load_for}")
@@ -317,6 +326,8 @@ class GroundEngineState:
 
     @synchronized(ground_engine_lock)
     def hook__ssx_load(self, address, size):
+        if not self.overlay11_loaded():
+            return
         hanger = self.emu_thread.emu.memory.register_arm9.r2
         name = self.emu_thread.emu.memory.read_string(self.emu_thread.emu.memory.register_arm9.r3)
         self._print(f"SSX Load {name} for hanger {hanger}")
@@ -329,6 +340,8 @@ class GroundEngineState:
 
     @synchronized_now(ground_engine_lock)
     def hook__talk_load(self, address, size):
+        if not self.overlay11_loaded():
+            return
         hanger = self.emu_thread.emu.memory.register_arm9.r0
         # TODO:
         #    If the hanger is 1 - 3, this is a load for SSA/SSE/SSS.
@@ -340,5 +353,12 @@ class GroundEngineState:
 
     @synchronized_now(ground_engine_lock)
     def hook__write_unionall_address(self, address, size):
+        if not self.overlay11_loaded():
+            return
         """Write the location of the unionall script into the container object for this"""
         self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))
+
+    def overlay11_loaded(self):
+        """TODO: Replace with a proper check..."""
+        begin_offset = self.rom_data.binaries['overlay/overlay_0011.bin'].functions['GroundMainLoop'].begin_absolute
+        return self.emu_thread.emu.memory.unsigned[begin_offset:begin_offset+len(O11_BYTE_CHECK)] == O11_BYTE_CHECK
