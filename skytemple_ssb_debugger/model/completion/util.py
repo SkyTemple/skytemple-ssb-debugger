@@ -28,6 +28,7 @@ def backward_until_space(it: Gtk.TextIter):
 
 
 def common_do_match(filter_func, all_func, context: GtkSource.CompletionContext) -> bool:
+    # TODO: We need to correct textiter because it doesn't work correct for inside function braces.
     _, textiter = context.get_iter()
     buffer: Gtk.TextBuffer = textiter.get_buffer()
 
@@ -46,6 +47,7 @@ def common_do_match(filter_func, all_func, context: GtkSource.CompletionContext)
 
 
 def common_do_populate(obj, filter_func, all_func, context: GtkSource.CompletionContext):
+    # TODO: We need to correct textiter because it doesn't work correct for inside function braces.
     _, textiter = context.get_iter()
     buffer: Gtk.TextBuffer = textiter.get_buffer()
 

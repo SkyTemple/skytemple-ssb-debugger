@@ -144,13 +144,13 @@ class MainController:
         )
 
         # Initial sizes
-        self.builder.get_object('box_r3').set_size_request(330, -1)
         self.builder.get_object('frame_debug_log').set_size_request(220, -1)
 
         builder.connect_signals(self)
 
         # DEBUG
-        self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
+        self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_all_scripts_replaced.nds')
+        #self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
 
     @property
     def emu_is_running(self):
@@ -526,7 +526,6 @@ class MainController:
                     if not ssb:
                         return
                     self.code_editor.focus_by_opcode_addr(ssb.file_name, ss.current_opcode_addr_relative)
-
 
     def on_ground_state_files_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:

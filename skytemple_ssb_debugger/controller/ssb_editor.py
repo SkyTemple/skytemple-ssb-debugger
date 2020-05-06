@@ -24,10 +24,9 @@ from typing import Tuple, List, Optional, TYPE_CHECKING
 from gi.repository import Gtk, GtkSource, GLib, Gdk, GObject
 from gi.repository.GtkSource import StyleSchemeManager, LanguageManager
 
-from explorerscript.parse_error import ParseError
+from explorerscript.error import ParseError, SsbCompilerError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_files.script.ssb.script_compiler import SsbCompilerError
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointStateType
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
