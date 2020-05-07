@@ -80,6 +80,38 @@
     <property name="can_focus">False</property>
     <property name="icon_name">media-playback-stop</property>
   </object>
+  <object class="GtkListStore" id="local_variables_store">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gint"/>
+    </columns>
+  </object>
+  <object class="GtkTreeView" id="local_variables_list">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="model">local_variables_store</property>
+    <child internal-child="selection">
+      <object class="GtkTreeSelection"/>
+    </child>
+  </object>
+  <object class="GtkListStore" id="macro_variables_store">
+    <columns>
+      <!-- column-name name -->
+      <column type="gchararray"/>
+      <!-- column-name value -->
+      <column type="gint"/>
+    </columns>
+  </object>
+  <object class="GtkTreeView" id="macro_variables_list">
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="model">macro_variables_store</property>
+    <child internal-child="selection">
+      <object class="GtkTreeSelection"/>
+    </child>
+  </object>
   <object class="GtkImage" id="menu_open_image">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
@@ -285,6 +317,8 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="margin_bottom">5</property>
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
@@ -302,6 +336,7 @@
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
                                     <property name="can_focus">True</property>
+                                    <property name="margin_bottom">5</property>
                                     <property name="primary_icon_name">edit-find-symbolic</property>
                                     <property name="primary_icon_activatable">False</property>
                                     <property name="primary_icon_sensitive">False</property>
@@ -397,6 +432,8 @@
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="margin_bottom">5</property>
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
@@ -539,6 +576,8 @@ not running.</property>
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">5</property>
+                        <property name="margin_right">5</property>
+                        <property name="margin_bottom">5</property>
                         <property name="label_xalign">0</property>
                         <property name="shadow_type">none</property>
                         <child>
@@ -772,7 +811,7 @@ This forces a reload.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_top">5</property>
-                            <property name="label" translatable="yes">Variables</property>
+                            <property name="label" translatable="yes">Global Variables</property>
                           </object>
                         </child>
                       </object>
@@ -820,28 +859,112 @@ This forces a reload.</property>
                       </packing>
                     </child>
                     <child>
-                      <object class="GtkFrame" id="frame_local_variables">
+                      <object class="GtkBox">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="margin_left">5</property>
-                        <property name="label_xalign">0</property>
-                        <property name="shadow_type">none</property>
+                        <property name="margin_right">5</property>
+                        <property name="margin_bottom">5</property>
+                        <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkAlignment">
+                          <object class="GtkFrame" id="frame_local_variables">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
+                            <property name="label_xalign">0</property>
+                            <property name="shadow_type">none</property>
                             <child>
-                              <placeholder/>
+                              <object class="GtkAlignment">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_top">5</property>
+                                <child>
+                                  <object class="GtkScrolledWindow" id="local_variables_sw">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="shadow_type">in</property>
+                                    <child>
+                                      <object class="GtkViewport" id="local_vars_ges_not_loaded">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <child>
+                                          <object class="GtkLabel" id="main_label3">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">Debugger is 
+not halting.</property>
+                                            <property name="justify">center</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_top">5</property>
+                                <property name="label" translatable="yes">Local Variables</property>
+                              </object>
                             </child>
                           </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">0</property>
+                          </packing>
                         </child>
-                        <child type="label">
-                          <object class="GtkLabel">
+                        <child>
+                          <object class="GtkFrame" id="frame_macro_variables">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
-                            <property name="label" translatable="yes">Local Variables</property>
+                            <property name="label_xalign">0</property>
+                            <property name="shadow_type">none</property>
+                            <child>
+                              <object class="GtkAlignment">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_top">5</property>
+                                <child>
+                                  <object class="GtkScrolledWindow" id="macro_variables_sw">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">True</property>
+                                    <property name="shadow_type">in</property>
+                                    <child>
+                                      <object class="GtkViewport" id="macro_vars_ges_not_loaded">
+                                        <property name="visible">True</property>
+                                        <property name="can_focus">False</property>
+                                        <child>
+                                          <object class="GtkLabel" id="main_label4">
+                                            <property name="visible">True</property>
+                                            <property name="can_focus">False</property>
+                                            <property name="label" translatable="yes">Debugger is 
+not halting.</property>
+                                            <property name="justify">center</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="label">
+                              <object class="GtkLabel">
+                                <property name="visible">True</property>
+                                <property name="can_focus">False</property>
+                                <property name="margin_top">5</property>
+                                <property name="label" translatable="yes">Macro Variables</property>
+                              </object>
+                            </child>
                           </object>
+                          <packing>
+                            <property name="expand">True</property>
+                            <property name="fill">True</property>
+                            <property name="position">1</property>
+                          </packing>
                         </child>
                       </object>
                       <packing>
@@ -1074,140 +1197,132 @@ via the File menu.</property>
                                           </packing>
                                         </child>
                                         <child>
-                                          <object class="GtkFrame">
+                                          <object class="GtkBox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label_xalign">0</property>
-                                            <property name="shadow_type">none</property>
+                                            <property name="margin_left">5</property>
+                                            <property name="margin_right">5</property>
+                                            <property name="margin_top">5</property>
+                                            <property name="margin_bottom">5</property>
+                                            <property name="orientation">vertical</property>
                                             <child>
-                                              <object class="GtkAlignment">
+                                              <object class="GtkBox">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">False</property>
-                                                <property name="margin_top">5</property>
-                                                <property name="left_padding">12</property>
                                                 <child>
-                                                  <object class="GtkBox">
+                                                  <object class="GtkButton" id="emulator_controls_playstop">
+                                                    <property name="visible">True</property>
+                                                    <property name="sensitive">False</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                    <property name="tooltip_text" translatable="yes">Run the game from the start or stop the emulator.</property>
+                                                    <property name="always_show_image">True</property>
+                                                    <signal name="clicked" handler="on_emulator_controls_playstop_clicked" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkImage" id="img_play">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="icon_name">media-playback-start</property>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">0</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkButton" id="emulator_controls_pause">
+                                                    <property name="visible">True</property>
+                                                    <property name="sensitive">False</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                    <signal name="clicked" handler="on_emulator_controls_pause_clicked" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkImage" id="img_pause">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="tooltip_text" translatable="yes">Pause the emulator.</property>
+                                                        <property name="icon_name">media-playback-pause</property>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">1</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkButton" id="emulator_controls_reset">
+                                                    <property name="visible">True</property>
+                                                    <property name="sensitive">False</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                    <property name="tooltip_text" translatable="yes">Reset the emulator.</property>
+                                                    <signal name="clicked" handler="on_emulator_controls_reset_clicked" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkImage">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="icon_name">view-refresh</property>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">True</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">2</property>
+                                                  </packing>
+                                                </child>
+                                                <child>
+                                                  <object class="GtkToggleButton" id="emulator_controls_volume">
+                                                    <property name="visible">True</property>
+                                                    <property name="sensitive">False</property>
+                                                    <property name="can_focus">True</property>
+                                                    <property name="receives_default">True</property>
+                                                    <property name="active">True</property>
+                                                    <signal name="toggled" handler="on_emulator_controls_volume_toggled" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkImage">
+                                                        <property name="visible">True</property>
+                                                        <property name="can_focus">False</property>
+                                                        <property name="icon_name">audio-volume-high</property>
+                                                      </object>
+                                                    </child>
+                                                  </object>
+                                                  <packing>
+                                                    <property name="expand">False</property>
+                                                    <property name="fill">True</property>
+                                                    <property name="position">3</property>
+                                                  </packing>
+                                                </child>
+                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
+                                            </child>
+                                            <child>
+                                              <object class="GtkFrame">
+                                                <property name="visible">True</property>
+                                                <property name="can_focus">False</property>
+                                                <property name="label_xalign">0</property>
+                                                <property name="shadow_type">none</property>
+                                                <child>
+                                                  <object class="GtkAlignment">
                                                     <property name="visible">True</property>
                                                     <property name="can_focus">False</property>
-                                                    <property name="orientation">vertical</property>
+                                                    <property name="left_padding">12</property>
                                                     <child>
                                                       <object class="GtkBox">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
+                                                        <property name="spacing">10</property>
                                                         <child>
-                                                          <object class="GtkButton" id="emulator_controls_playstop">
-                                                            <property name="visible">True</property>
-                                                            <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
-                                                            <property name="tooltip_text" translatable="yes">Run the game from the start or stop the emulator.</property>
-                                                            <property name="always_show_image">True</property>
-                                                            <signal name="clicked" handler="on_emulator_controls_playstop_clicked" swapped="no"/>
-                                                            <child>
-                                                            <object class="GtkImage" id="img_play">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="icon_name">media-playback-start</property>
-                                                            </object>
-                                                            </child>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">True</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">0</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkButton" id="emulator_controls_pause">
-                                                            <property name="visible">True</property>
-                                                            <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
-                                                            <signal name="clicked" handler="on_emulator_controls_pause_clicked" swapped="no"/>
-                                                            <child>
-                                                            <object class="GtkImage" id="img_pause">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="tooltip_text" translatable="yes">Pause the emulator.</property>
-                                                            <property name="icon_name">media-playback-pause</property>
-                                                            </object>
-                                                            </child>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">True</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">1</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkButton" id="emulator_controls_reset">
-                                                            <property name="visible">True</property>
-                                                            <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
-                                                            <property name="tooltip_text" translatable="yes">Reset the emulator.</property>
-                                                            <signal name="clicked" handler="on_emulator_controls_reset_clicked" swapped="no"/>
-                                                            <child>
-                                                            <object class="GtkImage">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="icon_name">view-refresh</property>
-                                                            </object>
-                                                            </child>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">True</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">2</property>
-                                                          </packing>
-                                                        </child>
-                                                        <child>
-                                                          <object class="GtkToggleButton" id="emulator_controls_volume">
-                                                            <property name="visible">True</property>
-                                                            <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
-                                                            <property name="active">True</property>
-                                                            <signal name="toggled" handler="on_emulator_controls_volume_toggled" swapped="no"/>
-                                                            <child>
-                                                            <object class="GtkImage">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="icon_name">audio-volume-high</property>
-                                                            </object>
-                                                            </child>
-                                                          </object>
-                                                          <packing>
-                                                            <property name="expand">False</property>
-                                                            <property name="fill">True</property>
-                                                            <property name="position">3</property>
-                                                          </packing>
-                                                        </child>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">0</property>
-                                                      </packing>
-                                                    </child>
-                                                    <child>
-                                                      <object class="GtkFrame">
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="label_xalign">0</property>
-                                                        <property name="shadow_type">none</property>
-                                                        <child>
-                                                          <object class="GtkAlignment">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="left_padding">12</property>
-                                                            <child>
-                                                            <object class="GtkBox">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="spacing">10</property>
-                                                            <child>
-                                                            <object class="GtkBox">
+                                                          <object class="GtkBox">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
                                                             <property name="margin_top">5</property>
@@ -1282,15 +1397,15 @@ via the File menu.</property>
                                                             <property name="position">1</property>
                                                             </packing>
                                                             </child>
-                                                            </object>
-                                                            <packing>
-                                                            <property name="expand">False</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="expand">True</property>
                                                             <property name="fill">True</property>
                                                             <property name="position">0</property>
-                                                            </packing>
-                                                            </child>
-                                                            <child>
-                                                            <object class="GtkBox">
+                                                          </packing>
+                                                        </child>
+                                                        <child>
+                                                          <object class="GtkBox">
                                                             <property name="visible">True</property>
                                                             <property name="can_focus">False</property>
                                                             <property name="margin_top">5</property>
@@ -1365,43 +1480,31 @@ via the File menu.</property>
                                                             <property name="position">1</property>
                                                             </packing>
                                                             </child>
-                                                            </object>
-                                                            <packing>
-                                                            <property name="expand">False</property>
+                                                          </object>
+                                                          <packing>
+                                                            <property name="expand">True</property>
                                                             <property name="fill">True</property>
                                                             <property name="position">1</property>
-                                                            </packing>
-                                                            </child>
-                                                            </object>
-                                                            </child>
-                                                          </object>
-                                                        </child>
-                                                        <child type="label">
-                                                          <object class="GtkLabel">
-                                                            <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="margin_top">5</property>
-                                                            <property name="label" translatable="yes">Savestate</property>
-                                                          </object>
+                                                          </packing>
                                                         </child>
                                                       </object>
-                                                      <packing>
-                                                        <property name="expand">False</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">1</property>
-                                                      </packing>
                                                     </child>
                                                   </object>
                                                 </child>
+                                                <child type="label">
+                                                  <object class="GtkLabel">
+                                                    <property name="visible">True</property>
+                                                    <property name="can_focus">False</property>
+                                                    <property name="margin_top">5</property>
+                                                    <property name="label" translatable="yes">Savestate</property>
+                                                  </object>
+                                                </child>
                                               </object>
-                                            </child>
-                                            <child type="label">
-                                              <object class="GtkLabel">
-                                                <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="margin_top">10</property>
-                                                <property name="label" translatable="yes">Emulator Controls</property>
-                                              </object>
+                                              <packing>
+                                                <property name="expand">False</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
                                             </child>
                                           </object>
                                           <packing>
@@ -1411,67 +1514,47 @@ via the File menu.</property>
                                           </packing>
                                         </child>
                                         <child>
-                                          <object class="GtkFrame">
+                                          <object class="GtkButtonBox">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="label_xalign">0</property>
-                                            <property name="shadow_type">none</property>
+                                            <property name="halign">start</property>
+                                            <property name="margin_left">5</property>
+                                            <property name="margin_right">5</property>
+                                            <property name="margin_bottom">5</property>
+                                            <property name="orientation">vertical</property>
+                                            <property name="layout_style">start</property>
                                             <child>
-                                              <object class="GtkAlignment">
+                                              <object class="GtkCheckButton" id="debug_settings_overlay">
+                                                <property name="label" translatable="yes">Draw Entity Debug Overlay</property>
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="left_padding">12</property>
-                                                <child>
-                                                  <object class="GtkButtonBox">
-                                                    <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
-                                                    <property name="halign">start</property>
-                                                    <property name="orientation">vertical</property>
-                                                    <property name="layout_style">start</property>
-                                                    <child>
-                                                      <object class="GtkCheckButton" id="debug_settings_overlay">
-                                                        <property name="label" translatable="yes">Draw Entity Debug Overlay</property>
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">True</property>
-                                                        <property name="receives_default">False</property>
-                                                        <property name="active">True</property>
-                                                        <property name="draw_indicator">True</property>
-                                                        <signal name="toggled" handler="on_debug_settings_overlay_toggled" swapped="no"/>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">True</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">0</property>
-                                                      </packing>
-                                                    </child>
-                                                    <child>
-                                                      <object class="GtkCheckButton" id="debug_settings_debug_mode">
-                                                        <property name="label" translatable="yes">Enable Debugging Mode</property>
-                                                        <property name="visible">True</property>
-                                                        <property name="can_focus">True</property>
-                                                        <property name="receives_default">False</property>
-                                                        <property name="tooltip_text" translatable="yes">branch_Debug (if debug) commands will activate.</property>
-                                                        <property name="active">True</property>
-                                                        <property name="draw_indicator">True</property>
-                                                        <signal name="toggled" handler="on_debug_settings_debug_mode_toggled" swapped="no"/>
-                                                      </object>
-                                                      <packing>
-                                                        <property name="expand">True</property>
-                                                        <property name="fill">True</property>
-                                                        <property name="position">1</property>
-                                                      </packing>
-                                                    </child>
-                                                  </object>
-                                                </child>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="active">True</property>
+                                                <property name="draw_indicator">True</property>
+                                                <signal name="toggled" handler="on_debug_settings_overlay_toggled" swapped="no"/>
                                               </object>
+                                              <packing>
+                                                <property name="expand">True</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">0</property>
+                                              </packing>
                                             </child>
-                                            <child type="label">
-                                              <object class="GtkLabel">
+                                            <child>
+                                              <object class="GtkCheckButton" id="debug_settings_debug_mode">
+                                                <property name="label" translatable="yes">Enable Debugging Mode</property>
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="margin_top">10</property>
-                                                <property name="label" translatable="yes">Debug Settings</property>
+                                                <property name="can_focus">True</property>
+                                                <property name="receives_default">False</property>
+                                                <property name="tooltip_text" translatable="yes">branch_Debug (if debug) commands will activate.</property>
+                                                <property name="active">True</property>
+                                                <property name="draw_indicator">True</property>
+                                                <signal name="toggled" handler="on_debug_settings_debug_mode_toggled" swapped="no"/>
                                               </object>
+                                              <packing>
+                                                <property name="expand">True</property>
+                                                <property name="fill">True</property>
+                                                <property name="position">1</property>
+                                              </packing>
                                             </child>
                                           </object>
                                           <packing>

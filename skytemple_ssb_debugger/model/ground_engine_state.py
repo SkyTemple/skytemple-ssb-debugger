@@ -18,7 +18,7 @@ import warnings
 from threading import Lock
 from typing import Optional, List, Tuple
 
-from gi.repository import Gtk
+from gi.repository import Gtk, GLib
 
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -216,8 +216,10 @@ class GroundEngineState:
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(pnt, cb))
 
     @synchronized_now(ground_engine_lock)
-    def reset(self, keep_global=False):
+    def reset(self, keep_global=False, fully=False):
         # ! Runs from either GTK or emu thread !
+        if fully:
+            self._running = False
         self._loaded_ssx_files = [None for _ in range(0, MAX_SSX + 1)]
         if keep_global:
             glob = self._loaded_ssb_files[0]
@@ -267,8 +269,11 @@ class GroundEngineState:
                                    f"these files, until they are reloaded:\n{n.join(were_invalid)}",
                                    title="Warning!")
             md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+            # Some timing issues here.
+            def run_and_destroy():
+                md.run()
+                md.destroy()
+            GLib.idle_add(lambda: run_and_destroy())
         for ssb in self._loaded_ssb_files:
             if ssb is not None:
                 self.ssb_file_manager.open_in_ground_engine(ssb.file_name)

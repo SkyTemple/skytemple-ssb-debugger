@@ -14,7 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional
+from typing import Optional, Dict
 import gi
 from gi.repository.Gtk import TreeViewColumn
 

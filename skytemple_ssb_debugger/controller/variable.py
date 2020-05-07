@@ -101,8 +101,9 @@ class VariableController:
         for var in self.rom_data.script_data.game_variables:
             var_values = []
             for offset in range(0, var.nbvalues):
-                _, val = GameVariable.read(self.emu_thread.emu.memory, self.rom_data, var.id, offset)
-                var_values.append(val)
+                if not var.is_local:
+                    _, val = GameVariable.read(self.emu_thread.emu.memory, self.rom_data, var.id, offset)
+                    var_values.append(val)
             self._variable_cache[self.rom_data.script_data.game_variables__by_id[var.id]] = var_values
         threadsafe_gtk_nonblocking(self._do_sync_gtk)
 
@@ -335,6 +336,8 @@ class VariableController:
     @synchronized(variables_lock)
     def hook__variable_set(self, address: int, size: int):
         var_id = self.emu_thread.emu.memory.register_arm9.r1
+        if var_id >= 400:
+            return
         var_offset = 0
         value_raw = self.emu_thread.emu.memory.register_arm9.r2
         # TODO: Do we need to process the raw value...?
@@ -345,6 +348,8 @@ class VariableController:
     @synchronized(variables_lock)
     def hook__variable_set_with_offset(self, address: int, size: int):
         var_id = self.emu_thread.emu.memory.register_arm9.r1
+        if var_id >= 400:
+            return
         var_offset = self.emu_thread.emu.memory.register_arm9.r2
         value_raw = self.emu_thread.emu.memory.register_arm9.r3
         # TODO: Do we need to process the raw value...?

@@ -34,6 +34,7 @@ from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
+from skytemple_ssb_debugger.controller.local_variable import LocalVariableController
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -125,6 +126,7 @@ class MainController:
 
         self.code_editor: CodeEditorController = CodeEditorController(self.builder, self, self.window)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
+        self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
         # Load more initial settings
@@ -568,6 +570,7 @@ class MainController:
                                      self.on_ground_engine_start)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
+            self.local_variable_controller.init(rom_data)
             self.code_editor.init(self.ssb_fm, self.breakpoint_manager, rom_data)
         except BaseException as ex:
             print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
@@ -625,11 +628,18 @@ class MainController:
         #self._set_sensitve("variables_notebook_parent", on_off)
         self._set_sensitve("ground_state_files_tree_sw", on_off)
         self._set_sensitve("ground_state_entities_tree_sw", on_off)
+        self._set_sensitve("macro_variables_sw", on_off)
+        self._set_sensitve("local_variables_sw", on_off)
 
     def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
         self.ground_state_controller.sync(self.code_editor, breaked_for)
+        # This will show the local and macro variables
+        if breaked_for:
+            self.local_variable_controller.sync(breaked_for)
+        else:
+            self.local_variable_controller.disable()
 
     def savestate(self, i: int):
         """Save both the emulator state and the ground engine state to files."""
@@ -734,7 +744,7 @@ class MainController:
             if self.breakpoint_state:
                 self.breakpoint_state.fail_hard()
             if self.debugger.ground_engine_state:
-                self.debugger.ground_engine_state.reset()
+                self.debugger.ground_engine_state.reset(fully=True)
             try:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.rom_filename))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())

@@ -14,26 +14,41 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Tuple
+from typing import Tuple, Optional
 
 from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar, GameVariableType
+from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
+
+START_OFFSET_LOCAL_VARIABLES = 108
+
+
+def _get_value_pnt(static_data: Pmd2Data, srs: Optional[ScriptRuntimeStruct], var: Pmd2ScriptGameVar):
+    if var.id >= 400:
+        # LOCAL VARIABLE
+        if not srs:
+            raise ValueError("Local variable requested, but script runtime struct is not set.")
+        return srs.pnt + START_OFFSET_LOCAL_VARIABLES + (var.memoffset * 8)
+    else:
+        # GLOBAL VARIABLE
+        return static_data.binaries['arm9.bin'].blocks['GameVarsValues'].begin_absolute + var.memoffset
 
 
 class GameVariable:
     @staticmethod
-    def read(mem: DeSmuME_Memory, static_data: Pmd2Data, var_id: int, read_offset: int) -> Tuple[Pmd2ScriptGameVar, int]:
+    def read(mem: DeSmuME_Memory, static_data: Pmd2Data,
+             var_id: int, read_offset: int, srs: Optional[ScriptRuntimeStruct] = None) -> Tuple[Pmd2ScriptGameVar, int]:
         """
-        Returns the info of the game variable passed in from the script info object and it's current value from memory
+        Returns the info of the game variable passed in from the script info object and it's current value from memory.
+        If the script runtime struct is not set, local variables can not be used!
 
         Partial reimplementation of
         GetScriptVariableValue, GetScriptVariableValueWithOffset and GetScriptVariableInfoAndPtr
         :return:
         """
         var: Pmd2ScriptGameVar = static_data.script_data.game_variables__by_id[var_id]
-
-        value_pnt = static_data.binaries['arm9.bin'].blocks['GameVarsValues'].begin_absolute + var.memoffset
+        value_pnt = _get_value_pnt(static_data, srs, var)
         value = 0
         if var.type == GameVariableType.BIT:
             # TODO: BRKEN!
@@ -103,16 +118,18 @@ class GameVariable:
         return var, value
 
     @staticmethod
-    def write(mem: DeSmuME_Memory, static_data: Pmd2Data, var_id: int, read_offset: int, value: int):
+    def write(mem: DeSmuME_Memory, static_data: Pmd2Data, var_id: int,
+              read_offset: int, value: int, srs: Optional[ScriptRuntimeStruct] = None):
         """
         Saves a game variable.
+        If the script runtime struct is not set, local variables can not be used!
 
         Partial reimplementation of
         SaveScriptVariableValue and SaveScriptVariableValueWithOffset
         """
         var: Pmd2ScriptGameVar = static_data.script_data.game_variables__by_id[var_id]
+        value_pnt = _get_value_pnt(static_data, srs, var)
 
-        value_pnt = static_data.binaries['arm9.bin'].blocks['GameVarsValues'].begin_absolute + var.memoffset
         # TODO: Enum?
         if var.type == GameVariableType.BIT:
             # TODO: BROKEN
