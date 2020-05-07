@@ -48,7 +48,7 @@ EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 
 class SSBEditorController:
     def __init__(
-            self, parent: 'CodeEditorController', breakpoint_manager: BreakpointManager,
+            self, parent: 'CodeEditorController', main_window: Gtk.Window, breakpoint_manager: BreakpointManager,
             ssb_file: SsbLoadedFile, rom_data: Pmd2Data, modified_handler, enable_explorerscript=True
     ):
         path = os.path.abspath(os.path.dirname(__file__))
@@ -57,6 +57,7 @@ class SSBEditorController:
         self.breakpoint_manager = breakpoint_manager
         self.rom_data = rom_data
         self.parent = parent
+        self._main_window = main_window
         self._modified_handler = modified_handler
 
         self._ssb = ssb_file
@@ -81,6 +82,7 @@ class SSBEditorController:
         self._explorerscript_revealer: Gtk.SearchEntry = None
         self._ssb_script_search_context: GtkSource.SearchContext = None
         self._explorerscript_search_context: GtkSource.SearchContext = None
+        self._saving_dialog: Optional[Gtk.Dialog] = None
 
         self._still_loading = True
         self._foucs_opcode_after_load = None
@@ -209,78 +211,95 @@ class SSBEditorController:
         have changes... - we save that one!
         """
         print(f"{self.filename}: Save")
-        saved = False
+
         ready_to_reload = False
         modified_buffer = None
-        try:
-            if self._ssb_script_view.get_buffer().get_modified():
-                modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-                ready_to_reload = self._ssb.file_manager.save_from_ssb_script(
-                    self._ssb.filename, modified_buffer.props.text
+        save_func = None
+        save_text = None
+
+        if not self._explorerscript_active and self._ssb_script_view.get_buffer().get_modified():
+            modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            save_func = self._ssb.file_manager.save_from_ssb_script
+        elif self._explorerscript_view.get_buffer().get_modified():
+            modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            save_func = self._ssb.file_manager.save_from_explorerscript
+        save_text = modified_buffer.props.text
+
+        def save_thread():
+            try:
+                save_func(
+                    self._ssb.filename, save_text
                 )
-                saved = True
-                self._ssb_script_view.get_buffer().set_modified(False)
-            if self._explorerscript_view.get_buffer().get_modified():
-                modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-                ready_to_reload = self._ssb.file_manager.save_from_explorerscript(
-                    self._ssb.filename, modified_buffer.props.text
-                )
-                saved = True
-                self._explorerscript_view.get_buffer().set_modified(False)
-        except ParseError as err:
-            md = Gtk.MessageDialog(
-                None,
-                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
-                f"The script file {self.filename} could not be saved.\n"
-                f"ParseError: {err.error}",
-                title="Warning!"
-            )
-            md.run()
-            md.destroy()
-            return
-        except Exception as err:
-            print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
-            md = Gtk.MessageDialog(
-                None,
-                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
-                f"The script file {self.filename} could not be saved.\n"
-                f"{err}",
-                title="Warning!"
-            )
-            md.run()
-            md.destroy()
-            return
-        if saved:
-            self._waiting_for_reload = True
-            # Build temporary text marks for the new source map. We will replace
-            # the real ones with those in on_ssb_reloaded
-            for model, view in [(self._ssb.ssbs, self._ssb_script_view), (self._ssb.exps, self._explorerscript_view)]:
-                buffer: Gtk.TextBuffer = view.get_buffer()
-                for opcode_offset, line, column in model.source_map:
-                    textiter = buffer.get_iter_at_line_offset(line, column)
-                    buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
+            except Exception as err:
+                GLib.idle_add(partial(self._save_done_error, err))
+                return
+            else:
+                GLib.idle_add(partial(self._save_done, ready_to_reload, modified_buffer))
 
-            buffer = self._ssb_script_view.get_buffer()
-            if self._explorerscript_active:
-                buffer = self._explorerscript_view.get_buffer()
-            # Resync the breakpoints at the Breakpoint Manager.
-            # Collect all line marks and check which is the first TMP_opcode text mark in it, this is
-            # the opcode to break on.
-            breakpoints_to_resync = []
-            for line in range(0, modified_buffer.get_line_count()):
-                marks = modified_buffer.get_source_marks_at_line(line, 'breakpoint')
-                if len(marks) > 0:
-                    opcode_offset = self._get_opcode_in_line(buffer, line, True)
-                    if opcode_offset is None:
-                        continue
+        self._saving_dialog: Gtk.Dialog = self.builder.get_object('file_saving_dialog')
+        self._saving_dialog.set_transient_for(self._main_window)
+        self.builder.get_object('file_saving_dialog_label').set_label(
+            f'Compiling script "{self.filename}"...'
+        )
+        threading.Thread(target=save_thread).start()
+        self._saving_dialog.run()
 
-                    breakpoints_to_resync.append(opcode_offset)
-            self.breakpoint_manager.resync(self._ssb.filename, breakpoints_to_resync)
 
-            # If the file manager told us, then we can immediately trigger the SSB reloading,
-            # this will trigger self.on_ssb_reloaded.
-            if ready_to_reload:
-                self._ssb.file_manager.force_reload(self._ssb.filename)
+    def _save_done_error(self, err):
+        """Gtk callback after the saving has been done, but an error occured."""
+        if self._saving_dialog is not None:
+            self._saving_dialog.hide()
+            self._saving_dialog = None
+        print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
+        prefix = ''
+        if isinstance(err, ParseError):
+            prefix = 'Parse error: '
+        md = Gtk.MessageDialog(
+            None,
+            Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
+            f"The script file {self.filename} could not be saved.\n"
+            f"{prefix}{err}",
+            title="Warning!"
+        )
+        md.run()
+        md.destroy()
+
+    def _save_done(self, ready_to_reload: bool, modified_buffer: GtkSource.Buffer):
+        """Gtk callback after the saving has been done."""
+        if self._saving_dialog is not None:
+            self._saving_dialog.hide()
+            self._saving_dialog = None
+        modified_buffer.set_modified(False)
+        self._waiting_for_reload = True
+        # Build temporary text marks for the new source map. We will replace
+        # the real ones with those in on_ssb_reloaded
+        for model, view in [(self._ssb.ssbs, self._ssb_script_view), (self._ssb.exps, self._explorerscript_view)]:
+            buffer: Gtk.TextBuffer = view.get_buffer()
+            for opcode_offset, line, column in model.source_map:
+                textiter = buffer.get_iter_at_line_offset(line, column)
+                buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
+
+        buffer = self._ssb_script_view.get_buffer()
+        if self._explorerscript_active:
+            buffer = self._explorerscript_view.get_buffer()
+        # Resync the breakpoints at the Breakpoint Manager.
+        # Collect all line marks and check which is the first TMP_opcode text mark in it, this is
+        # the opcode to break on.
+        breakpoints_to_resync = []
+        for line in range(0, modified_buffer.get_line_count()):
+            marks = modified_buffer.get_source_marks_at_line(line, 'breakpoint')
+            if len(marks) > 0:
+                opcode_offset = self._get_opcode_in_line(buffer, line, True)
+                if opcode_offset is None:
+                    continue
+
+                breakpoints_to_resync.append(opcode_offset)
+        self.breakpoint_manager.resync(self._ssb.filename, breakpoints_to_resync)
+
+        # If the file manager told us, then we can immediately trigger the SSB reloading,
+        # this will trigger self.on_ssb_reloaded.
+        if ready_to_reload:
+            self._ssb.file_manager.force_reload(self._ssb.filename)
 
     def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Optional[Gtk.Box]):
         self._activate_spinner(ssbs_bx)
@@ -330,8 +349,8 @@ class SSBEditorController:
 
         def load__gtk__exps_exception(exception):
             print(''.join(traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)))
-            md = Gtk.MessageDialog(None,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+            md = Gtk.MessageDialog(self._main_window,
+                                   Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK, f"There was an error while loading the ExplorerScript "
                                                        f"source code. The source will not be available.\n"
                                                        f"Please close and reopen the tab.\n\n"
@@ -888,7 +907,7 @@ class SSBEditorController:
     @staticmethod
     def _show_ssbs_es_changed_warning():
         md = Gtk.MessageDialog(
-            None,
+            self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
             Gtk.ButtonsType.NONE,
             f"The ExplorerScript source code does not match the compiled script that is present in the ROM?\n"

@@ -123,7 +123,7 @@ class MainController:
             )
             self._keyboard_tmp = self._keyboard_cfg
 
-        self.code_editor: CodeEditorController = CodeEditorController(self.builder, self)
+        self.code_editor: CodeEditorController = CodeEditorController(self.builder, self, self.window)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
@@ -194,11 +194,14 @@ class MainController:
             md.destroy()
             return
 
+    def on_main_window_delete_event(self, *args):
+        if not self.code_editor.close_all_tabs():
+            return True
+        self.gtk_main_quit()
+        return False
+
     def on_main_window_destroy(self, *args):
-        if self.breakpoint_state:
-            self.breakpoint_state.fail_hard()
-        self.emu_thread.stop()
-        Gtk.main_quit()
+        self.gtk_main_quit()
 
     def gtk_main_quit(self, *args):
         if self.breakpoint_state:

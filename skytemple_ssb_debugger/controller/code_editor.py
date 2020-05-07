@@ -32,7 +32,8 @@ if TYPE_CHECKING:
 
 
 class CodeEditorController:
-    def __init__(self, builder: Gtk.Builder, parent: 'MainController', enable_explorerscript=True):
+    def __init__(self, builder: Gtk.Builder, parent: 'MainController',
+                 main_window: Gtk.Window, enable_explorerscript=True):
         self.builder = builder
         self.parent = parent
         self.file_manager: Optional[SsbFileManager] = None
@@ -45,6 +46,7 @@ class CodeEditorController:
         self._cached_active_halted_filename = None
         self._cached_active_halted_opcode = None
         self.enable_explorerscript = enable_explorerscript
+        self._main_window = main_window
 
     def init(self, file_manager: SsbFileManager, breakpoint_manager: BreakpointManager, rom_data: Pmd2Data):
         self.file_manager = file_manager
@@ -64,7 +66,7 @@ class CodeEditorController:
                 self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
             else:
                 editor_controller = SSBEditorController(
-                    self, self.breakpoint_manager, self.file_manager.open_in_editor(filename),
+                    self, self._main_window, self.breakpoint_manager, self.file_manager.open_in_editor(filename),
                     self.rom_data, self.on_ssb_editor_modified, self.enable_explorerscript
                 )
                 if filename in self._cached_hanger_halt_lines:
@@ -85,7 +87,16 @@ class CodeEditorController:
                 self._open_editors[filename] = editor_controller
                 self._open_editors_by_page_num[pnum] = editor_controller
 
+    def close_all_tabs(self):
+        """Close all tabs. If any of the tabs was not closed, False is returned."""
+        all_returned_true = True
+        for filename in list(self._open_editors.keys()):
+            if not self.close_tab(filename):
+                all_returned_true = False
+        return all_returned_true
+
     def close_tab(self, filename: str):
+        """Close tab for filename. If the tab was not closed, False is returned."""
         if filename in self._open_editors:
             controller = self._open_editors[filename]
             pnum = self._notebook.page_num(controller.get_root_object())
@@ -96,11 +107,14 @@ class CodeEditorController:
                 if response == 1:
                     # Save first.
                     controller.save()
+                    # TODO: we just cancel atm, because the saving is done async. It would probably be nice to also
+                    #       exit, when it's done without error
+                    return False
                 if response == 0:
                     # okay, discard.
                     pass
                 else:
-                    return
+                    return False
 
             # Signal closing to file manager and check if breaking will still be possible.
             def warning_callback():
@@ -109,12 +123,13 @@ class CodeEditorController:
                 return True
 
             if not self.file_manager.close_in_editor(filename, warning_callback):
-                return
+                return False
 
             self._notebook.remove_page(pnum)
             controller.destroy()
             del self._open_editors[filename]
             del self._open_editors_by_page_num[pnum]
+            return True
             
     def focus_by_opcode_addr(self, filename: str, opcode_addr: int):
         """
@@ -177,7 +192,7 @@ class CodeEditorController:
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(
-            None,
+            self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
             Gtk.ButtonsType.NONE, f"Do you want to save changes to {filename}?"
@@ -193,7 +208,7 @@ class CodeEditorController:
 
     def _show_warning_breaking(self):
         md = Gtk.MessageDialog(
-            None,
+            self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
             Gtk.ButtonsType.YES_NO,
