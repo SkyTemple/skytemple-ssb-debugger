@@ -23,6 +23,9 @@
   <metadata>
     <property name="mimetypes">text/x-ssbs;application/x-ssbs;text/x-ssbs-source;application/x-ssbs-source</property>
     <property name="globs">*.ssbs</property>
+    <property name="line-comment-start">//</property>
+    <property name="block-comment-start">/*</property>
+    <property name="block-comment-end">*/</property>
   </metadata>
 
   <styles>
@@ -37,11 +40,27 @@
     <style id="position-marker-5" name="Position Marker .5"    map-to="def:decimal"/>
     <style id="label"             name="Label"                 map-to="def:preprocessor"/>
     <style id="label-jump"        name="Label Jump"            map-to="def:preprocessor"/>
+    <style id="comment"           name="Comment"               map-to="def:comment"/>
   </styles>
   <definitions>
     <define-regex id="identifier">[a-zA-Z_][0-9a-zA-Z_]*</define-regex>
 
     <define-regex id="number">[1-9][0-9]*</define-regex>
+
+    <context id="cpp-line-comment" style-ref="comment" end-at-line-end="true" extend-parent="false" class="comment" class-disabled="no-spell-check">
+      <start>//</start>
+      <include>
+        <context ref="def:in-line-comment"/>
+      </include>
+    </context>
+
+    <context id="c-block-comment" style-ref="comment" class="comment" class-disabled="no-spell-check">
+      <start>/\*</start>
+      <end>\*/</end>
+      <include>
+        <context ref="def:in-line-comment"/>
+      </include>
+    </context>
 
     <context id="double-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>"</start>
@@ -124,6 +143,8 @@
 
     <context id="ssbs" class="no-spell-check">
       <include>
+        <context ref="cpp-line-comment"/>
+        <context ref="c-block-comment"/>
         <context ref="double-quoted-string"/>
         <context ref="single-quoted-string"/>
         <context ref="decimal"/>

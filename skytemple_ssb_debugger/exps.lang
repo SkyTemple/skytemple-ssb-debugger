@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+#  Copyright 2020 Parakoopa
+#
+#  This file is part of SkyTemple.
+#
+#  SkyTemple is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  SkyTemple is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+
+-->
+<language id="exps" name="ExplorerScript" version="2.0" _section="Script">
+  <metadata>
+    <property name="mimetypes">text/x-exps;application/x-exps;text/x-exps-source;application/x-exps-source</property>
+    <property name="globs">*.exps</property>
+    <property name="line-comment-start">//</property>
+    <property name="block-comment-start">/*</property>
+    <property name="block-comment-end">*/</property>
+  </metadata>
+
+  <styles>
+    <style id="keyword"           name="Keyword"               map-to="def:keyword"/>
+    <style id="weak-keyword"      name="Weak Keyword"          map-to="def:special-constant"/>
+  </styles>
+  <definitions>
+    <context id="keywords" style-ref="keyword">
+      <keyword>coro</keyword>
+      <keyword>def</keyword>
+      <keyword>for_actor</keyword>
+      <keyword>for_object</keyword>
+      <keyword>for_performer</keyword>
+      <keyword>alias</keyword>
+      <keyword>previous</keyword>
+      <keyword>not</keyword>
+      <keyword>if</keyword>
+      <keyword>elseif</keyword>
+      <keyword>else</keyword>
+      <keyword>forever</keyword>
+      <keyword>with</keyword>
+      <keyword>switch</keyword>
+      <keyword>debug</keyword>
+      <keyword>edit</keyword>
+      <keyword>variation</keyword>
+      <keyword>random</keyword>
+      <keyword>sector</keyword>
+      <keyword>menu2</keyword>
+      <keyword>menu</keyword>
+      <keyword>case</keyword>
+      <keyword>default</keyword>
+      <keyword>clear</keyword>
+      <keyword>reset</keyword>
+      <keyword>init</keyword>
+      <keyword>scn</keyword>
+      <keyword>dungeon_result</keyword>
+      <keyword>adventure_log</keyword>
+      <keyword>continue</keyword>
+      <keyword>break</keyword>
+      <keyword>break_forever</keyword>
+      <keyword>return</keyword>
+      <keyword>end</keyword>
+      <keyword>hold</keyword>
+      <keyword>jump</keyword>
+    </context>
+
+    <context id="weak-keywords" style-ref="weak-keyword">
+      <keyword>TRUE</keyword>
+      <keyword>FALSE</keyword>
+      <keyword>actor</keyword>
+      <keyword>object</keyword>
+      <keyword>performer</keyword>
+      <keyword>value</keyword>
+      <keyword>dungeon_mode</keyword>
+    </context>
+
+    <context id="exps" class="no-spell-check">
+      <include>
+        <context ref="ssbs:cpp-line-comment"/>
+        <context ref="ssbs:c-block-comment"/>
+        <context ref="ssbs:double-quoted-string"/>
+        <context ref="ssbs:single-quoted-string"/>
+        <context ref="ssbs:decimal"/>
+        <context ref="ssbs:octal"/>
+        <context ref="ssbs:hex"/>
+        <context ref="ssbs:binary"/>
+        <context ref="keywords"/>
+        <context ref="weak-keywords"/>
+        <context ref="ssbs:lang-string-key"/>
+        <context ref="ssbs:position-marker"/>
+        <context ref="ssbs:label"/>
+        <context ref="ssbs:label-jump"/>
+        <context ref="ssbs:constant"/>
+        <context ref="ssbs:variable"/>
+      </include>
+    </context>
+  </definitions>
+</language>

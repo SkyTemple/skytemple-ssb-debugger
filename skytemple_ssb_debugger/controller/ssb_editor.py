@@ -220,10 +220,13 @@ class SSBEditorController:
         if not self._explorerscript_active and self._ssb_script_view.get_buffer().get_modified():
             modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
             save_func = self._ssb.file_manager.save_from_ssb_script
+            save_text = modified_buffer.props.text
         elif self._explorerscript_view.get_buffer().get_modified():
             modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
             save_func = self._ssb.file_manager.save_from_explorerscript
-        save_text = modified_buffer.props.text
+            save_text = modified_buffer.props.text
+        if not save_text:
+            return
 
         def save_thread():
             try:
@@ -466,50 +469,39 @@ class SSBEditorController:
         """
         assert self.filename == ssb.filename
         print(f"{self.filename}: On reload")
+        for view in (self._ssb_script_view, self._explorerscript_view):
+            buffer: GtkSource.Buffer = view.get_buffer()
+            # Remove all breakpoints
+            buffer.remove_source_marks(buffer.get_start_iter(), buffer.get_end_iter(), 'breakpoint')
 
-        if not self._explorerscript_active:
-            # If SsbScript is active, we just need to reload it's breakpoints.
-            view = self._ssb_script_view
-        else:
-            # If ExplorerScript is active, we also have to fully reload the script view.
-            view = self._explorerscript_view
-            bssbs: Gtk.TextBuffer = self._ssb_script_view.get_buffer()
-            bssbs.delete(bssbs.get_start_iter(), bssbs.get_end_iter())
-            bssbs.set_modified(False)
-            self.load_views(self.builder.get_object('page_ssbscript'), None)
+            # Remove all regular text marks and rename temporary
+            # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
+            if self._waiting_for_reload:
+                textiter: Gtk.TextIter = buffer.get_start_iter().copy()
+                # TODO: This is probably pretty slow
+                while textiter.forward_char():
+                    old_marks_at_pos = [
+                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
+                    ]
+                    new_marks_at_pos = [
+                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
+                    ]
+                    for m in old_marks_at_pos:
+                        buffer.delete_mark(m)
+                    for m in new_marks_at_pos:
+                        name = m.get_name()
+                        # Maybe by chance an old mark with this name still exists elsewhere, remove it.
+                        om = buffer.get_mark(name[4:])
+                        if om is not None:
+                            buffer.delete_mark(om)
+                        # Move by deleting and re-creating.
+                        match = MARK_PATTERN_TMP.match(m.get_name())
+                        buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
+                        buffer.delete_mark(m)
 
-        buffer: GtkSource.Buffer = view.get_buffer()
-        # Remove all breakpoints
-        buffer.remove_source_marks(buffer.get_start_iter(), buffer.get_end_iter(), 'breakpoint')
-
-        # Remove all regular text marks and rename temporary
-        # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
-        if self._waiting_for_reload:
-            textiter: Gtk.TextIter = buffer.get_start_iter().copy()
-            # TODO: This is probably pretty slow
-            while textiter.forward_char():
-                old_marks_at_pos = [
-                    m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
-                ]
-                new_marks_at_pos = [
-                    m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
-                ]
-                for m in old_marks_at_pos:
-                    buffer.delete_mark(m)
-                for m in new_marks_at_pos:
-                    name = m.get_name()
-                    # Maybe by chance an old mark with this name still exists elsewhere, remove it.
-                    om = buffer.get_mark(name[4:])
-                    if om is not None:
-                        buffer.delete_mark(om)
-                    # Move by deleting and re-creating.
-                    match = MARK_PATTERN_TMP.match(m.get_name())
-                    buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
-                    buffer.delete_mark(m)
-
-        # Re-add all breakpoints:
-        for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-            self.on_breakpoint_added(opcode_offset)
+            # Re-add all breakpoints:
+            for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
+                self.on_breakpoint_added(opcode_offset)
 
     def on_ssb_property_change(self, *args):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
