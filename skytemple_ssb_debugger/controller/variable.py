@@ -336,7 +336,7 @@ class VariableController:
     @synchronized(variables_lock)
     def hook__variable_set(self, address: int, size: int):
         var_id = self.emu_thread.emu.memory.register_arm9.r1
-        if var_id >= 400:
+        if var_id >= 0x400:
             return
         var_offset = 0
         value_raw = self.emu_thread.emu.memory.register_arm9.r2
@@ -348,7 +348,7 @@ class VariableController:
     @synchronized(variables_lock)
     def hook__variable_set_with_offset(self, address: int, size: int):
         var_id = self.emu_thread.emu.memory.register_arm9.r1
-        if var_id >= 400:
+        if var_id >= 0x400:
             return
         var_offset = self.emu_thread.emu.memory.register_arm9.r2
         value_raw = self.emu_thread.emu.memory.register_arm9.r3

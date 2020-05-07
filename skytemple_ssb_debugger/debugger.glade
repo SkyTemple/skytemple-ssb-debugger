@@ -1154,7 +1154,7 @@ via the File menu.</property>
                                                     <property name="width_request">256</property>
                                                     <property name="height_request">192</property>
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
+                                                    <property name="can_focus">True</property>
                                                     <property name="events">GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                                                     <signal name="button-press-event" handler="on_draw_main_button_press_event" swapped="no"/>
                                                     <signal name="button-release-event" handler="on_draw_main_button_release_event" swapped="no"/>
@@ -1173,7 +1173,7 @@ via the File menu.</property>
                                                     <property name="width_request">256</property>
                                                     <property name="height_request">192</property>
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
+                                                    <property name="can_focus">True</property>
                                                     <property name="events">GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                                                     <signal name="button-press-event" handler="on_draw_sub_button_press_event" swapped="no"/>
                                                     <signal name="button-release-event" handler="on_draw_sub_button_release_event" swapped="no"/>

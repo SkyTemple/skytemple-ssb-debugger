@@ -25,7 +25,7 @@ START_OFFSET_LOCAL_VARIABLES = 108
 
 
 def _get_value_pnt(static_data: Pmd2Data, srs: Optional[ScriptRuntimeStruct], var: Pmd2ScriptGameVar):
-    if var.id >= 400:
+    if var.id >= 0x400:
         # LOCAL VARIABLE
         if not srs:
             raise ValueError("Local variable requested, but script runtime struct is not set.")

@@ -65,11 +65,13 @@
       <keyword>adventure_log</keyword>
       <keyword>continue</keyword>
       <keyword>break</keyword>
-      <keyword>break_forever</keyword>
+      <keyword>break_loop</keyword>
       <keyword>return</keyword>
       <keyword>end</keyword>
       <keyword>hold</keyword>
       <keyword>jump</keyword>
+      <keyword>while</keyword>
+      <keyword>for</keyword>
     </context>
 
     <context id="weak-keywords" style-ref="weak-keyword">

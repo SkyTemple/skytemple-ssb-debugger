@@ -303,7 +303,10 @@ class DebuggerController:
             return
         emu = self.emu_thread.emu
 
-        ssb_str_table_pointer = emu.memory.unsigned.read_long(emu.memory.register_arm9.r4 + 0x20)
+        srs = ScriptRuntimeStruct(self.emu_thread, self.rom_data,
+                                  emu.memory.register_arm9.r4, self.ground_engine_state.unionall_load_addr)
+
+        ssb_str_table_pointer = srs.start_addr_str_table
         current_op_pnt = emu.memory.register_arm9.r5
         current_op = emu.memory.register_arm9.r6
         if current_op == 0x6B:
@@ -313,15 +316,17 @@ class DebuggerController:
             self.print_callback(f"debug_Print: {const_string}")
         elif current_op == 0x6C:
             # debug_PrintFlag
-            game_var_name, game_var_value = GameVariable.read(self.rom_data, emu.memory, emu.memory.unsigned.read_short(current_op_pnt + 2), 0)
+            game_var_name, game_var_value = GameVariable.read(
+                emu.memory, self.rom_data, emu.memory.unsigned.read_short(current_op_pnt + 2), 0, srs
+            )
             const_string = read_ssb_str_mem(emu.memory, ssb_str_table_pointer,
                                             emu.memory.unsigned.read_short(current_op_pnt + 4))
             self.print_callback(f"debug_PrintFlag: {const_string} - {game_var_name.name} = {game_var_value}")
         elif current_op == 0x6D:
             # debug_PrintScenario
             var_id = emu.memory.unsigned.read_short(current_op_pnt + 2)
-            game_var_name, game_var_value = GameVariable.read(self.rom_data, emu.memory, var_id, 0)
-            _, level_value = GameVariable.read(self.rom_data, emu.memory, var_id, 1)
+            game_var_name, game_var_value = GameVariable.read(self.rom_data, emu.memory, var_id, 0, srs)
+            _, level_value = GameVariable.read(emu.memory, self.rom_data, var_id, 1, srs)
             const_string = read_ssb_str_mem(emu.memory, ssb_str_table_pointer,
                                             emu.memory.unsigned.read_short(current_op_pnt + 4))
             self.print_callback(f"debug_PrintScenario: {const_string} - {game_var_name.name} = "
