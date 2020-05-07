@@ -19,6 +19,22 @@
 TODO:
 - Running scripts
 - ExplorerScript
+  - Writing exps files and source maps
+    - Project directory
+    - Reading them in the debugger and generating them
+  - Integration in debugger
+  - Macros
+    - File includes
+    - File includes in editor
+    - Breaking support / Source maps
+  - for / while
+  - String files
+  - check the branchscenario stuff again
+- Completions:
+    - TODO: We need to correct textiter because it doesn't work correct for inside function braces.
+    - Better support for new variable syntax (detecting start when inserting) + calling them "variables" in the calltip dropdown
+- Test the BranchScenario opcodes!!
+- Layout rework (everything on the left with panes + local/macro variables pane)
 
 - Menus (emulator controls, emulator settings, search, replace, export, import, save all, open new file, help, explorerscript settings)
 - Psy's list patch

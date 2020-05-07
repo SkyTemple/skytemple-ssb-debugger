@@ -14,22 +14,57 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Optional
+
 from explorerscript.source_map import SourceMap
 from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
 
 
 class ExplorerScriptFile(AbstractScriptFile):
-    def load(self):
-        pass  # TODO
+    def __init__(self, parent: 'SsbLoadedFile'):
+        super().__init__(parent)
+        self.ssb_hash: Optional[str] = None
+        self._text: str = ''
+        self._source_map: Optional[SourceMap] = None
+        self._loaded = False
+
+    def load(self, force=False):
+        # We delegate the project file handling to the file manager
+        fm = self.parent.project_file_manager
+        if not fm.explorerscript_exists(self.parent.filename):
+            # Source file doesn't exist yet
+            self.force_decompile()
+            fm.explorerscript_save(self.parent.filename, self._text, self._source_map)
+            fm.explorerscript_save_hash(self.parent.filename, self.ssb_hash)
+
+        if not force and not fm.explorerscript_hash_up_to_date(self.parent.filename, self.ssb_hash):
+            # Hash isn't up to date and load was not forced
+            raise SsbHashError()
+
+        self._text, self._source_map = fm.explorerscript_load(self.parent.filename)
+        self._loaded = True
+
+    def force_decompile(self):
+        self._text, self._source_map = self.parent.ssb_model.to_explorerscript()
+        self._loaded = True
 
     @property
     def loaded(self):
-        return False  # TODO
+        return self._loaded
 
     @property
     def text(self):
-        return ''  # TODO
+        return self._text
 
     @property
     def source_map(self):
-        return SourceMap({}, [])  # TODO
+        return self._source_map
+
+    @source_map.setter
+    def source_map(self, val):
+        self._source_map = val
+
+
+class SsbHashError(Exception):
+    """Raised by load, when the exps already exists but the hash file doesn't or the hash doesn't match the ssb hash."""
+    pass

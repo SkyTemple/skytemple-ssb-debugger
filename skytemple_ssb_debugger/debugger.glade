@@ -994,7 +994,7 @@ via the File menu.</property>
                         <child>
                           <object class="GtkEventBox" id="right_event_box">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can_focus">True</property>
                             <signal name="button-press-event" handler="on_right_event_box_button_press_event" swapped="no"/>
                             <child>
                               <object class="GtkFrame" id="box_r4">

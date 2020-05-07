@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
 
-class LoadedSsxFile:
+class SsxFileInRam:
     def __init__(self, file_name: str, hanger: int):
         self.file_name = file_name
         self.hanger = hanger

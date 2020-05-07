@@ -27,6 +27,7 @@ from desmume.controls import Keys, keymask, load_configured_config
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.config.path import skytemple_config_dir
+from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
 from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
@@ -50,6 +51,7 @@ from gi.repository.Gtk import *
 
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
+PROJECT_DIR_SUBDIR_NAME = 'debugger'
 
 
 class MainController:
@@ -58,7 +60,7 @@ class MainController:
         self.window = window
         self.emu_thread: Optional[EmulatorThread] = None
         self.rom: Optional[NintendoDSRom] = None
-        self.ssb_file_manager: Optional[SsbFileManager] = None
+        self.ssb_fm: Optional[SsbFileManager] = None
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_filename = None
         self._emu_is_running = False
@@ -69,6 +71,8 @@ class MainController:
 
         self.config_dir = os.path.join(skytemple_config_dir(), 'debugger')
         os.makedirs(self.config_dir, exist_ok=True)
+
+        self.project_fm: Optional[ProjectFileManager] = None
 
         self._click = False
         self._debug_log_scroll_to_bottom = False
@@ -149,8 +153,7 @@ class MainController:
         builder.connect_signals(self)
 
         # DEBUG
-        self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_all_scripts_replaced.nds')
-        #self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
+        self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
 
     @property
     def emu_is_running(self):
@@ -480,22 +483,28 @@ class MainController:
         self.variable_controller.sync()
 
     def on_variables_load1_clicked(self, *args):
-        self.variable_controller.load(1, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.load(1, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     def on_variables_load2_clicked(self, *args):
-        self.variable_controller.load(2, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.load(2, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     def on_variables_load3_clicked(self, *args):
-        self.variable_controller.load(3, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.load(3, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     def on_variables_save1_clicked(self, *args):
-        self.variable_controller.save(1, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.save(1, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     def on_variables_save2_clicked(self, *args):
-        self.variable_controller.save(2, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.save(2, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     def on_variables_save3_clicked(self, *args):
-        self.variable_controller.save(3, self.config_dir)
+        if self.project_fm:
+            self.variable_controller.save(3, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
     # TODO: A bit of weird coupling with those two signal handlers.
     def on_ground_state_entities_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
@@ -539,23 +548,26 @@ class MainController:
 
     # More functions
     def open_rom(self, fn: str):
+        # TODO: Inject most of this later with SkyTemple via new environment object
         try:
             self.rom = NintendoDSRom.fromFile(fn)
             rom_data = get_ppmdu_config_for_rom(self.rom)
-            self.ssb_file_manager = SsbFileManager(self.rom, rom_data, fn, self.debugger)
+            self.project_fm = ProjectFileManager(fn)
+            self.ssb_fm = SsbFileManager(self.rom, rom_data, fn, self.debugger, self.project_fm)
             self.breakpoint_manager = BreakpointManager(
-                os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_file_manager
+                os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_fm
             )
             # Immediately save, because the module packs the ROM differently.
             self.rom.saveToFile(fn)
             self.rom_filename = fn
             if self.debugger:
-                self.debugger.enable(rom_data, self.ssb_file_manager, self.breakpoint_manager,
+                self.debugger.enable(rom_data, self.ssb_fm, self.breakpoint_manager,
                                      self.on_ground_engine_start)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
-            self.code_editor.init(self.ssb_file_manager, self.breakpoint_manager, rom_data)
+            self.code_editor.init(self.ssb_fm, self.breakpoint_manager, rom_data)
         except BaseException as ex:
+            print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
             md = Gtk.MessageDialog(self.window,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK, f"Unable to load: {fn}\n{ex}",
@@ -618,12 +630,18 @@ class MainController:
 
     def savestate(self, i: int):
         """Save both the emulator state and the ground engine state to files."""
+        if not self.project_fm:
+            return
         try:
             #if self.breakpoint_state.is_stopped():
             #    raise RuntimeError("Savestates can not be created while debugging.")
             rom_basename = os.path.basename(self.rom_filename)
-            desmume_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}')
-            ground_engine_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}')
+            desmume_savestate_path = os.path.join(
+                self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
+            )
+            ground_engine_savestate_path = os.path.join(
+                self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
+            )
 
             with open(ground_engine_savestate_path, 'w') as f:
                 json.dump(self.debugger.ground_engine_state.serialize(), f)
@@ -640,9 +658,15 @@ class MainController:
 
     def loadstate(self, i: int):
         """Loads both the emulator state and the ground engine state from files."""
+        if not self.project_fm:
+            return
         rom_basename = os.path.basename(self.rom_filename)
-        desmume_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}')
-        ground_engine_savestate_path = os.path.join(self.config_dir, f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}')
+        desmume_savestate_path = os.path.join(
+            self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
+        )
+        ground_engine_savestate_path = os.path.join(
+            self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
+        )
 
         if os.path.exists(ground_engine_savestate_path):
             try:

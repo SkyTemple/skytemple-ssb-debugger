@@ -20,6 +20,7 @@ from typing import Dict, TYPE_CHECKING
 from ndspy.rom import NintendoDSRom
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.types.file_types import FileType
 from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
@@ -30,20 +31,24 @@ if TYPE_CHECKING:
 
 
 class SsbFileManager:
-    def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str, debugger: 'DebuggerController'):
+    def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str,
+                 debugger: 'DebuggerController', project_fm: ProjectFileManager):
         self.rom = rom
         self.rom_data = rom_data
         self.rom_filename = rom_filename
         self.debugger = debugger
+        self.project_fm = project_fm
         # TODO: Mechanism to close files again!
         self._open_files: Dict[str, SsbLoadedFile] = {}
 
     def get(self, filename: str) -> SsbLoadedFile:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
         if filename not in self._open_files:
+            ssb_bin = self.rom.getFileByName(filename)
             self._open_files[filename] = SsbLoadedFile(
-                filename, FileType.SSB.deserialize(self.rom.getFileByName(filename)), self
+                filename, FileType.SSB.deserialize(ssb_bin), self, self.project_fm
             )
+            self._open_files[filename].exps.ssb_hash = self._hash(ssb_bin)
         return self._open_files[filename]
 
     def save_from_ssb_script(self, filename: str, code: str):
@@ -79,7 +84,25 @@ class SsbFileManager:
         :raises: ParseError: On parsing errors
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
-        pass  # todo
+        self.get(filename)
+        compiler = ScriptCompiler(self.rom_data)
+        f = self._open_files[filename]
+        f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(code)
+        ssb_new_bin = FileType.SSB.serialize(f.ssb_model)
+
+        # Write ExplorerScript to file
+        self.project_fm.explorerscript_save(filename, code, f.exps.source_map)
+
+        # Update the hash of the ExplorerScript file
+        new_hash = self._hash(ssb_new_bin)
+        f.exps.ssb_hash = new_hash
+        self.project_fm.explorerscript_save_hash(filename, new_hash)
+
+        # Save ROM
+        self.rom.setFileByName(
+            filename, ssb_new_bin
+        )
+        self.rom.saveToFile(self.rom_filename)
         # After save:
         return self._handle_after_save(filename)
 
@@ -151,7 +174,11 @@ class SsbFileManager:
 
     def hash_for(self, filename: str):
         self.get(filename)
-        return hashlib.sha256(self._open_files[filename].ssb_model.original_binary_data).hexdigest()
+        return self._hash(self._open_files[filename].ssb_model.original_binary_data)
+
+    @staticmethod
+    def _hash(binary_data: bin):
+        return hashlib.sha256(binary_data).hexdigest()
 
     def mark_invalid(self, filename: str):
         """Mark a file as not breakable, because source mappings are not available."""

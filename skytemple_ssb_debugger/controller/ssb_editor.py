@@ -18,6 +18,7 @@
 import os
 import re
 import threading
+import traceback
 from functools import partial
 from typing import Tuple, List, Optional, TYPE_CHECKING
 
@@ -33,6 +34,7 @@ from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import Cal
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
+from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.pixbuf.icons import *
 
@@ -47,7 +49,7 @@ EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 class SSBEditorController:
     def __init__(
             self, parent: 'CodeEditorController', breakpoint_manager: BreakpointManager,
-            ssb_file: SsbLoadedFile, rom_data: Pmd2Data, modified_handler
+            ssb_file: SsbLoadedFile, rom_data: Pmd2Data, modified_handler, enable_explorerscript=True
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         self.builder = Gtk.Builder()
@@ -58,7 +60,6 @@ class SSBEditorController:
         self._modified_handler = modified_handler
 
         self._ssb = ssb_file
-        # TODO: Show warnings depending on the current ssb file state ( not breakable )
 
         self._root: Gtk.Box = self.builder.get_object('code_editor')
         self._ssm = StyleSchemeManager()
@@ -69,8 +70,7 @@ class SSBEditorController:
 
         # If True, the ExplorerScript view should be editable but not the SSBScript view
         # If False, the other way around.
-        # TODO
-        self._explorerscript_active = False
+        self._explorerscript_active = enable_explorerscript
         self._waiting_for_reload = False
 
         self._ssb_script_view: GtkSource.View = None
@@ -238,18 +238,8 @@ class SSBEditorController:
             md.run()
             md.destroy()
             return
-        except SsbCompilerError as err:
-            md = Gtk.MessageDialog(
-                None,
-                Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
-                f"The script file {self.filename} could not be saved.\n"
-                f"{err}",
-                title="Warning!"
-            )
-            md.run()
-            md.destroy()
-            return
-        except ValueError as err:
+        except Exception as err:
+            print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
             md = Gtk.MessageDialog(
                 None,
                 Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
@@ -292,21 +282,24 @@ class SSBEditorController:
             if ready_to_reload:
                 self._ssb.file_manager.force_reload(self._ssb.filename)
 
-    def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Gtk.Box):
+    def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Optional[Gtk.Box]):
         self._activate_spinner(ssbs_bx)
-        self._activate_spinner(exps_bx)
+        if exps_bx:
+            self._activate_spinner(exps_bx)
 
         (ssbs_ovl, self._ssb_script_view, self._ssb_script_revealer,
          self._ssb_script_search, self._ssb_script_search_context) = self._create_editor()
-        (exps_ovl, self._explorerscript_view, self._explorerscript_revealer,
-         self._explorerscript_search, self._explorerscript_search_context) = self._create_editor()
+        if exps_bx:
+            (exps_ovl, self._explorerscript_view, self._explorerscript_revealer,
+             self._explorerscript_search, self._explorerscript_search_context) = self._create_editor()
 
         self._load_ssbs_completion()
-        self._load_explorerscript_completion()
+        if exps_bx:
+            self._load_explorerscript_completion()
 
         self._update_view_editable_state()
 
-        def process_loaded(bx, ovl, model, view, language):
+        def load__gtk__process_loaded(bx, ovl, model, view, language):
             for child in bx.get_children():
                 bx.remove(child)
             buffer: GtkSource.Buffer = view.get_buffer()
@@ -321,19 +314,54 @@ class SSBEditorController:
 
             bx.pack_start(ovl, True, True, 0)
 
+        def load__gtk__exps_hash_error():
+            # we lazily load in the GTK thread now:
+            try:
+                if self._show_ssbs_es_changed_warning():
+                    # Re-generate the ExplorerScript
+                    self._ssb.exps.force_decompile()
+                else:
+                    # Force load the file
+                    self._ssb.exps.load(force=True)
+            except Exception as ex:
+                load__gtk__exps_exception(ex)
+            else:
+                load__gtk__process_loaded(exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps')
+
+        def load__gtk__exps_exception(exception):
+            print(''.join(traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)))
+            md = Gtk.MessageDialog(None,
+                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                   Gtk.ButtonsType.OK, f"There was an error while loading the ExplorerScript "
+                                                       f"source code. The source will not be available.\n"
+                                                       f"Please close and reopen the tab.\n\n"
+                                                       f"{exception}")
+            md.set_position(Gtk.WindowPosition.CENTER)
+            md.run()
+            md.destroy()
+
         def load_thread():
-            # SSBSLoad
+            # SSBS Load
             self._ssb.ssbs.load()
             GLib.idle_add(partial(
-                process_loaded, ssbs_bx, ssbs_ovl, self._ssb.ssbs, self._ssb_script_view, 'ssbs'
+                load__gtk__process_loaded, ssbs_bx, ssbs_ovl, self._ssb.ssbs, self._ssb_script_view, 'ssbs'
             ))
 
-            self._ssb.exps.load()
-            GLib.idle_add(partial(
-                process_loaded, exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps'
-            ))
-            GLib.idle_add(self._load_breakpoints_from_manager)
-            GLib.idle_add(self._after_views_loaded)
+            # ExplorerScript Load
+            if exps_bx:
+                try:
+                    self._ssb.exps.load()
+                except SsbHashError:
+                    GLib.idle_add(load__gtk__exps_hash_error)
+                except Exception as ex:
+                    GLib.idle_add(partial(load__gtk__exps_exception, ex))
+                else:
+                    GLib.idle_add(partial(
+                        load__gtk__process_loaded, exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps'
+                    ))
+            GLib.idle_add(self._load_breakpoints_from_manager, exps_bx is not None)
+            if self._still_loading:
+                GLib.idle_add(self._after_views_loaded)
 
         threading.Thread(target=load_thread).start()
 
@@ -366,10 +394,6 @@ class SSBEditorController:
         # - Save SSB file hashes to ground state file, do previous for all changed ssb files
         #   [show warning for affected files].
 
-        # Unrelated note for ES:
-        # - Generate in a separate, specified directory:
-        #   - .exps, .hash, .expssm
-
         buffer: Gtk.TextBuffer = view.get_buffer()
         opcode_offset = self._get_opcode_in_line(buffer, line_number - 1)
         if opcode_offset is None:
@@ -383,10 +407,14 @@ class SSBEditorController:
 
         self.breakpoint_manager.remove(self._ssb.filename, opcode_offset)
 
-    def on_breakpoint_added(self, opcode_offset):
+    def on_breakpoint_added(self, opcode_offset, also_update_explorerscript=True):
         print(f"{self.filename}: On breakpoint added")
         view: GtkSource.View
-        for view in (self._ssb_script_view, self._explorerscript_view):
+        if also_update_explorerscript:
+            view_list = (self._ssb_script_view, self._explorerscript_view)
+        else:
+            view_list = (self._ssb_script_view, )
+        for view in view_list:
             buffer: GtkSource.Buffer = view.get_buffer()
             m: Gtk.TextMark = buffer.get_mark(f'opcode_{opcode_offset}')
             # TODO: proper logging and warnings!
@@ -419,39 +447,50 @@ class SSBEditorController:
         """
         assert self.filename == ssb.filename
         print(f"{self.filename}: On reload")
-        for view in (self._ssb_script_view, self._explorerscript_view):
-            buffer: GtkSource.Buffer = view.get_buffer()
-            # Remove all breakpoints
-            buffer.remove_source_marks(buffer.get_start_iter(), buffer.get_end_iter(), 'breakpoint')
 
-            # Remove all regular text marks and rename temporary
-            # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
-            if self._waiting_for_reload:
-                textiter: Gtk.TextIter = buffer.get_start_iter().copy()
-                # TODO: This is probably pretty slow
-                while textiter.forward_char():
-                    old_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
-                    ]
-                    new_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
-                    ]
-                    for m in old_marks_at_pos:
-                        buffer.delete_mark(m)
-                    for m in new_marks_at_pos:
-                        name = m.get_name()
-                        # Maybe by chance an old mark with this name still exists elsewhere, remove it.
-                        om = buffer.get_mark(name[4:])
-                        if om is not None:
-                            buffer.delete_mark(om)
-                        # Move by deleting and re-creating.
-                        match = MARK_PATTERN_TMP.match(m.get_name())
-                        buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
-                        buffer.delete_mark(m)
+        if not self._explorerscript_active:
+            # If SsbScript is active, we just need to reload it's breakpoints.
+            view = self._ssb_script_view
+        else:
+            # If ExplorerScript is active, we also have to fully reload the script view.
+            view = self._explorerscript_view
+            bssbs: Gtk.TextBuffer = self._ssb_script_view.get_buffer()
+            bssbs.delete(bssbs.get_start_iter(), bssbs.get_end_iter())
+            bssbs.set_modified(False)
+            self.load_views(self.builder.get_object('page_ssbscript'), None)
 
-            # Re-add all breakpoints:
-            for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-                self.on_breakpoint_added(opcode_offset)
+        buffer: GtkSource.Buffer = view.get_buffer()
+        # Remove all breakpoints
+        buffer.remove_source_marks(buffer.get_start_iter(), buffer.get_end_iter(), 'breakpoint')
+
+        # Remove all regular text marks and rename temporary
+        # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
+        if self._waiting_for_reload:
+            textiter: Gtk.TextIter = buffer.get_start_iter().copy()
+            # TODO: This is probably pretty slow
+            while textiter.forward_char():
+                old_marks_at_pos = [
+                    m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
+                ]
+                new_marks_at_pos = [
+                    m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
+                ]
+                for m in old_marks_at_pos:
+                    buffer.delete_mark(m)
+                for m in new_marks_at_pos:
+                    name = m.get_name()
+                    # Maybe by chance an old mark with this name still exists elsewhere, remove it.
+                    om = buffer.get_mark(name[4:])
+                    if om is not None:
+                        buffer.delete_mark(om)
+                    # Move by deleting and re-creating.
+                    match = MARK_PATTERN_TMP.match(m.get_name())
+                    buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
+                    buffer.delete_mark(m)
+
+        # Re-add all breakpoints:
+        for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
+            self.on_breakpoint_added(opcode_offset)
 
     def on_ssb_property_change(self, *args):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
@@ -685,9 +724,9 @@ class SSBEditorController:
 
     # Utility
 
-    def _load_breakpoints_from_manager(self):
+    def _load_breakpoints_from_manager(self, also_update_explorerscript=True):
         for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-            self.on_breakpoint_added(opcode_offset)
+            self.on_breakpoint_added(opcode_offset, also_update_explorerscript=also_update_explorerscript)
 
     def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
@@ -819,7 +858,6 @@ class SSBEditorController:
                 self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.INFO,
                 "This is a read-only representation of the compiled ExplorerScript."
             )
-            # TODO: Button to reset ExplorerScript.
             # Force refresh of ES info bar
             self.on_ssb_property_change()
         else:
@@ -835,7 +873,8 @@ class SSBEditorController:
             # Force refresh of ES info bar
             self.on_ssb_property_change()
 
-    def _refill_info_bar(self, info_bar: Gtk.InfoBar, message_type: Gtk.MessageType, text: str):
+    @staticmethod
+    def _refill_info_bar(info_bar: Gtk.InfoBar, message_type: Gtk.MessageType, text: str):
         info_bar.set_message_type(message_type)
         content: Gtk.Box = info_bar.get_content_area()
         for c in content.get_children():
@@ -845,6 +884,27 @@ class SSBEditorController:
         content.add(lbl)
         info_bar.set_revealed(True)
         info_bar.show_all()
+
+    @staticmethod
+    def _show_ssbs_es_changed_warning():
+        md = Gtk.MessageDialog(
+            None,
+            Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
+            Gtk.ButtonsType.NONE,
+            f"The ExplorerScript source code does not match the compiled script that is present in the ROM?\n"
+            f"Do you want to keep your ExplorerScript source code, or reload (decompile) it from ROM?\n"
+            f"Warning: If you choose to reload, you will loose your file, including all comments in it.",
+            title="ExplorerScript Inconsistency"
+        )
+        md.add_button('Reload from ROM', Gtk.ResponseType.YES)
+        md.add_button('Keep ExplorerScript source code', Gtk.ResponseType.NO)
+
+        response = md.run()
+        md.destroy()
+
+        if response == Gtk.ResponseType.YES:
+            return True
+        return False
 
 
 def get_mixed_color(color_rgba1, color_rgba2):

@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class CodeEditorController:
-    def __init__(self, builder: Gtk.Builder, parent: 'MainController'):
+    def __init__(self, builder: Gtk.Builder, parent: 'MainController', enable_explorerscript=True):
         self.builder = builder
         self.parent = parent
         self.file_manager: Optional[SsbFileManager] = None
@@ -44,6 +44,7 @@ class CodeEditorController:
         self._cached_hanger_halt_lines = {}
         self._cached_active_halted_filename = None
         self._cached_active_halted_opcode = None
+        self.enable_explorerscript = enable_explorerscript
 
     def init(self, file_manager: SsbFileManager, breakpoint_manager: BreakpointManager, rom_data: Pmd2Data):
         self.file_manager = file_manager
@@ -64,7 +65,7 @@ class CodeEditorController:
             else:
                 editor_controller = SSBEditorController(
                     self, self.breakpoint_manager, self.file_manager.open_in_editor(filename),
-                    self.rom_data, self.on_ssb_editor_modified
+                    self.rom_data, self.on_ssb_editor_modified, self.enable_explorerscript
                 )
                 if filename in self._cached_hanger_halt_lines:
                     editor_controller.insert_hanger_halt_lines(self._cached_hanger_halt_lines[filename])

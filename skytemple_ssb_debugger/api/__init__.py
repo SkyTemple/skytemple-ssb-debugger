@@ -15,12 +15,3 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
-
-class LoadedSsbFile:
-    def __init__(self, file_name: str, hanger: int, hash: str = None):
-        self.file_name = file_name
-        self.hanger = hanger
-        # If true, the debugger is currently breaking at this file.
-        self.breaked = False
-        # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
-        self.hash = hash

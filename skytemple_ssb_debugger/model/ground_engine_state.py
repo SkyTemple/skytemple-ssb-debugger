@@ -29,8 +29,8 @@ from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
 from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.model.ground_state.event import Event
-from skytemple_ssb_debugger.model.ground_state.loaded_ssb_file import LoadedSsbFile
-from skytemple_ssb_debugger.model.ground_state.loaded_ssx_file import LoadedSsxFile
+from skytemple_ssb_debugger.model.ground_state.ssb_file_in_ram import SsbFileInRam
+from skytemple_ssb_debugger.model.ground_state.ssx_file_in_ram import SsxFileInRam
 from skytemple_ssb_debugger.model.ground_state.object import Object
 from skytemple_ssb_debugger.model.ground_state.performer import Performer
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -94,8 +94,8 @@ class GroundEngineState:
         for i in range(0, info.maxentries):
             self._events.append(Event(self.emu_thread, self.rom_data, self.pnt_events, i * info.entrylength))
 
-        self._loaded_ssx_files: List[Optional[LoadedSsxFile]] = []
-        self._loaded_ssb_files: List[Optional[LoadedSsbFile]] = []
+        self._loaded_ssx_files: List[Optional[SsxFileInRam]] = []
+        self._loaded_ssb_files: List[Optional[SsbFileInRam]] = []
         self.reset()
 
     @synchronized_now(ground_engine_lock)
@@ -177,7 +177,7 @@ class GroundEngineState:
             return evt
         return None
 
-    def collect(self) -> Tuple[GlobalScript, List[LoadedSsbFile], List[LoadedSsxFile], List[Actor], List[Object], List[Performer], List[Event]]:
+    def collect(self) -> Tuple[GlobalScript, List[SsbFileInRam], List[SsxFileInRam], List[Actor], List[Object], List[Performer], List[Event]]:
         loaded_ssb_files = self.loaded_ssb_files
         loaded_ssx_files = self.loaded_ssx_files
         actors = [x for x in self.actors if x is not None]
@@ -248,7 +248,7 @@ class GroundEngineState:
         self._running = state['running']
         self._load_ssb_for = state['load_ssb_for']
         self._loaded_ssb_files = [
-            LoadedSsbFile(fn_and_hash[0], hng, fn_and_hash[1])
+            SsbFileInRam(fn_and_hash[0], hng, fn_and_hash[1])
             if fn_and_hash is not None else None
             for hng, fn_and_hash in enumerate(state['ssbs'])
         ]
@@ -274,7 +274,7 @@ class GroundEngineState:
                 self.ssb_file_manager.open_in_ground_engine(ssb.file_name)
                 if ssb.file_name in were_invalid:
                     self.ssb_file_manager.mark_invalid(ssb.file_name)
-        self._loaded_ssx_files = [LoadedSsxFile(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]
+        self._loaded_ssx_files = [SsxFileInRam(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]
 
         # Also update the load address for unionall
         threadsafe_emu(self.emu_thread, lambda: self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr)))
@@ -322,7 +322,7 @@ class GroundEngineState:
             warnings.warn(f"Ground Engine debugger: Invalid hanger ID for ssb: {load_for}")
             return
         threadsafe_gtk_nonblocking(lambda: self.ssb_file_manager.open_in_ground_engine(name))
-        self._loaded_ssb_files[load_for] = (LoadedSsbFile(name, load_for))
+        self._loaded_ssb_files[load_for] = (SsbFileInRam(name, load_for))
 
     @synchronized(ground_engine_lock)
     def hook__ssx_load(self, address, size):
@@ -336,7 +336,7 @@ class GroundEngineState:
             warnings.warn(f"Ground Engine debugger: Invalid hanger ID for ssx: {hanger}")
             return
 
-        self._loaded_ssx_files[hanger] = (LoadedSsxFile(name, hanger))
+        self._loaded_ssx_files[hanger] = (SsxFileInRam(name, hanger))
 
     @synchronized_now(ground_engine_lock)
     def hook__talk_load(self, address, size):

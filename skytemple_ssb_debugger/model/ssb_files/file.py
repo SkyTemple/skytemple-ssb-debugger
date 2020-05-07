@@ -17,6 +17,7 @@
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from explorerscript.source_map import SourceMapPositionMark
+from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.script.ssa_sse_sss.position_marker import SsaPositionMarker
 from skytemple_files.script.ssb.model import Ssb
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
@@ -27,12 +28,14 @@ if TYPE_CHECKING:
 
 
 class SsbLoadedFile:
-    def __init__(self, filename: str, model: Ssb, file_manager: 'SsbFileManager'):
+    def __init__(self, filename: str, model: Ssb,
+                 ssb_file_manager: 'SsbFileManager', project_file_manager: 'ProjectFileManager'):
         self.filename = filename
         self.ssb_model = model
-        self.ssbs = SsbScriptFile(self)
-        self.exps = ExplorerScriptFile(self)
-        self.file_manager: 'SsbFileManager' = file_manager
+        self.file_manager: 'SsbFileManager' = ssb_file_manager
+        self.project_file_manager: 'ProjectFileManager' = project_file_manager
+        self.ssbs: SsbScriptFile = SsbScriptFile(self)
+        self.exps: ExplorerScriptFile = ExplorerScriptFile(self)
 
         # The SSB file is currently open in an editor.
         self._opened_in_editor = False
