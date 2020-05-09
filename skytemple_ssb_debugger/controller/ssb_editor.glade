@@ -34,12 +34,13 @@
           </packing>
         </child>
         <child>
-          <object class="GtkToolButton" id="code_editor_cntrls_breaks">
+          <object class="GtkToggleToolButton" id="code_editor_cntrls_breaks">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="tooltip_text" translatable="yes">Enable or disable breakpoints.</property>
             <property name="label" translatable="yes">Disable Breaks</property>
             <property name="use_underline">True</property>
+            <signal name="toggled" handler="on_code_editor_cntrls_breaks_toggled" swapped="no"/>
           </object>
           <packing>
             <property name="expand">False</property>

@@ -81,6 +81,14 @@ class DebuggerController:
         self._debug_mode = False
         self._log_ground_engine_state = False
 
+    @property
+    def breakpoints_disabled(self):
+        return self._breakpoints_disabled
+
+    @breakpoints_disabled.setter
+    def breakpoints_disabled(self, val):
+        self._breakpoints_disabled = val
+
     def enable(self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager,
                breakpoint_manager: BreakpointManager, inform_ground_engine_start_cb):
         self.rom_data = rom_data

@@ -635,6 +635,10 @@ class ScriptEditorController:
     def on_code_editor_cntrls_step_next_clicked(self, btn: Gtk.Button, *args):
         self.parent.parent.emu_resume(BreakpointStateType.STEP_NEXT)
 
+    def on_code_editor_cntrls_breaks_toggled(self, btn: Gtk.ToggleButton, *args):
+        if self.parent.parent.debugger:
+            self.parent.parent.debugger.breakpoints_disabled = btn.get_active()
+
     # Utility
     def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
