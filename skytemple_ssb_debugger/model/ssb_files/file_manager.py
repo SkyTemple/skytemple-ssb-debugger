@@ -15,10 +15,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import hashlib
+import os
 from typing import Dict, TYPE_CHECKING
 
 from ndspy.rom import NintendoDSRom
 
+from explorerscript.included_usage_map import IncludedUsageMap
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.types.file_types import FileType
@@ -65,6 +67,7 @@ class SsbFileManager:
         :raises: ParseError: On parsing errors
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
+        # TODO: Put save functions in new classes
         self.get(filename)
         compiler = ScriptCompiler(self.rom_data)
         f = self._open_files[filename]
@@ -76,7 +79,7 @@ class SsbFileManager:
         # After save:
         return self._handle_after_save(filename)
 
-    def save_from_explorerscript(self, filename: str, code: str):
+    def save_from_explorerscript(self, ssb_filename: str, code: str):
         """
         Save an SSB model from ExplorerScript. It's existing model and source map will be updated.
         If the file was not loaded in the ground engine, and is thus ready
@@ -84,32 +87,51 @@ class SsbFileManager:
         when you are ready (to trigger ssb reload event).
         Otherwise False is returned and the event will be triggered later automatically.
 
+        ssb_filename is the SSB file name! The exps file is auto-detected using this.
+
         :raises: ParseError: On parsing errors
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
-        self.get(filename)
+        # TODO: Put save functions in new classes
+        project_dir = self.project_fm.dir()
+        exps_filename = os.path.join(
+            project_dir, self.project_fm.explorerscript_get_path_for_ssb(ssb_filename)
+        )
+        self.get(ssb_filename)
         compiler = ScriptCompiler(self.rom_data)
-        f = self._open_files[filename]
+        f = self._open_files[ssb_filename]
+        original_source_map = f.exps.source_map
         f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(
-            code, filename, lookup_paths=[self.project_fm.dir(MACROS_DIR_NAME)]
+            code, exps_filename, lookup_paths=[self.project_fm.dir(MACROS_DIR_NAME)]
         )
         ssb_new_bin = FileType.SSB.serialize(f.ssb_model)
 
         # Write ExplorerScript to file
-        self.project_fm.explorerscript_save(filename, code, f.exps.source_map)
+        self.project_fm.explorerscript_save(ssb_filename, code, f.exps.source_map)
 
         # Update the hash of the ExplorerScript file
         new_hash = self._hash(ssb_new_bin)
         f.exps.ssb_hash = new_hash
-        self.project_fm.explorerscript_save_hash(filename, new_hash)
+        self.project_fm.explorerscript_save_hash(ssb_filename, new_hash)
+
+        # Update the inclusion maps of included files.
+        diff = IncludedUsageMap(original_source_map, exps_filename) - IncludedUsageMap(f.exps.source_map, exps_filename)
+        for removed_path in diff.removed:
+            self.project_fm.explorerscript_include_usage_remove(removed_path.replace(project_dir, ''), ssb_filename)
+        for added_path in diff.added:
+            self.project_fm.explorerscript_include_usage_add(added_path.replace(project_dir, ''), ssb_filename)
+
+        # TODO: (in new method):
+            # TODO: Save all included files.
+            # TODO: Only save to ROM if actually a ssb file.
 
         # Save ROM
         self.rom.setFileByName(
-            filename, ssb_new_bin
+            ssb_filename, ssb_new_bin
         )
         self.rom.saveToFile(self.rom_filename)
         # After save:
-        return self._handle_after_save(filename)
+        return self._handle_after_save(ssb_filename)
 
     def force_reload(self, filename: str):
         """

@@ -57,11 +57,11 @@ class ExplorerScriptFile(AbstractScriptFile):
         return self._text
 
     @property
-    def source_map(self):
+    def source_map(self) -> SourceMap:
         return self._source_map
 
     @source_map.setter
-    def source_map(self, val):
+    def source_map(self, val: SourceMap):
         self._source_map = val
 
 
