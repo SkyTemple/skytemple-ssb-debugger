@@ -94,12 +94,10 @@ class SsbFileManager:
         """
         # TODO: Put save functions in new classes
         project_dir = self.project_fm.dir()
-        exps_filename = os.path.join(
-            project_dir, self.project_fm.explorerscript_get_path_for_ssb(ssb_filename)
-        )
         self.get(ssb_filename)
         compiler = ScriptCompiler(self.rom_data)
         f = self._open_files[ssb_filename]
+        exps_filename = f.exps.full_path
         original_source_map = f.exps.source_map
         f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(
             code, exps_filename, lookup_paths=[self.project_fm.dir(MACROS_DIR_NAME)]
@@ -116,10 +114,11 @@ class SsbFileManager:
 
         # Update the inclusion maps of included files.
         diff = IncludedUsageMap(original_source_map, exps_filename) - IncludedUsageMap(f.exps.source_map, exps_filename)
+        pd_w_pathsetp = project_dir + os.path.pathsep
         for removed_path in diff.removed:
-            self.project_fm.explorerscript_include_usage_remove(removed_path.replace(project_dir, ''), ssb_filename)
+            self.project_fm.explorerscript_include_usage_remove(removed_path.replace(pd_w_pathsetp, ''), ssb_filename)
         for added_path in diff.added:
-            self.project_fm.explorerscript_include_usage_add(added_path.replace(project_dir, ''), ssb_filename)
+            self.project_fm.explorerscript_include_usage_add(added_path.replace(pd_w_pathsetp, ''), ssb_filename)
 
         # TODO: (in new method):
             # TODO: Save all included files.

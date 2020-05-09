@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import os
 from typing import Optional
 
 from explorerscript.source_map import SourceMap
@@ -27,6 +28,14 @@ class ExplorerScriptFile(AbstractScriptFile):
         self._text: str = ''
         self._source_map: Optional[SourceMap] = None
         self._loaded = False
+
+    @property
+    def full_path(self):
+        fm = self.parent.project_file_manager
+        project_dir = fm.dir()
+        return os.path.join(
+            project_dir, fm.explorerscript_get_path_for_ssb(self.parent.filename)
+        )
 
     def load(self, force=False):
         # We delegate the project file handling to the file manager

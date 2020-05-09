@@ -21,17 +21,17 @@ from gi.repository import Gtk, Pango
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.controller.ssb_editor import SSBEditorController
+from skytemple_ssb_debugger.controller.script_editor import ScriptEditorController
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-
+from ..model.script_file_context.ssb_file import SsbFileScriptFileContext
 
 if TYPE_CHECKING:
     from .main import MainController
 
 
-class CodeEditorController:
+class EditorNotebookController:
     def __init__(self, builder: Gtk.Builder, parent: 'MainController',
                  main_window: Gtk.Window, enable_explorerscript=True):
         self.builder = builder
@@ -39,8 +39,8 @@ class CodeEditorController:
         self.file_manager: Optional[SsbFileManager] = None
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_data: Optional[Pmd2Data] = None
-        self._open_editors: Dict[str, SSBEditorController] = {}
-        self._open_editors_by_page_num: Dict[int, SSBEditorController] = {}
+        self._open_editors: Dict[str, ScriptEditorController] = {}
+        self._open_editors_by_page_num: Dict[int, ScriptEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
         self._cached_hanger_halt_lines = {}
         self._cached_active_halted_filename = None
@@ -55,25 +55,28 @@ class CodeEditorController:
         self.breakpoint_manager.register_callbacks(self.on_breakpoint_added, self.on_breakpoint_removed)
 
     @property
-    def currently_open(self) -> Optional[SSBEditorController]:
+    def currently_open(self) -> Optional[ScriptEditorController]:
         if self._notebook.get_current_page() > -1:
             return self._open_editors_by_page_num[self._notebook.get_current_page()]
         return None
 
-    def open(self, filename: str):
+    def open_ssb(self, filename: str):
         if self.file_manager:
             if filename in self._open_editors:
                 self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
             else:
-                editor_controller = SSBEditorController(
-                    self, self._main_window, self.breakpoint_manager, self.file_manager.open_in_editor(filename),
+                context = SsbFileScriptFileContext(self.file_manager.open_in_editor(filename), self.breakpoint_manager)
+                editor_controller = ScriptEditorController(
+                    self, self._main_window, context,
                     self.rom_data, self.on_ssb_editor_modified, self.enable_explorerscript
                 )
                 if filename in self._cached_hanger_halt_lines:
-                    editor_controller.insert_hanger_halt_lines(self._cached_hanger_halt_lines[filename])
-                if self._cached_active_halted_filename == filename:
+                    editor_controller.insert_hanger_halt_lines(filename, self._cached_hanger_halt_lines[filename])
+                if self._cached_active_halted_filename is not None:
                     editor_controller.toggle_debugging_controls(True)
-                    editor_controller.halted_at_opcode(self._cached_active_halted_opcode)
+                    editor_controller.on_break_pulled(
+                        self._cached_active_halted_filename, self._cached_active_halted_opcode
+                    )
                 current_page = self._notebook.get_current_page()
                 root = editor_controller.get_root_object()
                 pnum = self._notebook.insert_page(
@@ -131,23 +134,24 @@ class CodeEditorController:
             del self._open_editors_by_page_num[pnum]
             return True
             
-    def focus_by_opcode_addr(self, filename: str, opcode_addr: int):
+    def focus_by_opcode_addr(self, ssb_filename: str, opcode_addr: int):
         """
         Pull an editor into focus and tell it to jump to opcode_addr. 
         If the editor is not open, it's opened before.
         """
-        if filename not in self._open_editors:
-            self.open(filename)
+        # TODO: Handle focusing lines in Macro files
+        if ssb_filename not in self._open_editors:
+            self.open_ssb(ssb_filename)
         else:
-            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
-        self._open_editors[filename].focus_opcode(opcode_addr)
+            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[ssb_filename].get_root_object()))
+        self._open_editors[ssb_filename].focus_opcode(ssb_filename, opcode_addr)
 
-    def break_pulled(self, state: BreakpointState, filename: str, opcode_addr: int):
+    def break_pulled(self, state: BreakpointState, ssb_filename: str, opcode_addr: int):
         """The debugger paused. Enable debugger controls for file_name."""
-        if filename in self._open_editors:
-            self._open_editors[filename].toggle_debugging_controls(True)
-            self._open_editors[filename].halted_at_opcode(opcode_addr)
-        self._cached_active_halted_filename = filename
+        for editor in self._open_editors.values():
+            editor.toggle_debugging_controls(True)
+            editor.on_break_pulled(ssb_filename, opcode_addr)
+        self._cached_active_halted_filename = ssb_filename
         self._cached_active_halted_opcode = opcode_addr
         state.add_release_hook(self.break_released)
 
@@ -155,7 +159,7 @@ class CodeEditorController:
         """The debugger is no longer paused, disable all debugging controls."""
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(False)
-            editor.halted_at_opcode(-1)
+            editor.on_break_released()
         self._cached_active_halted_filename = None
         self._cached_active_halted_opcode = None
 
@@ -164,7 +168,7 @@ class CodeEditorController:
         for filename, lines in halt_lines.items():
             self._cached_hanger_halt_lines[filename] = lines
             if filename in self._open_editors.keys():
-                self._open_editors[filename].insert_hanger_halt_lines(lines)
+                self._open_editors[filename].insert_hanger_halt_lines(filename, lines)
 
     def remove_hanger_halt_lines(self):
         """Remove the marks for the current script execution points"""
@@ -172,15 +176,15 @@ class CodeEditorController:
         for editor in self._open_editors.values():
             editor.remove_hanger_halt_lines()
 
-    def on_breakpoint_added(self, filename, opcode_offset):
-        if filename in self._open_editors:
-            self._open_editors[filename].on_breakpoint_added(opcode_offset)
+    def on_breakpoint_added(self, ssb_filename, opcode_offset):
+        for editor in self._open_editors.values():
+            editor.on_breakpoint_added(ssb_filename, opcode_offset)
 
     def on_breakpoint_removed(self, filename, opcode_offset):
-        if filename in self._open_editors:
-            self._open_editors[filename].on_breakpoint_removed(opcode_offset)
+        for editor in self._open_editors.values():
+            editor.on_breakpoint_removed(filename, opcode_offset)
 
-    def on_ssb_editor_modified(self, controller: SSBEditorController, modified: bool):
+    def on_ssb_editor_modified(self, controller: ScriptEditorController, modified: bool):
         lbl_box: Gtk.Box = self._notebook.get_tab_label(controller.get_root_object())
         lbl: Gtk.Label = lbl_box.get_children()[0]
         filename = controller.filename.split('/')[-1][:-4]

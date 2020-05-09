@@ -30,7 +30,7 @@ from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
-from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
+from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
@@ -124,7 +124,7 @@ class MainController:
             )
             self._keyboard_tmp = self._keyboard_cfg
 
-        self.code_editor: CodeEditorController = CodeEditorController(self.builder, self, self.window)
+        self.editor_notebook: EditorNotebookController = EditorNotebookController(self.builder, self, self.window)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
@@ -198,7 +198,7 @@ class MainController:
             return
 
     def on_main_window_delete_event(self, *args):
-        if not self.code_editor.close_all_tabs():
+        if not self.editor_notebook.close_all_tabs():
             return True
         self.gtk_main_quit()
         return False
@@ -330,8 +330,8 @@ class MainController:
             self.open_rom(fn)
 
     def on_menu_save_activate(self, menu_item: Gtk.MenuItem, *args):
-        if self.code_editor and self.code_editor.currently_open:
-            self.code_editor.currently_open.save()
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.save()
 
     def on_menu_save_all_activate(self, menu_item: Gtk.MenuItem, *args):
         pass  # todo
@@ -438,7 +438,7 @@ class MainController:
                 if model[treeiter][0] == '':
                     tree.expand_row(model[treeiter].path, False)
                 else:
-                    self.code_editor.open(SCRIPT_DIR + '/' + model[treeiter][0])
+                    self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + model[treeiter][0])
 
     def init_file_tree(self):
         ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
@@ -542,7 +542,7 @@ class MainController:
                     ssb = ges.loaded_ssb_files[ss.hanger_ssb]
                     if not ssb:
                         return
-                    self.code_editor.focus_by_opcode_addr(ssb.file_name, ss.current_opcode_addr_relative)
+                    self.editor_notebook.focus_by_opcode_addr(ssb.file_name, ss.current_opcode_addr_relative)
 
     def on_ground_state_files_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
@@ -552,7 +552,7 @@ class MainController:
                 path = model[treeiter][1]
                 # TODO: SSA/SSS/SSE support
                 if entry_type == GE_FILE_STORE_SCRIPT and path and path != '':
-                    self.code_editor.open(SCRIPT_DIR + '/' + path)
+                    self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + path)
 
     # More functions
     def open_rom(self, fn: str):
@@ -574,7 +574,7 @@ class MainController:
             self.init_file_tree()
             self.variable_controller.init(rom_data)
             self.local_variable_controller.init(rom_data)
-            self.code_editor.init(self.ssb_fm, self.breakpoint_manager, rom_data)
+            self.editor_notebook.init(self.ssb_fm, self.breakpoint_manager, rom_data)
         except BaseException as ex:
             print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
             md = Gtk.MessageDialog(self.window,
@@ -619,8 +619,8 @@ class MainController:
 
     def toggle_paused_debugging_features(self, on_off):
         if not on_off:
-            if self.code_editor:
-                self.code_editor.remove_hanger_halt_lines()
+            if self.editor_notebook:
+                self.editor_notebook.remove_hanger_halt_lines()
         # These are always on for now. (mostly for performance reason. TODO: Does this lead to issues?)
         #self._set_sensitve("variables_save1", on_off)
         #self._set_sensitve("variables_save2", on_off)
@@ -637,7 +637,7 @@ class MainController:
     def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
-        self.ground_state_controller.sync(self.code_editor, breaked_for)
+        self.ground_state_controller.sync(self.editor_notebook, breaked_for)
         # This will show the local and macro variables
         if breaked_for:
             self.local_variable_controller.sync(breaked_for)
@@ -832,8 +832,8 @@ class MainController:
         # This will mark the hanger as being breaked:
         self.debugger.ground_engine_state.break_pulled(state)
         # This will tell the code editor to refresh the debugger controls for all open editors
-        self.code_editor.break_pulled(state, ssb.file_name, opcode_addr)
-        self.code_editor.focus_by_opcode_addr(ssb.file_name, opcode_addr)
+        self.editor_notebook.break_pulled(state, ssb.file_name, opcode_addr)
+        self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
         self.load_debugger_state(srs)
         self.debug_overlay.break_pulled()
 

@@ -66,7 +66,8 @@ class SsbLoadedFile:
             # return
         if not self.ssbs.source_map:
             self.ssbs.load()
-        return self.ssbs.source_map.position_marks
+        # TODO: From Macros
+        return self.ssbs.source_map.get_position_marks__direct()
 
 
     @property
@@ -133,6 +134,7 @@ class SsbLoadedFile:
             handler(self)
 
     def register_property_callback(self, cb):
+        # TODO: MOVE REGISTRATION CALL TO CONTEXT!!
         self._event_handlers_property_change.append(cb)
 
     def unregister_property_callback(self, cb):

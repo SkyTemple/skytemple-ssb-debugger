@@ -1,4 +1,4 @@
-"""Controller for a single SSB editor (SSBScript + ExplorerScript)."""
+"""Controller for a single SSB script editor (SSBScript + ExplorerScript)."""
 #  Copyright 2020 Parakoopa
 #
 #  This file is part of SkyTemple.
@@ -17,50 +17,45 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 import re
-import threading
 import traceback
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING
+from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
-from gi.repository import Gtk, GtkSource, GLib, Gdk, GObject
+from gi.repository import GtkSource
 from gi.repository.GtkSource import StyleSchemeManager, LanguageManager
 
-from explorerscript.error import ParseError, SsbCompilerError
+from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointStateType
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
-from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
-from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
+from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUtil
+from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.pixbuf.icons import *
 
 if TYPE_CHECKING:
-    from skytemple_ssb_debugger.controller.code_editor import CodeEditorController
+    from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
 
-MARK_PATTERN = re.compile('opcode_(\\d+)')
-MARK_PATTERN_TMP = re.compile('TMP_opcode_(\\d+)')
+
 EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 
 
-class SSBEditorController:
+class ScriptEditorController:
     def __init__(
-            self, parent: 'CodeEditorController', main_window: Gtk.Window, breakpoint_manager: BreakpointManager,
-            ssb_file: SsbLoadedFile, rom_data: Pmd2Data, modified_handler, enable_explorerscript=True
+            self, parent: 'EditorNotebookController', main_window: Gtk.Window, file_context: AbstractScriptFileContext,
+            rom_data: Pmd2Data, modified_handler, enable_explorerscript=True
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(path, "ssb_editor.glade"))
-        self.breakpoint_manager = breakpoint_manager
+        self.file_context: AbstractScriptFileContext = file_context
         self.rom_data = rom_data
         self.parent = parent
         self._main_window = main_window
         self._modified_handler = modified_handler
-
-        self._ssb = ssb_file
 
         self._root: Gtk.Box = self.builder.get_object('code_editor')
         self._ssm = StyleSchemeManager()
@@ -86,7 +81,7 @@ class SSBEditorController:
 
         self._still_loading = True
         self._foucs_opcode_after_load = None
-        self._halted_at_opcode_after_load = None
+        self._on_break_pulled_after_load = None
         self._hanger_halt_lines_after_load = None
 
         self._loaded_search_window: Optional[Gtk.Dialog] = None
@@ -102,14 +97,15 @@ class SSBEditorController:
         self._mrk_attrs__execution_line: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
         self._mrk_attrs__execution_line.set_background(self._mix_breakpoint_colors('def:note', 21, 234))
 
+        self.file_context.register_ssbs_state_change_handler(self.on_ssbs_state_change)
+        self.file_context.register_ssbs_reload_handler(self.switch_to_new_op_marks)
+        self.file_context.register_insert_opcode_text_mark_handler(self.insert_opcode_text_mark)
+
         self.load_views(
             self.builder.get_object('page_ssbscript'), self.builder.get_object('page_explorerscript')
         )
 
         self.builder.connect_signals(self)
-        self._ssb.register_reload_event_editor(self.on_ssb_reload)
-        self._ssb.register_property_callback(self.on_ssb_property_change)
-        self.on_ssb_property_change()
 
         self._root.show_all()
 
@@ -117,8 +113,7 @@ class SSBEditorController:
         return self._root
 
     def destroy(self):
-        self._ssb.unregister_reload_event_editor(self.on_ssb_reload)
-        self._ssb.unregister_property_callback(self.on_ssb_property_change)
+        self.file_context.destroy()
         self._root.destroy()
 
     @property
@@ -131,7 +126,9 @@ class SSBEditorController:
 
     @property
     def filename(self):
-        return self._ssb.filename
+        if self.file_context.ssb_filepath:
+            return self.file_context.ssb_filepath
+        return self.file_context.exps_filepath
 
     def toggle_debugging_controls(self, val):
         self.builder.get_object('code_editor_cntrls_resume').set_sensitive(val)
@@ -140,42 +137,41 @@ class SSBEditorController:
         self.builder.get_object('code_editor_cntrls_step_out').set_sensitive(val)
         self.builder.get_object('code_editor_cntrls_step_next').set_sensitive(val)
 
-    def halted_at_opcode(self, opcode_addr):
-        """Mark the currently actively halted opcode."""
+    def on_break_pulled(self, ssb_filename, opcode_addr):
+        """Mark the currently actively halted opcode, if we have one for the current file and opcode."""
         if self._still_loading:
-            self._halted_at_opcode_after_load = opcode_addr
+            self._on_break_pulled_after_load = (ssb_filename, opcode_addr)
         else:
+            self.on_break_released()
             ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'breaked-line')
             expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'breaked-line')
-            if opcode_addr != -1:
-                m = ssbsb.get_mark(f'opcode_{opcode_addr}')
-                if m is not None:
-                    ssbsb.create_source_mark('breaked-line', 'breaked-line', ssbsb.get_iter_at_mark(m))
-                m = expsb.get_mark(f'opcode_{opcode_addr}')
-                if m is not None:
-                    expsb.create_source_mark('breaked-line', 'breaked-line', expsb.get_iter_at_mark(m))
-
-    def insert_hanger_halt_lines(self, lines: List[Tuple[SsbRoutineType, int, int]]):
-        """Mark the current execution position for all running scripts. List is tuples (type, id, opcode_addr)"""
-        if self._still_loading:
-            self._hanger_halt_lines_after_load = lines
-        else:
-            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'execution-line')
-            expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'execution-line')
-            for type, slot_id, opcode_addr in lines:
-                m = ssbsb.get_mark(f'opcode_{opcode_addr}')
-                if m is not None:
-                    ssbsb.create_source_mark(
-                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line', ssbsb.get_iter_at_mark(m)
+            if ssb_filename is not None and opcode_addr != -1:
+                for buff in (ssbsb, expsb):
+                    EditorTextMarkUtil.add_line_mark_for_op(
+                        buff, ssb_filename, opcode_addr, 'breaked-line', 'breaked-line'
                     )
-                m = expsb.get_mark(f'opcode_{opcode_addr}')
-                if m is not None:
-                    expsb.create_source_mark(
-                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line', expsb.get_iter_at_mark(m)
+
+    def on_break_released(self):
+        """Remove the marks for the current breaked line."""
+        ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+        expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+        for buff in (ssbsb, expsb):
+            EditorTextMarkUtil.remove_all_line_marks(buff, 'breaked-line')
+
+    def insert_hanger_halt_lines(self, ssb_filename: str, lines: List[Tuple[SsbRoutineType, int, int]]):
+        """Mark the current execution position for all running scripts.
+        List is tuples (type, id, filename, opcode_addr)"""
+        if self._still_loading:
+            self._hanger_halt_lines_after_load = (ssb_filename, lines)
+        else:
+            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            for buff in (ssbsb, expsb):
+                EditorTextMarkUtil.remove_all_line_marks(buff, 'execution-line')
+                for type, slot_id, opcode_addr in lines:
+                    EditorTextMarkUtil.add_line_mark_for_op(
+                        buff, ssb_filename, opcode_addr,
+                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line'
                     )
 
     def remove_hanger_halt_lines(self):
@@ -184,69 +180,52 @@ class SSBEditorController:
             self._hanger_halt_lines_after_load = None
         else:
             ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-            ssbsb.remove_source_marks(ssbsb.get_start_iter(), ssbsb.get_end_iter(), 'execution-line')
             expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            expsb.remove_source_marks(expsb.get_start_iter(), expsb.get_end_iter(), 'execution-line')
+            for buff in (ssbsb, expsb):
+                EditorTextMarkUtil.remove_all_line_marks(buff, 'execution-line')
 
-    def focus_opcode(self, opcode_addr):
+    def focus_opcode(self, ssb_filename, opcode_addr):
         """Put a textmark representing an opcode into the center of view."""
         if self._still_loading:
-            self._foucs_opcode_after_load = opcode_addr
+            self._foucs_opcode_after_load = (ssb_filename, opcode_addr)
         else:
-            b: Gtk.TextBuffer = self._ssb_script_view.get_buffer()
-            m = b.get_mark(f'opcode_{opcode_addr}')
-            if m:
-                self._ssb_script_view.scroll_to_mark(m, 0.1, False, 0.1, 0.1)
-                b.place_cursor(b.get_iter_at_mark(m))
-
-            b: Gtk.TextBuffer = self._explorerscript_view.get_buffer()
-            m = b.get_mark(f'opcode_{opcode_addr}')
-            if m:
-                self._explorerscript_view.scroll_to_mark(m, 0.1, False, 0.1, 0.1)
-                b.place_cursor(b.get_iter_at_mark(m))
+            ssbsb = self._ssb_script_view
+            expsb = self._explorerscript_view
+            for view in (ssbsb, expsb):
+                EditorTextMarkUtil.scroll_to_op(view.get_buffer(), view, ssb_filename, opcode_addr)
 
     def save(self):
         """
-        Save the SSB file. As a constraint only the ssbs or exps views should be editable, so in theory only one can
+        Save the script file. As a constraint only the ssbs or exps views should be editable, so in theory only one can
         have changes... - we save that one!
         """
-        print(f"{self.filename}: Save")
-
-        ready_to_reload = False
         modified_buffer = None
-        save_func = None
+        save_exps = False
         save_text = None
 
         if not self._explorerscript_active and self._ssb_script_view.get_buffer().get_modified():
             modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
-            save_func = self._ssb.file_manager.save_from_ssb_script
+            save_exps = False
             save_text = modified_buffer.props.text
         elif self._explorerscript_view.get_buffer().get_modified():
             modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            save_func = self._ssb.file_manager.save_from_explorerscript
+            save_exps = True
             save_text = modified_buffer.props.text
         if not save_text:
             return
-
-        def save_thread():
-            try:
-                save_func(
-                    self._ssb.filename, save_text
-                )
-            except Exception as err:
-                GLib.idle_add(partial(self._save_done_error, err))
-                return
-            else:
-                GLib.idle_add(partial(self._save_done, ready_to_reload, modified_buffer))
 
         self._saving_dialog: Gtk.Dialog = self.builder.get_object('file_saving_dialog')
         self._saving_dialog.set_transient_for(self._main_window)
         self.builder.get_object('file_saving_dialog_label').set_label(
             f'Compiling script "{self.filename}"...'
         )
-        threading.Thread(target=save_thread).start()
-        self._saving_dialog.run()
 
+        self.file_context.save(save_text=save_text,
+                               save_exps=save_exps,
+                               error_callback=self._save_done_error,
+                               success_callback=partial(self._save_done, modified_buffer))
+
+        self._saving_dialog.run()
 
     def _save_done_error(self, err):
         """Gtk callback after the saving has been done, but an error occured."""
@@ -267,43 +246,29 @@ class SSBEditorController:
         md.run()
         md.destroy()
 
-    def _save_done(self, ready_to_reload: bool, modified_buffer: GtkSource.Buffer):
+    def _save_done(self, modified_buffer: GtkSource.Buffer):
         """Gtk callback after the saving has been done."""
         if self._saving_dialog is not None:
             self._saving_dialog.hide()
             self._saving_dialog = None
+
         modified_buffer.set_modified(False)
         self._waiting_for_reload = True
-        # Build temporary text marks for the new source map. We will replace
-        # the real ones with those in on_ssb_reloaded
-        for model, view in [(self._ssb.ssbs, self._ssb_script_view), (self._ssb.exps, self._explorerscript_view)]:
-            buffer: Gtk.TextBuffer = view.get_buffer()
-            for file_name, macro_name, opcode_offset, line, column in model.source_map:
-                if macro_name is None:
-                    textiter = buffer.get_iter_at_line_offset(line, column)
-                    buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
 
-        buffer = self._ssb_script_view.get_buffer()
-        if self._explorerscript_active:
-            buffer = self._explorerscript_view.get_buffer()
         # Resync the breakpoints at the Breakpoint Manager.
-        # Collect all line marks and check which is the first TMP_opcode text mark in it, this is
+        # Collect all line marks and check which is the first temporary opcode text mark in it, this is
         # the opcode to break on.
-        breakpoints_to_resync = []
+        breakpoints_to_resync = {}
         for line in range(0, modified_buffer.get_line_count()):
-            marks = modified_buffer.get_source_marks_at_line(line, 'breakpoint')
+            marks = EditorTextMarkUtil.get_line_marks_for(modified_buffer, line, 'breakpoint')
             if len(marks) > 0:
-                opcode_offset = self._get_opcode_in_line(buffer, line, True)
-                if opcode_offset is None:
-                    continue
+                for ssb_filename, opcode_offset in EditorTextMarkUtil.get_tmp_opcodes_in_line(modified_buffer, line):
+                    if ssb_filename not in breakpoints_to_resync:
+                        breakpoints_to_resync[ssb_filename] = []
+                    breakpoints_to_resync[ssb_filename].append(opcode_offset)
 
-                breakpoints_to_resync.append(opcode_offset)
-        self.breakpoint_manager.resync(self._ssb.filename, breakpoints_to_resync)
-
-        # If the file manager told us, then we can immediately trigger the SSB reloading,
-        # this will trigger self.on_ssb_reloaded.
-        if ready_to_reload:
-            self._ssb.file_manager.force_reload(self._ssb.filename)
+        for ssb_filename, b_points in breakpoints_to_resync.items():
+            self.file_context.breakpoint_manager.resync(ssb_filename, b_points)
 
     def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Optional[Gtk.Box]):
         self._activate_spinner(ssbs_bx)
@@ -322,35 +287,31 @@ class SSBEditorController:
 
         self._update_view_editable_state()
 
-        def load__gtk__process_loaded(bx, ovl, model, view, language):
+        def load__gtk__process_loaded(text, is_explorerscript, language):
+            ovl = ssbs_ovl
+            bx = ssbs_bx
+            view = self._ssb_script_view
+            if is_explorerscript:
+                ovl = exps_ovl
+                bx = exps_bx
+                view = self._explorerscript_view
             for child in bx.get_children():
                 bx.remove(child)
             buffer: GtkSource.Buffer = view.get_buffer()
-            buffer.set_text(model.text)
+            buffer.set_text(text)
             buffer.set_modified(False)
             buffer.set_language(self._lm.get_language(language))
             buffer.set_highlight_syntax(True)
 
-            for file_name, macro_name, opcode_offset, line, column in model.source_map:
-                if macro_name is None:
-                    textiter = buffer.get_iter_at_line_offset(line, column)
-                    buffer.create_mark(f'opcode_{opcode_offset}', textiter)
-
             bx.pack_start(ovl, True, True, 0)
 
-        def load__gtk__exps_hash_error():
-            # we lazily load in the GTK thread now:
-            try:
-                if self._show_ssbs_es_changed_warning():
-                    # Re-generate the ExplorerScript
-                    self._ssb.exps.force_decompile()
-                else:
-                    # Force load the file
-                    self._ssb.exps.load(force=True)
-            except Exception as ex:
-                load__gtk__exps_exception(ex)
+        def load__gtk__exps_hash_error(force_decompile: Callable, force_load: Callable):
+            if self._show_ssbs_es_changed_warning():
+                # Re-generate the ExplorerScript
+                force_decompile()
             else:
-                load__gtk__process_loaded(exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps')
+                # Force load the file
+                force_load()
 
         def load__gtk__exps_exception(exception):
             print(''.join(traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)))
@@ -364,154 +325,93 @@ class SSBEditorController:
             md.run()
             md.destroy()
 
-        def load_thread():
-            # SSBS Load
-            self._ssb.ssbs.load()
-            GLib.idle_add(partial(
-                load__gtk__process_loaded, ssbs_bx, ssbs_ovl, self._ssb.ssbs, self._ssb_script_view, 'ssbs'
-            ))
+        def load__gtk__ssbs_not_available():
+            self._refill_info_bar(
+                self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.WARNING,
+                "SSBScript is not available for this file."
+            )
+            self._ssb_script_view.set_editable(False)
 
-            # ExplorerScript Load
-            if exps_bx:
-                try:
-                    self._ssb.exps.load()
-                except SsbHashError:
-                    GLib.idle_add(load__gtk__exps_hash_error)
-                except Exception as ex:
-                    GLib.idle_add(partial(load__gtk__exps_exception, ex))
-                else:
-                    GLib.idle_add(partial(
-                        load__gtk__process_loaded, exps_bx, exps_ovl, self._ssb.exps, self._explorerscript_view, 'exps'
-                    ))
-            GLib.idle_add(self._load_breakpoints_from_manager, exps_bx is not None)
+        def load_gtk__after():
+            self.file_context.request_ssbs_state()
             if self._still_loading:
-                GLib.idle_add(self._after_views_loaded)
+                self._after_views_loaded()
 
-        threading.Thread(target=load_thread).start()
+        self.file_context.load(load_exps=exps_bx is not None,
+                               load_view_callback=load__gtk__process_loaded,
+                               after_callback=load_gtk__after,
+                               exps_exception_callback=load__gtk__exps_exception,
+                               exps_hash_changed_callback=load__gtk__exps_hash_error,
+                               ssbs_not_avaiable_callback=load__gtk__ssbs_not_available)
 
     def _after_views_loaded(self):
         self._still_loading = False
         if self._foucs_opcode_after_load:
-            self.focus_opcode(self._foucs_opcode_after_load)
-        if self._halted_at_opcode_after_load:
-            self.halted_at_opcode(self._halted_at_opcode_after_load)
+            self.focus_opcode(*self._foucs_opcode_after_load)
+        if self._on_break_pulled_after_load:
+            self.on_break_pulled(*self._on_break_pulled_after_load)
         if self._hanger_halt_lines_after_load:
-            self.insert_hanger_halt_lines(self._hanger_halt_lines_after_load)
+            self.insert_hanger_halt_lines(*self._hanger_halt_lines_after_load)
 
     def add_breakpoint(self, line_number: int, view: GtkSource.View):
-        # This workflow is a bit complicacted, here's an outline.
-        # TODO: Make proper documentation for this and also file loading / compilation / decompilation process.
-        # - Update breakpoints now at manager using marks in SourceView
-        #   - Using the old mapping from the source marks for now (if still loaded in ground engine)!
-        #   - Write new tempoary text marks from source map (if still loaded in ground engine)
-        #   - Re-sync breakpoint lines with opcode offsets of saved file at BreakpointManager (keeps it tmp for now,
-        #     if still loaded in ground engine)
-        # - On save, write new source map
-        #   - [if SSBScript: SSBScript only, because no ExplorerScript generated yet, if ES fully regenerate SSBScript]
-        # - If the file is no longer loaded in Ground Engine:
-        #    - Switch over temporary source marks to new active source marks
-        #    - Resync and activate new breakpoint positions
-        # - If the file is loaded in Ground Engine, keep old source mapping [text marks!] and
-        #   use that for breaking for now
-        # - If the file was closed and the old text marks are no longer available, disable
-        #   debugging for that file until reload [show warning before close and on open again]
-        # - Save SSB file hashes to ground state file, do previous for all changed ssb files
-        #   [show warning for affected files].
-
         buffer: Gtk.TextBuffer = view.get_buffer()
-        opcode_offset = self._get_opcode_in_line(buffer, line_number - 1)
-        if opcode_offset is None:
-            return
-
-        self.breakpoint_manager.add(self._ssb.filename, opcode_offset)
+        for ssb_filename, opcode_offset in EditorTextMarkUtil.get_opcodes_in_line(buffer, line_number - 1):
+            self.file_context.breakpoint_manager.add(ssb_filename, opcode_offset)
 
     def remove_breakpoint(self, mark: GtkSource.Mark):
-        match = MARK_PATTERN.match(mark.get_name()[4:])
-        opcode_offset = match.group(1)
+        ssb_filename, opcode_offset = EditorTextMarkUtil.extract_opcode_data_from_line_mark(mark)
+        self.file_context.breakpoint_manager.remove(ssb_filename, opcode_offset)
 
-        self.breakpoint_manager.remove(self._ssb.filename, opcode_offset)
-
-    def on_breakpoint_added(self, opcode_offset, also_update_explorerscript=True):
-        print(f"{self.filename}: On breakpoint added")
-        view: GtkSource.View
+    def on_breakpoint_added(self, ssb_filename, opcode_offset, also_update_explorerscript=True):
         if also_update_explorerscript:
             view_list = (self._ssb_script_view, self._explorerscript_view)
         else:
             view_list = (self._ssb_script_view, )
         for view in view_list:
             buffer: GtkSource.Buffer = view.get_buffer()
-            m: Gtk.TextMark = buffer.get_mark(f'opcode_{opcode_offset}')
-            # TODO: proper logging and warnings!
-            if m is None:
-                print(f"WARNING: Mark not found opcode_{opcode_offset}.")
-                continue
-            line_iter = buffer.get_iter_at_line(buffer.get_iter_at_mark(m).get_line())
-            lm: Gtk.TextMark = buffer.get_mark(f'for:opcode_{opcode_offset}')
-            if lm is not None:
-                print(f"WARNING: Line mark already found for:opcode_{opcode_offset}.")
-                continue
-            buffer.create_source_mark(f'for:opcode_{opcode_offset}', 'breakpoint', line_iter)
+            EditorTextMarkUtil.add_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
 
-    def on_breakpoint_removed(self, opcode_offset):
-        view: GtkSource.View
+    def on_breakpoint_removed(self, ssb_filename, opcode_offset):
         for view in (self._ssb_script_view, self._explorerscript_view):
             buffer: GtkSource.Buffer = view.get_buffer()
-            m: Gtk.TextMark = buffer.get_mark(f'for:opcode_{opcode_offset}')
-            if m is None:
-                continue
-            buffer.remove_source_marks(buffer.get_iter_at_mark(m), buffer.get_iter_at_mark(m))
+            EditorTextMarkUtil.remove_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
 
-    # Signal & event handlers
-    def on_ssb_reload(self, ssb):
+    def switch_to_new_op_marks(self, ssb_filename):
         """
-        The ssb file is clear for reload (saved & no longer loaded in Ground Engine).
+        The given ssb file is clear for reload (saved & no longer loaded in Ground Engine).
         Delete all breakpoint line marks and all regular text marks.
         If we have temporary text marks:
             Move the temporary text marks to be the new regular ones.
         """
-        assert self.filename == ssb.filename
-        print(f"{self.filename}: On reload")
         for view in (self._ssb_script_view, self._explorerscript_view):
             buffer: GtkSource.Buffer = view.get_buffer()
             # Remove all breakpoints
-            buffer.remove_source_marks(buffer.get_start_iter(), buffer.get_end_iter(), 'breakpoint')
+            EditorTextMarkUtil.remove_all_line_marks(buffer, 'breakpoint')
 
             # Remove all regular text marks and rename temporary
             # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
             if self._waiting_for_reload:
-                textiter: Gtk.TextIter = buffer.get_start_iter().copy()
-                # TODO: This is probably pretty slow
-                while textiter.forward_char():
-                    old_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('opcode_')
-                    ]
-                    new_marks_at_pos = [
-                        m for m in textiter.get_marks() if m.get_name() and m.get_name().startswith('TMP_opcode_')
-                    ]
-                    for m in old_marks_at_pos:
-                        buffer.delete_mark(m)
-                    for m in new_marks_at_pos:
-                        name = m.get_name()
-                        # Maybe by chance an old mark with this name still exists elsewhere, remove it.
-                        om = buffer.get_mark(name[4:])
-                        if om is not None:
-                            buffer.delete_mark(om)
-                        # Move by deleting and re-creating.
-                        match = MARK_PATTERN_TMP.match(m.get_name())
-                        buffer.create_mark(f'opcode_{int(match.group(1))}', textiter)
-                        buffer.delete_mark(m)
+                EditorTextMarkUtil.switch_to_new_op_marks(buffer, ssb_filename)
 
-            # Re-add all breakpoints:
-            for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-                self.on_breakpoint_added(opcode_offset)
+            # Re-add all breakpoints
+            for opcode_offset in self.file_context.breakpoint_manager.saved_in_rom_get_for(ssb_filename):
+                self.on_breakpoint_added(ssb_filename, opcode_offset)
 
-    def on_ssb_property_change(self, *args):
+    def insert_opcode_text_mark(self, is_exps: bool, ssb_filename: str,
+                                opcode_offset: int, line: int, column: int, is_temp: bool):
+        view = self._ssb_script_view
+        if is_exps:
+            view = self._explorerscript_view
+        EditorTextMarkUtil.create_opcode_mark(view.get_buffer(), ssb_filename, opcode_offset, line, column, is_temp)
+
+    # Signal & event handlers
+    def on_ssbs_state_change(self, breakable, ram_state_up_to_date):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
         info_bar: Gtk.InfoBar = self.builder.get_object('code_editor_box_ssbscript_bar')
         if self._explorerscript_active:
             info_bar: Gtk.InfoBar = self.builder.get_object('code_editor_box_es_bar')
 
-        if self._ssb.not_breakable:
+        if not breakable:
             self._refill_info_bar(
                 info_bar, Gtk.MessageType.WARNING,
                 "An old version of this script is still loaded in RAM, but breakpoints are not available.\n"
@@ -519,7 +419,7 @@ class SSBEditorController:
             )
             return
 
-        if not self._ssb.ram_state_up_to_date:
+        if not ram_state_up_to_date:
             self._refill_info_bar(
                 info_bar, Gtk.MessageType.INFO,
                 "An old version of this script is still loaded in RAM, old breakpoints are still used, until "
@@ -736,11 +636,6 @@ class SSBEditorController:
         self.parent.parent.emu_resume(BreakpointStateType.STEP_NEXT)
 
     # Utility
-
-    def _load_breakpoints_from_manager(self, also_update_explorerscript=True):
-        for opcode_offset in self.breakpoint_manager.saved_in_rom_get_for(self._ssb.filename):
-            self.on_breakpoint_added(opcode_offset, also_update_explorerscript=also_update_explorerscript)
-
     def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
         breakpoint_bg = color_hex_to_rgb(self._active_scheme.get_style(mix_style_name).props.background, mix_style_alpha)
@@ -829,25 +724,6 @@ class SSBEditorController:
         spinner.start()
         bx.pack_start(spinner, True, False, 0)
 
-    @staticmethod
-    def _get_opcode_in_line(buffer: Gtk.TextBuffer, line_number_0_indexed, use_temp_markers=False) -> Optional[int]:
-        marker_prefix = 'opcode_'
-        marker_pattern = MARK_PATTERN
-        if use_temp_markers:
-            marker_prefix = 'TMP_opcode_'
-            marker_pattern = MARK_PATTERN_TMP
-        i = buffer.get_iter_at_line(line_number_0_indexed)
-        while i.get_line() == line_number_0_indexed:
-            marks_at_pos = [
-                m for m in i.get_marks() if m.get_name() and m.get_name().startswith(marker_prefix)
-            ]
-            if len(marks_at_pos) > 0:
-                match = marker_pattern.match(marks_at_pos[0].get_name())
-                return int(match.group(1))
-            if not i.forward_char():  # TODO: the other forwards might also work!
-                return None
-        return None
-
     def _load_ssbs_completion(self):
         view = self._ssb_script_view
         completion: GtkSource.Completion = view.get_completion()
@@ -872,19 +748,17 @@ class SSBEditorController:
                 "This is a read-only representation of the compiled ExplorerScript."
             )
             # Force refresh of ES info bar
-            self.on_ssb_property_change()
         else:
             # Enable SSBS editing
             self._ssb_script_view.set_editable(True)
             # Disable ES editing
             self._explorerscript_view.set_editable(False)
-            # Show notice on SSBS info bar
+            # Show notice on ES info bar
             self._refill_info_bar(
                 self.builder.get_object('code_editor_box_es_bar'), Gtk.MessageType.INFO,
-                "ExplorerScript is not avaiable for this file."
+                "ExplorerScript is not available for this file."
             )
             # Force refresh of ES info bar
-            self.on_ssb_property_change()
 
     @staticmethod
     def _refill_info_bar(info_bar: Gtk.InfoBar, message_type: Gtk.MessageType, text: str):
