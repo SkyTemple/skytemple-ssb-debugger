@@ -278,9 +278,10 @@ class SSBEditorController:
         # the real ones with those in on_ssb_reloaded
         for model, view in [(self._ssb.ssbs, self._ssb_script_view), (self._ssb.exps, self._explorerscript_view)]:
             buffer: Gtk.TextBuffer = view.get_buffer()
-            for opcode_offset, line, column in model.source_map:
-                textiter = buffer.get_iter_at_line_offset(line, column)
-                buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
+            for file_name, macro_name, opcode_offset, line, column in model.source_map:
+                if macro_name is None:
+                    textiter = buffer.get_iter_at_line_offset(line, column)
+                    buffer.create_mark(f'TMP_opcode_{opcode_offset}', textiter)
 
         buffer = self._ssb_script_view.get_buffer()
         if self._explorerscript_active:
@@ -330,9 +331,10 @@ class SSBEditorController:
             buffer.set_language(self._lm.get_language(language))
             buffer.set_highlight_syntax(True)
 
-            for opcode_offset, line, column in model.source_map:
-                textiter = buffer.get_iter_at_line_offset(line, column)
-                buffer.create_mark(f'opcode_{opcode_offset}', textiter)
+            for file_name, macro_name, opcode_offset, line, column in model.source_map:
+                if macro_name is None:
+                    textiter = buffer.get_iter_at_line_offset(line, column)
+                    buffer.create_mark(f'opcode_{opcode_offset}', textiter)
 
             bx.pack_start(ovl, True, True, 0)
 
@@ -896,8 +898,7 @@ class SSBEditorController:
         info_bar.set_revealed(True)
         info_bar.show_all()
 
-    @staticmethod
-    def _show_ssbs_es_changed_warning():
+    def _show_ssbs_es_changed_warning(self):
         md = Gtk.MessageDialog(
             self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,

@@ -30,7 +30,7 @@ TODO:
     - Better support for new variable syntax (detecting start when inserting) + calling them "variables" in the calltip dropdown
 - Test the BranchScenario opcodes!!
 
-- Menus (emulator controls, emulator settings, search, replace, export, import, save all, open new file, help, explorerscript settings)
+- Menus (emulator controls, emulator settings, search, replace, undo, redo, export, import, save all, open new file, help, explorerscript settings)
 - Psy's list patch
 """
 

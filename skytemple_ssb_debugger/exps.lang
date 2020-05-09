@@ -36,6 +36,7 @@
     <context id="keywords" style-ref="keyword">
       <keyword>coro</keyword>
       <keyword>def</keyword>
+      <keyword>macro</keyword>
       <keyword>for_actor</keyword>
       <keyword>for_object</keyword>
       <keyword>for_performer</keyword>

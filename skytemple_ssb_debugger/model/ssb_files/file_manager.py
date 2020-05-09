@@ -30,6 +30,9 @@ if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.debugger import DebuggerController
 
 
+MACROS_DIR_NAME = 'macros'
+
+
 class SsbFileManager:
     def __init__(self, rom: NintendoDSRom, rom_data: Pmd2Data, rom_filename: str,
                  debugger: 'DebuggerController', project_fm: ProjectFileManager):
@@ -87,7 +90,9 @@ class SsbFileManager:
         self.get(filename)
         compiler = ScriptCompiler(self.rom_data)
         f = self._open_files[filename]
-        f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(code)
+        f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(
+            code, filename, lookup_paths=[self.project_fm.dir(MACROS_DIR_NAME)]
+        )
         ssb_new_bin = FileType.SSB.serialize(f.ssb_model)
 
         # Write ExplorerScript to file
