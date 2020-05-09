@@ -175,6 +175,7 @@ class MainController:
         try:
             # Load desmume
             # TODO: Dummy
+            #self.emu_thread = EmulatorThread(self, "C:\\Users\\Marco\\austausch\\dev\\desmume\\desmume\\src\\frontend\\interface\\windows\\__bins\\DeSmuME Interface-VS2017-x64-Release.dll")
             self.emu_thread = EmulatorThread(self, "../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
             self.emu_thread.start()
 
@@ -208,7 +209,8 @@ class MainController:
     def gtk_main_quit(self, *args):
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
-        self.emu_thread.stop()
+        if self.emu_thread:
+            self.emu_thread.stop()
         Gtk.main_quit()
 
     def gtk_widget_hide_on_delete(self, w: Gtk.Widget, *args):
@@ -319,7 +321,8 @@ class MainController:
 
     # MENU FILE
     def on_menu_open_activate(self, *args):
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
+        if self.emu_thread:
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
 
         response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, "Open...", (self._filter_nds, self._filter_gba_ds, self._filter_any))
 

@@ -95,7 +95,8 @@ class EmulatorThread(Thread):
 
     def stop(self):
         start_lock.acquire()
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        if self.loop:
+            self.loop.call_soon_threadsafe(self.loop.stop)
         start_lock.release()
 
     def register_main_loop(self):

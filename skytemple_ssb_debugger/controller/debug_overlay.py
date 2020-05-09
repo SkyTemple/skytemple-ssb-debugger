@@ -136,6 +136,8 @@ class DebugOverlayController:
         # Refresh the cache
         with debug_overlay_lock:
             ges = self.debugger.ground_engine_state
+            if not ges:
+                return
             self._cache_running = ges.running
             if self._cache_running:
                 self._actor_bbox_cache = []
