@@ -20,6 +20,7 @@ from typing import Callable, Optional
 
 from gi.repository import GLib
 
+from explorerscript.source_map import SourceMap, MacroSourceMapping
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
@@ -114,11 +115,13 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def _after_load(self, after_callback: Callable[[], None]):
         if self._do_insert_opcode_text_mark:
             for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
+                source_map: SourceMap
                 if source_map is not None:
-                    for file_name, macro_name, opcode_offset, line, column in source_map:
-                        if macro_name is None:
+                    for opcode_offset, source_mapping in source_map:
+                        if not isinstance(source_mapping, MacroSourceMapping):
                             self._do_insert_opcode_text_mark(
-                                is_exps, self._ssb_file.filename, opcode_offset, line, column, False
+                                is_exps, self._ssb_file.filename, opcode_offset,
+                                source_mapping.line, source_mapping.column, False
                             )
         after_callback()
 
@@ -149,11 +152,13 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         # the real ones with those in on_ssb_reloaded
         if self._do_insert_opcode_text_mark:
             for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
+                source_map: SourceMap
                 if source_map is not None:
-                    for file_name, macro_name, opcode_offset, line, column in source_map:
-                        if macro_name is None:
+                    for opcode_offset, source_mapping in source_map:
+                        if not isinstance(source_mapping, MacroSourceMapping):
                             self._do_insert_opcode_text_mark(
-                                is_exps, self._ssb_file.filename, opcode_offset, line, column, True
+                                is_exps, self._ssb_file.filename, opcode_offset,
+                                source_mapping.line, source_mapping.column, True
                             )
 
         success_callback()
