@@ -18,17 +18,10 @@
 """
 TODO:
 - Running scripts
-- ExplorerScript
-  - Macros
-    - File includes
-    - File includes in editor
-    - Breaking support / Source maps
-  - String files
 - Completions:
     - ExplorerScript
     - TODO: We need to correct textiter because it doesn't work correct for inside function braces.
     - Better support for new variable syntax (detecting start when inserting) + calling them "variables" in the calltip dropdown
-- Test the BranchScenario opcodes!!
 
 - Menus (emulator controls, emulator settings, search, replace, undo, redo, export, import, save all, open new file, help, explorerscript settings)
 - Psy's list patch

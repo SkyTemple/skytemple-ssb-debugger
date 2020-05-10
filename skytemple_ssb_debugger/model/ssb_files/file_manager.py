@@ -114,7 +114,7 @@ class SsbFileManager:
 
         # Update the inclusion maps of included files.
         diff = IncludedUsageMap(original_source_map, exps_filename) - IncludedUsageMap(f.exps.source_map, exps_filename)
-        pd_w_pathsetp = project_dir + os.path.pathsep
+        pd_w_pathsetp = project_dir + os.path.sep
         for removed_path in diff.removed:
             self.project_fm.explorerscript_include_usage_remove(removed_path.replace(pd_w_pathsetp, ''), ssb_filename)
         for added_path in diff.added:

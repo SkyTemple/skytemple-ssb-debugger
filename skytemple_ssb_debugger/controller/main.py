@@ -16,7 +16,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import os
+import shutil
 import traceback
+from functools import partial
 from typing import Optional
 
 import cairo
@@ -25,6 +27,7 @@ from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask, load_configured_config
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
+from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.project_file_manager import ProjectFileManager
@@ -53,6 +56,7 @@ from gi.repository.Gtk import *
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
 PROJECT_DIR_SUBDIR_NAME = 'debugger'
+PROJECT_DIR_MACRO_NAME = 'macros'
 
 
 class MainController:
@@ -437,8 +441,79 @@ class MainController:
             if treeiter is not None and model is not None:
                 if model[treeiter][0] == '':
                     tree.expand_row(model[treeiter].path, False)
-                else:
+                elif model[treeiter][2] == 'ssb':
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + model[treeiter][0])
+                elif model[treeiter][2] == 'exps_macro':
+                    self.editor_notebook.open_exps_macro(SCRIPT_DIR + '/' + model[treeiter][0])
+                else:
+                    tree.expand_row(model.get_path(treeiter), False)
+        elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY:
+            # Right click!
+            model = self.builder.get_object('ssb_file_tree_store')
+            treepath = tree.get_path_at_pos(int(event.x), int(event.y))[0]
+            if treepath is not None:
+                if model[treepath][2] == 'exps_macro_dir':
+                    menu: Gtk.Menu = Gtk.Menu.new()
+                    create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create directory...")
+                    create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model, treepath))
+                    create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create new script file...")
+                    create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model, treepath))
+                    menu.attach_to_widget(tree, None)
+                    menu.add(create_dir)
+                    menu.add(create_file)
+                    if model[treepath][1] != 'Macros':
+                        # prevent main dir from being deleted
+                        # todo: this is a bit lazy and obviously flawed...
+                        delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Delete directory...")
+                        delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model, treepath))
+                        menu.add(Gtk.SeparatorMenuItem.new())
+                        menu.add(delete_dir)
+                    menu.show_all()
+                    menu.popup_at_pointer(event)
+                elif model[treepath][2] == 'exps_macro':
+                    menu: Gtk.Menu = Gtk.Menu.new()
+                    delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Delete script file...")
+                    delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model, treepath))
+                    menu.attach_to_widget(tree, None)
+                    menu.add(delete_file)
+                    menu.show_all()
+                    menu.popup_at_pointer(event)
+
+    def on_ssb_file_tree__menu_create_macro_dir(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
+        row = store[treepath]
+        response, dirname = self._show_generic_input('Name of the directory:', 'Create Directory')
+        if response == Gtk.ResponseType.OK:
+            abs_dirname = row[0] + os.path.sep + dirname
+            os.makedirs(abs_dirname, exist_ok=True)
+            store.append(store.get_iter(treepath), [abs_dirname, dirname, 'exps_macro_dir'])
+
+    def on_ssb_file_tree__menu_create_macro_file(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
+        row = store[treepath]
+        response, filename = self._show_generic_input('Name of the new script file:', 'Create File')
+        if len(filename) < 5 or filename[-5:] != EXPLORERSCRIPT_EXT:
+            filename += EXPLORERSCRIPT_EXT
+        if response == Gtk.ResponseType.OK:
+            abs_filename = row[0] + os.path.sep + filename
+            os.makedirs(row[0], exist_ok=True)
+            with open(abs_filename, 'w') as f:
+                f.write('')
+            store.append(store.get_iter(treepath), [abs_filename, filename, 'exps_macro'])
+
+    def on_ssb_file_tree__menu_delete_dir(self, model: Gtk.TreeModel, treepath: Gtk.TreePath, *args):
+        row = model[treepath]
+        response = self._show_are_you_sure_delete(f"Do you want to delete the directory "
+                                                  f"{row[1]} with all of it's contents?")
+        if response == Gtk.ResponseType.DELETE_EVENT:
+            shutil.rmtree(row[0])
+            del model[treepath]
+
+    def on_ssb_file_tree__menu_delete_file(self, model, treepath, *args):
+        row = model[treepath]
+        response = self._show_are_you_sure_delete(f"Do you want to delete the script file "
+                                                  f"{row[1]}?")
+        if response == Gtk.ResponseType.DELETE_EVENT:
+            os.remove(row[0])
+            del model[treepath]
 
     def init_file_tree(self):
         ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
@@ -453,37 +528,52 @@ class MainController:
 
         script_files = load_script_files(get_rom_folder(self.rom, SCRIPT_DIR))
 
+        # EXPLORERSCRIPT MACROS
+        #    -> Macros
+        macros_dir_name = self.project_fm.dir(PROJECT_DIR_MACRO_NAME)
+        macros_tree_nodes = {macros_dir_name: ssb_file_tree_store.append(None, [macros_dir_name, 'Macros', 'exps_macro_dir'])}
+        for root, dnames, fnames in os.walk(macros_dir_name):
+            root_node = macros_tree_nodes[root]
+            for dirname in dnames:
+                macros_tree_nodes[root + os.path.sep + dirname] = ssb_file_tree_store.append(
+                    root_node, [root + os.path.sep + dirname, dirname, 'exps_macro_dir']
+                )
+            for filename in fnames:
+                if len(filename) > 4 and filename[-5:] == EXPLORERSCRIPT_EXT:
+                    ssb_file_tree_store.append(root_node, [root + os.path.sep + filename, filename, 'exps_macro'])
+
+        # SSB SCRIPT FILES
         #    -> Common [common]
-        common_root = ssb_file_tree_store.append(None, ['', 'Common'])
+        common_root = ssb_file_tree_store.append(None, ['', 'Common', ''])
         #       -> Master Script (unionall) [ssb]
         #       -> (others) [ssb]
         for name in script_files['common']:
-            ssb_file_tree_store.append(common_root, ['COMMON/' + name, name])
+            ssb_file_tree_store.append(common_root, ['COMMON/' + name, name, 'ssb'])
 
         for i, map_obj in enumerate(script_files['maps'].values()):
             #    -> (Map Name) [map]
-            map_root = ssb_file_tree_store.append(None, ['', map_obj['name']])
+            map_root = ssb_file_tree_store.append(None, ['', map_obj['name'], ''])
 
-            enter_root = ssb_file_tree_store.append(map_root, ['', 'Enter (sse)'])
+            enter_root = ssb_file_tree_store.append(map_root, ['', 'Enter (sse)', ''])
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
                 for ssb in map_obj['enter_ssbs']:
-                    ssb_file_tree_store.append(enter_root, [f"{map_obj['name']}/{ssb}", ssb])
+                    ssb_file_tree_store.append(enter_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
 
             #       -> Acting Scripts [lsd]
-            acting_root = ssb_file_tree_store.append(map_root, ['', 'Acting (ssa)'])
+            acting_root = ssb_file_tree_store.append(map_root, ['', 'Acting (ssa)', ''])
             for _, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
-                ssb_file_tree_store.append(acting_root, [f"{map_obj['name']}/{ssb}", ssb])
+                ssb_file_tree_store.append(acting_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
 
             #       -> Sub Scripts [sub]
-            sub_root = ssb_file_tree_store.append(map_root, ['', 'Sub (sss)'])
+            sub_root = ssb_file_tree_store.append(map_root, ['', 'Sub (sss)', ''])
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
-                sub_entry = ssb_file_tree_store.append(sub_root, ['', sss])
+                sub_entry = ssb_file_tree_store.append(sub_root, ['', sss, ''])
                 for ssb in ssbs:
                     #             -> Script X [ssb]
-                    ssb_file_tree_store.append(sub_entry, [f"{map_obj['name']}/{ssb}", ssb])
+                    ssb_file_tree_store.append(sub_entry, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
 
     # VARIABLES VIEW
 
@@ -975,3 +1065,34 @@ class MainController:
         if self.builder.get_object('img_play').get_parent():
             btn.remove(self.builder.get_object('img_play'))
             btn.add(self.builder.get_object('img_stop'))
+
+    def _show_are_you_sure_delete(self, text):
+        dialog: Gtk.MessageDialog = Gtk.MessageDialog(
+            self.window,
+            Gtk.DialogFlags.MODAL,
+            Gtk.MessageType.WARNING,
+            Gtk.ButtonsType.NONE, text
+        )
+        dont_save: Gtk.Widget = dialog.add_button("Delete", Gtk.ResponseType.DELETE_EVENT)
+        dont_save.get_style_context().add_class('destructive-action')
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.format_secondary_text('You will not be able to restore it.')
+        response = dialog.run()
+        dialog.destroy()
+        return response
+
+    def _show_generic_input(self, label_text, ok_text):
+        dialog: Gtk.Dialog = self.builder.get_object('generic_input_dialog')
+        entry: Gtk.Entry = self.builder.get_object('generic_input_dialog_entry')
+        label: Gtk.Label = self.builder.get_object('generic_input_dialog_label')
+        label.set_text(label_text)
+        btn_cancel = dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        btn = dialog.add_button(ok_text, Gtk.ResponseType.OK)
+        btn.set_can_default(True)
+        btn.grab_default()
+        entry.set_activates_default(True)
+        response = dialog.run()
+        dialog.hide()
+        btn.get_parent().remove(btn)
+        btn_cancel.get_parent().remove(btn_cancel)
+        return response, entry.get_text()
