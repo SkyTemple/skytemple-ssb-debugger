@@ -17,6 +17,7 @@
             <property name="tooltip_text" translatable="yes">Run this script.</property>
             <property name="label" translatable="yes">Run</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-debug-symbolic</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -37,9 +38,10 @@
           <object class="GtkToggleToolButton" id="code_editor_cntrls_breaks">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="tooltip_text" translatable="yes">Enable or disable breakpoints.</property>
+            <property name="tooltip_text" translatable="yes">Disable breakpoints (all files).</property>
             <property name="label" translatable="yes">Disable Breaks</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-disable-breaks-symbolic</property>
             <signal name="toggled" handler="on_code_editor_cntrls_breaks_toggled" swapped="no"/>
           </object>
           <packing>
@@ -62,8 +64,10 @@
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Resume.</property>
             <property name="label" translatable="yes">Resume</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">media-playback-start-symbolic</property>
             <signal name="clicked" handler="on_code_editor_cntrls_resume_clicked" swapped="no"/>
           </object>
           <packing>
@@ -79,6 +83,7 @@
             <property name="tooltip_text" translatable="yes">Step over the current instruction.</property>
             <property name="label" translatable="yes">Step Over</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-step-over-symbolic</property>
             <signal name="clicked" handler="on_code_editor_cntrls_step_over_clicked" swapped="no"/>
           </object>
           <packing>
@@ -94,6 +99,7 @@
             <property name="tooltip_text" translatable="yes">Step into the current instruction, if it's a call, otherwise step over.</property>
             <property name="label" translatable="yes">Step Into</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-step-into-symbolic</property>
             <signal name="clicked" handler="on_code_editor_cntrls_step_into_clicked" swapped="no"/>
           </object>
           <packing>
@@ -109,6 +115,7 @@
             <property name="tooltip_text" translatable="yes">Step out of the current function call.</property>
             <property name="label" translatable="yes">Step Out</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-step-out-symbolic</property>
             <signal name="clicked" handler="on_code_editor_cntrls_step_out_clicked" swapped="no"/>
           </object>
           <packing>
@@ -131,8 +138,10 @@
             <property name="visible">True</property>
             <property name="sensitive">False</property>
             <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Halt at the next instruction, even if in another script context.</property>
             <property name="label" translatable="yes">Step Next</property>
             <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-debugger-step-next-symbolic</property>
             <signal name="clicked" handler="on_code_editor_cntrls_step_next_clicked" swapped="no"/>
           </object>
           <packing>

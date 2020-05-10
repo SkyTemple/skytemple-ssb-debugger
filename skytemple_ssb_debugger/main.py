@@ -53,6 +53,11 @@ def main():
     try:
         path = os.path.abspath(os.path.dirname(__file__))
 
+        # TODO: Specify this corretly for packaging! - also in the setup.py!
+        itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
+        itheme.append_search_path(os.path.abspath(os.path.join(path, "..", "data", "icons")))
+        itheme.rescan_if_needed()
+
         # Load Builder and Window
         builder = Gtk.Builder()
         builder.add_from_file(os.path.join(path, "debugger.glade"))

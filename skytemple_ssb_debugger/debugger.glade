@@ -414,7 +414,8 @@
                           <object class="GtkImage">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-missing-image</property>
+                            <property name="margin_bottom">5</property>
+                            <property name="icon_name">system-run-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -557,7 +558,8 @@ not running.</property>
                           <object class="GtkImage">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-missing-image</property>
+                            <property name="margin_bottom">5</property>
+                            <property name="icon_name">applications-engineering-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -844,7 +846,8 @@ This forces a reload.</property>
                           <object class="GtkImage">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-missing-image</property>
+                            <property name="margin_bottom">5</property>
+                            <property name="icon_name">view-pin-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -996,7 +999,8 @@ not halting.</property>
                           <object class="GtkImage">
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
-                            <property name="stock">gtk-missing-image</property>
+                            <property name="margin_bottom">5</property>
+                            <property name="icon_name">mark-location-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1222,7 +1226,7 @@ via the File menu.</property>
                                                       <object class="GtkImage" id="img_play">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">media-playback-start</property>
+                                                        <property name="icon_name">media-playback-start-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1288,7 +1292,7 @@ via the File menu.</property>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">audio-volume-high</property>
+                                                        <property name="icon_name">audio-volume-high-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1633,7 +1637,7 @@ via the File menu.</property>
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="icon_name">go-bottom</property>
+                                    <property name="icon_name">go-bottom-symbolic</property>
                                   </object>
                                 </child>
                               </object>
@@ -1653,7 +1657,7 @@ via the File menu.</property>
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="icon_name">edit-delete</property>
+                                    <property name="icon_name">edit-delete-symbolic</property>
                                   </object>
                                 </child>
                               </object>

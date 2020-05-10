@@ -234,7 +234,7 @@ def tab_label_close_button(filename, close_callback):
     label.set_tooltip_text(filename)
     label.set_width_chars(10)
 
-    button: Gtk.Button = Gtk.Button.new_from_icon_name('window-close', Gtk.IconSize.MENU)
+    button: Gtk.Button = Gtk.Button.new_from_icon_name('window-close-symbolic', Gtk.IconSize.MENU)
     button.set_tooltip_text('Close')
     button.set_relief(Gtk.ReliefStyle.NONE)
     button.set_focus_on_click(False)
