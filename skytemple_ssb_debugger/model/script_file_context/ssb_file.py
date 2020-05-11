@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import threading
 from functools import partial
-from typing import Callable, Optional
+from typing import Callable, Optional, TYPE_CHECKING
 
 from gi.repository import GLib
 
@@ -26,14 +26,20 @@ from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractSc
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
 
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
+
 
 class SsbFileScriptFileContext(AbstractScriptFileContext):
     """Context for a script file that directly represents a single compiled SSB script."""
-    def __init__(self, ssb_loaded_file: SsbLoadedFile, breakpoint_manager: BreakpointManager):
+
+    def __init__(self, ssb_loaded_file: SsbLoadedFile,
+                 breakpoint_manager: BreakpointManager, editor_notebook_controller: 'EditorNotebookController'):
         super().__init__()
         self._ssb_file = ssb_loaded_file
         self._register_ssb_handler(ssb_loaded_file)
         self._breakpoint_manager = breakpoint_manager
+        self._editor_notebook_controller = editor_notebook_controller
 
     def destroy(self):
         super().destroy()
@@ -69,7 +75,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
-        ssbs_not_avaiable_callback: Callable[[], None]
+        ssbs_not_available_callback: Callable[[], None]
     ):
         def gtk__chose_force_decompile():
             # we lazily load in the GTK thread now:
@@ -118,11 +124,19 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 source_map: SourceMap
                 if source_map is not None:
                     for opcode_offset, source_mapping in source_map:
-                        if not isinstance(source_mapping, MacroSourceMapping):
+                        if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
                             self._do_insert_opcode_text_mark(
                                 is_exps, self._ssb_file.filename, opcode_offset,
-                                source_mapping.line, source_mapping.column, False
+                                source_mapping.line, source_mapping.column, False, False
                             )
+                        # Also insert opcode text marks for macro calls
+                        if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
+                            cin_fn, cin_line, cin_col = source_mapping.called_in
+                            if cin_fn is None:
+                                self._do_insert_opcode_text_mark(
+                                    is_exps, self._ssb_file.filename, opcode_offset,
+                                    cin_line, cin_col, False, True
+                                )
         after_callback()
 
     def save(self, save_text: str, save_exps: bool,
@@ -131,8 +145,9 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
         def save_thread():
             try:
+                included_exps_files = None
                 if save_exps:
-                    ready_to_reload = self._ssb_file.file_manager.save_from_explorerscript(
+                    ready_to_reload, included_exps_files = self._ssb_file.file_manager.save_from_explorerscript(
                         self._ssb_file.filename, save_text
                     )
                 else:
@@ -143,11 +158,15 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 GLib.idle_add(partial(error_callback, err))
                 return
             else:
-                GLib.idle_add(partial(self._after_save, ready_to_reload, success_callback))
+                GLib.idle_add(partial(self._after_save, ready_to_reload, included_exps_files, success_callback))
 
         threading.Thread(target=save_thread).start()
 
-    def _after_save(self, ready_to_reload, success_callback: Callable[[], None]):
+    def _after_save(self, ready_to_reload, included_exps_files, success_callback: Callable[[], None]):
+        if included_exps_files is not None:
+            for exps_abs_path in included_exps_files:
+                self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, self._ssb_file.filename)
+
         # Build temporary text marks for the new source map. We will replace
         # the real ones with those in on_ssb_reloaded
         if self._do_insert_opcode_text_mark:
@@ -155,12 +174,29 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 source_map: SourceMap
                 if source_map is not None:
                     for opcode_offset, source_mapping in source_map:
-                        if not isinstance(source_mapping, MacroSourceMapping):
+                        if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
                             self._do_insert_opcode_text_mark(
                                 is_exps, self._ssb_file.filename, opcode_offset,
-                                source_mapping.line, source_mapping.column, True
+                                source_mapping.line, source_mapping.column, True, False
                             )
+                        # Also insert opcode text marks for macro calls
+                        if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
+                            cin_fn, cin_line, cin_col = source_mapping.called_in
+                            if cin_fn is None:
+                                self._do_insert_opcode_text_mark(
+                                    is_exps, self._ssb_file.filename, opcode_offset,
+                                    cin_line, cin_col, True, True
+                                )
 
         success_callback()
         if ready_to_reload:
             self._ssb_file.file_manager.force_reload(self._ssb_file.filename)
+
+    def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
+        if ssb_filename == self._ssb_file.filename:
+            self._after_save(ready_to_reload, [], lambda: None)
+
+    def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):
+        # We don't manage a macro, so we don't care.
+        pass
+

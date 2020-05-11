@@ -32,8 +32,8 @@ class AbstractScriptFileContext(ABC):
         # (ssb_filename) -> None
         self._on_ssbs_reload: Optional[Callable[[str], None]] = None
         # Notifies of added opcodes to create markers for
-        # (is_exps, ssb_filename, opcode_offset, line, column, is_temp) -> None
-        self._do_insert_opcode_text_mark: Optional[Callable[[bool, str, int, int, int, bool], None]] = None
+        # (is_exps, ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call) -> None
+        self._do_insert_opcode_text_mark: Optional[Callable[[bool, str, int, int, int, bool, bool], None]] = None
 
     def destroy(self):
         self._unregister_ssb_handlers()
@@ -83,7 +83,7 @@ class AbstractScriptFileContext(ABC):
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
-        ssbs_not_avaiable_callback: Callable[[], None]
+        ssbs_not_available_callback: Callable[[], None]
     ):
         pass
 
@@ -92,6 +92,19 @@ class AbstractScriptFileContext(ABC):
              error_callback: Callable[[BaseException], None],
              success_callback: Callable[[], None]):
         pass
+
+    @abstractmethod
+    def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
+        """
+        A ssb file was re-compiled from outside of it's script editor.
+        """
+
+    @abstractmethod
+    def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):
+        """
+        The ssb file ssb_filename was changed and it imports the ExplorerScript macro file with the absolute path
+        of exps_abs_path.
+        """
 
     def _register_ssb_handler(self, loaded_ssb: SsbLoadedFile):
         self._registered_ssbs.append(loaded_ssb)

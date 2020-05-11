@@ -67,6 +67,9 @@ class ExplorerScriptFile(AbstractScriptFile):
 
     @property
     def source_map(self) -> SourceMap:
+        if self._source_map is None:
+            # If not currently loaded, load fresh source map instead directly.
+            return self.parent.project_file_manager.explorerscript_load_sourcemap(self.parent.filename)
         return self._source_map
 
     @source_map.setter

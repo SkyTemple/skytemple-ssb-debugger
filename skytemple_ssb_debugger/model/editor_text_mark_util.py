@@ -19,15 +19,16 @@ from typing import List, Iterable, Tuple, Optional
 
 from gi.repository import GtkSource, Gtk
 
-MARK_PATTERN = re.compile('opcode_<<<(.*)>>>_(\\d+)')
-MARK_PATTERN_TMP = re.compile('TMP_opcode_<<<(.*)>>>_(\\d+)')
+# file, opcode offset, optional attribute
+MARK_PATTERN = re.compile('opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')
+MARK_PATTERN_TMP = re.compile('TMP_opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')
 
 
 class EditorTextMarkUtil:
     """A static utility class for managing the op related text/source marks in a GtkSource.Buffer."""
     @classmethod
-    def add_line_mark_for_op(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, name: str, category: str):
-        m = cls._get_opcode_mark(b, ssb_filename, opcode_addr)
+    def add_line_mark_for_op(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, name: str, category: str, is_for_macro_call: bool):
+        m = cls._get_opcode_mark(b, ssb_filename, opcode_addr, is_for_macro_call)
         if m is not None:
             b.create_source_mark(name, category, b.get_iter_at_mark(m))
 
@@ -36,8 +37,8 @@ class EditorTextMarkUtil:
         b.remove_source_marks(b.get_start_iter(), b.get_end_iter(), category)
 
     @classmethod
-    def scroll_to_op(cls, b: GtkSource.Buffer, view: GtkSource.View, ssb_filename: str, opcode_addr: int):
-        m = cls._get_opcode_mark(b, ssb_filename, opcode_addr)
+    def scroll_to_op(cls, b: GtkSource.Buffer, view: GtkSource.View, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool):
+        m = cls._get_opcode_mark(b, ssb_filename, opcode_addr, is_for_macro_call)
         if m is not None:
             view.scroll_to_mark(m, 0.1, False, 0.1, 0.1)
             b.place_cursor(b.get_iter_at_mark(m))
@@ -61,27 +62,37 @@ class EditorTextMarkUtil:
 
     @classmethod
     def add_breakpoint_line_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_offset: int, category: str):
-        m: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset)
-        if m is None:
-            return
-        line_iter = b.get_iter_at_line(b.get_iter_at_mark(m).get_line())
-        lm: Gtk.TextMark = b.get_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}')
-        if lm is not None:
-            return
-        b.create_source_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}', category, line_iter)
+        ms = []
+        m: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, True)
+        if m is not None:
+            ms.append(m)
+        m: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, False)
+        if m is not None:
+            ms.append(m)
+        for i, m in enumerate(ms):
+            line_iter = b.get_iter_at_line(b.get_iter_at_mark(m).get_line())
+            lm: Gtk.TextMark = b.get_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}_{i}')
+            if lm is not None:
+                return
+            b.create_source_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}_{i}', category, line_iter)
 
     @classmethod
     def remove_breakpoint_line_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_offset: int, category: str):
-        m: Gtk.TextMark = b.get_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}')
-        if m is None:
-            return
-        b.remove_source_marks(b.get_iter_at_mark(m), b.get_iter_at_mark(m), category)
+        # XXX: This is a bit ugly, but due to the fact, that there can be one call to a macro
+        # in the same file, there can be exactly 0-2 line markers:
+        for i in [0, 1]:
+            m: Gtk.TextMark = b.get_mark(f'for:opcode_<<<{ssb_filename}>>>_{opcode_offset}_{i}')
+            if m is None:
+                return
+            b.remove_source_marks(b.get_iter_at_mark(m), b.get_iter_at_mark(m), category)
 
     @classmethod
-    def create_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, offset: int, line: int, col: int, is_tmp: bool):
+    def create_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str,
+                           offset: int, line: int, col: int, is_tmp: bool, is_for_macro_call: bool):
         textiter = b.get_iter_at_line_offset(line, col)
         tmp_prefix = 'TMP_' if is_tmp else ''
-        b.create_mark(f'{tmp_prefix}opcode_<<<{ssb_filename}>>>_{offset}', textiter)
+        macro_call_suffix = '_call' if is_for_macro_call else ''
+        b.create_mark(f'{tmp_prefix}opcode_<<<{ssb_filename}>>>_{offset}{macro_call_suffix}', textiter)
 
     @classmethod
     def switch_to_new_op_marks(cls, b: GtkSource.Buffer, ssb_filename: str):
@@ -106,12 +117,18 @@ class EditorTextMarkUtil:
                     b.delete_mark(om)
                 # Move by deleting and re-creating.
                 match = MARK_PATTERN_TMP.match(m.get_name())
-                b.create_mark(f'opcode_<<<{str(match.group(1))}>>>_{int(match.group(2))}', textiter)
+                if match.group(3):
+                    b.create_mark(f'opcode_<<<{str(match.group(1))}>>>_{int(match.group(2))}_{match.group(3)}', textiter)
+                else:
+                    b.create_mark(f'opcode_<<<{str(match.group(1))}>>>_{int(match.group(2))}', textiter)
                 b.delete_mark(m)
 
     @classmethod
-    def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int) -> Optional[Gtk.TextMark]:
-        return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}')
+    def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool) -> Optional[Gtk.TextMark]:
+        if is_for_macro_call:
+            return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}_call')
+        else:
+            return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}')
 
     @classmethod
     def _get_opcode_in_line(cls, buffer: Gtk.TextBuffer, line, use_temp_markers=False) -> List[Tuple[str, int]]:

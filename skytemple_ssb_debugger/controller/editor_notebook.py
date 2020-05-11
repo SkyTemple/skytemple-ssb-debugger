@@ -15,6 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import os
 from typing import Dict, Optional, List, Tuple, TYPE_CHECKING
 
 from gi.repository import Gtk, Pango
@@ -25,6 +26,8 @@ from skytemple_ssb_debugger.controller.script_editor import ScriptEditorControll
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+from ..model.script_file_context.abstract import AbstractScriptFileContext
+from ..model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
 from ..model.script_file_context.ssb_file import SsbFileScriptFileContext
 
 if TYPE_CHECKING:
@@ -40,7 +43,6 @@ class EditorNotebookController:
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_data: Optional[Pmd2Data] = None
         self._open_editors: Dict[str, ScriptEditorController] = {}
-        self._open_editors_by_page_num: Dict[int, ScriptEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
         self._cached_hanger_halt_lines = {}
         self._cached_active_halted_filename = None
@@ -57,21 +59,35 @@ class EditorNotebookController:
     @property
     def currently_open(self) -> Optional[ScriptEditorController]:
         if self._notebook.get_current_page() > -1:
-            return self._open_editors_by_page_num[self._notebook.get_current_page()]
+            wdg = self._notebook.get_nth_page(self._notebook.get_current_page())
+            for c in self._open_editors.values():
+                if c.get_root_object() == wdg:
+                    return c
         return None
 
-    def open_ssb(self, filename: str):
+    def open_ssb(self, ssb_rom_path: str):
+        context = SsbFileScriptFileContext(self.file_manager.open_in_editor(ssb_rom_path), self.breakpoint_manager, self)
+        return self._open_common(ssb_rom_path, context)
+
+    def open_exps_macro(self, abs_path: str, path_relative_to_pdir: str):
+        context = ExpsMacroFileScriptFileContext(
+            abs_path, self.file_manager, self.breakpoint_manager, self
+        )
+        return self._open_common(path_relative_to_pdir, context)
+
+    def _open_common(self, registered_fname: str, file_conext: AbstractScriptFileContext):
         if self.file_manager:
-            if filename in self._open_editors:
-                self._notebook.set_current_page(self._notebook.page_num(self._open_editors[filename].get_root_object()))
+            if registered_fname in self._open_editors:
+                self._notebook.set_current_page(self._notebook.page_num(
+                    self._open_editors[registered_fname].get_root_object()
+                ))
             else:
-                context = SsbFileScriptFileContext(self.file_manager.open_in_editor(filename), self.breakpoint_manager)
                 editor_controller = ScriptEditorController(
-                    self, self._main_window, context,
+                    self, self._main_window, file_conext,
                     self.rom_data, self.on_ssb_editor_modified, self.enable_explorerscript
                 )
-                if filename in self._cached_hanger_halt_lines:
-                    editor_controller.insert_hanger_halt_lines(filename, self._cached_hanger_halt_lines[filename])
+                for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
+                    editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)
                 if self._cached_active_halted_filename is not None:
                     editor_controller.toggle_debugging_controls(True)
                     editor_controller.on_break_pulled(
@@ -81,14 +97,13 @@ class EditorNotebookController:
                 root = editor_controller.get_root_object()
                 pnum = self._notebook.insert_page(
                     root, tab_label_close_button(
-                        filename, self.close_tab
+                        registered_fname, self.close_tab
                     ), current_page + 1
                 )
-                self._notebook.child_set_property(root, 'menu-label', filename)
+                self._notebook.child_set_property(root, 'menu-label', registered_fname)
                 self._notebook.set_tab_reorderable(root, True)
                 self._notebook.set_current_page(pnum)
-                self._open_editors[filename] = editor_controller
-                self._open_editors_by_page_num[pnum] = editor_controller
+                self._open_editors[registered_fname] = editor_controller
 
     def close_all_tabs(self):
         """Close all tabs. If any of the tabs was not closed, False is returned."""
@@ -125,13 +140,13 @@ class EditorNotebookController:
                     return False
                 return True
 
-            if not self.file_manager.close_in_editor(filename, warning_callback):
-                return False
+            if filename[-4:] == '.ssb':
+                if not self.file_manager.close_in_editor(filename, warning_callback):
+                    return False
 
             self._notebook.remove_page(pnum)
             controller.destroy()
             del self._open_editors[filename]
-            del self._open_editors_by_page_num[pnum]
             return True
             
     def focus_by_opcode_addr(self, ssb_filename: str, opcode_addr: int):
@@ -187,12 +202,32 @@ class EditorNotebookController:
     def on_ssb_editor_modified(self, controller: ScriptEditorController, modified: bool):
         lbl_box: Gtk.Box = self._notebook.get_tab_label(controller.get_root_object())
         lbl: Gtk.Label = lbl_box.get_children()[0]
-        filename = controller.filename.split('/')[-1][:-4]
+        pathsep = os.path.sep
+        if controller.filename.endswith('.ssb'):
+            pathsep = '/'
+        filename = controller.filename.split(pathsep)[-1]
         # TODO: Alert SkyTemple main UI somehow? (via FileManager?)
         if modified:
             lbl.set_markup(f'<i>{filename}*</i>')
         else:
             lbl.set_markup(f'{filename}')
+
+    def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
+        """
+        A ssb file was re-compiled from outside of it's script editor.
+        Tell all editors about that, so that they can react if their context manages the file.
+        ready_to_reload is the return value from SsbFileManager.save_from_explorerscript for this script.
+        """
+        for editor in self._open_editors.values():
+            editor.on_ssb_changed_externally(ssb_filename, ready_to_reload)
+
+    def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):
+        """
+        The ssb file ssb_filename was changed and it imports the ExplorerScript macro file with the absolute path
+        of exps_abs_path. Let the file contexts of the open editors handle this.
+        """
+        for editor in self._open_editors.values():
+            editor.on_exps_macro_ssb_changed(exps_abs_path, ssb_filename)
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(

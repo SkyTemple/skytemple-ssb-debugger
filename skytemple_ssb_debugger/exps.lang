@@ -34,6 +34,7 @@
   </styles>
   <definitions>
     <context id="keywords" style-ref="keyword">
+      <keyword>import</keyword>
       <keyword>coro</keyword>
       <keyword>def</keyword>
       <keyword>macro</keyword>

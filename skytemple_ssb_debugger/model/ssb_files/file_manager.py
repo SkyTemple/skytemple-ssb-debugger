@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import hashlib
 import os
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, List, Tuple, Set
 
 from ndspy.rom import NintendoDSRom
 
@@ -30,9 +30,6 @@ from skytemple_ssb_debugger.threadsafe import threadsafe_now_or_gtk_nonblocking
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.debugger import DebuggerController
-
-
-MACROS_DIR_NAME = 'macros'
 
 
 class SsbFileManager:
@@ -49,14 +46,17 @@ class SsbFileManager:
     def get(self, filename: str) -> SsbLoadedFile:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
         if filename not in self._open_files:
-            ssb_bin = self.rom.getFileByName(filename)
+            try:
+                ssb_bin = self.rom.getFileByName(filename)
+            except ValueError as err:
+                raise FileNotFoundError(str(err)) from err
             self._open_files[filename] = SsbLoadedFile(
                 filename, FileType.SSB.deserialize(ssb_bin), self, self.project_fm
             )
             self._open_files[filename].exps.ssb_hash = self._hash(ssb_bin)
         return self._open_files[filename]
 
-    def save_from_ssb_script(self, filename: str, code: str):
+    def save_from_ssb_script(self, filename: str, code: str) -> bool:
         """
         Save an SSB model from SSBScript. It's existing model and source map will be updated.
         If the file was not loaded in the ground engine, and is thus ready
@@ -79,9 +79,12 @@ class SsbFileManager:
         # After save:
         return self._handle_after_save(filename)
 
-    def save_from_explorerscript(self, ssb_filename: str, code: str):
+    def save_from_explorerscript(self, ssb_filename: str, code: str) -> Tuple[bool, Set[str]]:
         """
         Save an SSB model from ExplorerScript. It's existing model and source map will be updated.
+
+        Returns a tuple of ready_to_reload (see next) and the set of included absolute exps file names.
+
         If the file was not loaded in the ground engine, and is thus ready
         to reload for the editors, True is returned. You may call self.force_reload()
         when you are ready (to trigger ssb reload event).
@@ -93,6 +96,7 @@ class SsbFileManager:
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
         # TODO: Put save functions in new classes
+        from skytemple_ssb_debugger.controller.main import PROJECT_DIR_MACRO_NAME
         project_dir = self.project_fm.dir()
         self.get(ssb_filename)
         compiler = ScriptCompiler(self.rom_data)
@@ -100,7 +104,7 @@ class SsbFileManager:
         exps_filename = f.exps.full_path
         original_source_map = f.exps.source_map
         f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(
-            code, exps_filename, lookup_paths=[self.project_fm.dir(MACROS_DIR_NAME)]
+            code, exps_filename, lookup_paths=[self.project_fm.dir(PROJECT_DIR_MACRO_NAME)]
         )
         ssb_new_bin = FileType.SSB.serialize(f.ssb_model)
 
@@ -113,16 +117,13 @@ class SsbFileManager:
         self.project_fm.explorerscript_save_hash(ssb_filename, new_hash)
 
         # Update the inclusion maps of included files.
-        diff = IncludedUsageMap(original_source_map, exps_filename) - IncludedUsageMap(f.exps.source_map, exps_filename)
+        new_inclusion_list = IncludedUsageMap(f.exps.source_map, exps_filename)
+        diff = IncludedUsageMap(original_source_map, exps_filename) - new_inclusion_list
         pd_w_pathsetp = project_dir + os.path.sep
         for removed_path in diff.removed:
             self.project_fm.explorerscript_include_usage_remove(removed_path.replace(pd_w_pathsetp, ''), ssb_filename)
         for added_path in diff.added:
             self.project_fm.explorerscript_include_usage_add(added_path.replace(pd_w_pathsetp, ''), ssb_filename)
-
-        # TODO: (in new method):
-            # TODO: Save all included files.
-            # TODO: Only save to ROM if actually a ssb file.
 
         # Save ROM
         self.rom.setFileByName(
@@ -130,7 +131,35 @@ class SsbFileManager:
         )
         self.rom.saveToFile(self.rom_filename)
         # After save:
-        return self._handle_after_save(ssb_filename)
+        return self._handle_after_save(ssb_filename), new_inclusion_list.included_files
+
+    def save_explorerscript_macro(self, abs_exps_path: str, code: str,
+                                  changed_ssbs: List[SsbLoadedFile]) -> Tuple[List[bool], List[Set[str]]]:
+        """
+        Saves an ExplorerScript macro file. This will save the source file for the macro and also recompile all SSB
+        models in the list of changed_ssbs.
+        Returned is a list of "ready_to_reload" from save_from_explorerscript and a list of sets for ALL included files
+        of those ssb files.
+        """
+        # Write ExplorerScript to file
+        with open(abs_exps_path, 'w') as f:
+            f.write(code)
+
+        ready_to_reloads = []
+        included_files_list = []
+        for ssb in changed_ssbs:
+            # Skip non-existing or not up to date exps:
+            if not self.project_fm.explorerscript_exists(ssb.filename) or \
+                    not self.project_fm.explorerscript_hash_up_to_date(ssb.filename, ssb.exps.ssb_hash):
+                ready_to_reloads.append(False)
+                included_files_list.append(set())
+            else:
+                exps_source, _ = self.project_fm.explorerscript_load(ssb.filename, sourcemap=False)
+                ready_to_reload, included_files = self.save_from_explorerscript(ssb.filename, exps_source)
+                ready_to_reloads.append(ready_to_reload)
+                included_files_list.append(included_files)
+
+        return ready_to_reloads, included_files_list
 
     def force_reload(self, filename: str):
         """

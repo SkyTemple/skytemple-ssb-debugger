@@ -56,7 +56,7 @@ from gi.repository.Gtk import *
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
 PROJECT_DIR_SUBDIR_NAME = 'debugger'
-PROJECT_DIR_MACRO_NAME = 'macros'
+PROJECT_DIR_MACRO_NAME = 'Macros'
 
 
 class MainController:
@@ -444,7 +444,10 @@ class MainController:
                 elif model[treeiter][2] == 'ssb':
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + model[treeiter][0])
                 elif model[treeiter][2] == 'exps_macro':
-                    self.editor_notebook.open_exps_macro(SCRIPT_DIR + '/' + model[treeiter][0])
+                    short_path = model[treeiter][0].replace(self.project_fm.dir() + os.path.sep, '')
+                    self.editor_notebook.open_exps_macro(
+                        model[treeiter][0], short_path
+                    )
                 else:
                     tree.expand_row(model.get_path(treeiter), False)
         elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY:

@@ -134,7 +134,6 @@ class SsbLoadedFile:
             handler(self)
 
     def register_property_callback(self, cb):
-        # TODO: MOVE REGISTRATION CALL TO CONTEXT!!
         self._event_handlers_property_change.append(cb)
 
     def unregister_property_callback(self, cb):
