@@ -101,7 +101,7 @@
       <!-- column-name name -->
       <column type="gchararray"/>
       <!-- column-name value -->
-      <column type="gint"/>
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkTreeView" id="macro_variables_list">

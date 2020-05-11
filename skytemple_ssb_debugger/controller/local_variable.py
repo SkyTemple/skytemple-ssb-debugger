@@ -26,11 +26,13 @@ from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import resizable
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, synchronized, threadsafe_gtk_nonblocking
 
 local_variables_lock = Lock()
+macro_variables_lock = Lock()
 
 
 class LocalVariableController:
@@ -70,7 +72,7 @@ class LocalVariableController:
                 self._local_vars_specs.append(var)
 
     @synchronized(local_variables_lock)
-    def sync(self, breaked_for: ScriptRuntimeStruct):
+    def sync(self, breaked_for: ScriptRuntimeStruct, file_state: BreakpointFileState = None):
         if not self.debugger or not self.debugger.ground_engine_state or not self._local_vars_specs:
             return self.disable()
 
@@ -84,14 +86,17 @@ class LocalVariableController:
         # Local variables
         self._local__list_store.clear()
         self._local_vars_values = []
-        threadsafe_emu_nonblocking(self.emu_thread, partial(self._do_sync, breaked_for))
+        threadsafe_emu_nonblocking(self.emu_thread, partial(self._do_sync_local_vars, breaked_for))
 
-        # TODO: Macro variables
+        # Macro variables
         self._macro__list_store.clear()
+        if file_state and file_state.current_macro_variables:
+            for name, value in file_state.current_macro_variables.items():
+                self._macro__list_store.append([name, str(value)])
 
     # RUNNING IN EMULATOR THREAD:
     @synchronized(local_variables_lock)
-    def _do_sync(self, srs):
+    def _do_sync_local_vars(self, srs):
         for var in self._local_vars_specs:
             _, val = GameVariable.read(self.emu_thread.emu.memory, self._rom_data, var.id, 0, srs)
             self._local_vars_values.append(val)

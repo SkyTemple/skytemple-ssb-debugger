@@ -731,13 +731,13 @@ class MainController:
         self._set_sensitve("macro_variables_sw", on_off)
         self._set_sensitve("local_variables_sw", on_off)
 
-    def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None):
+    def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None, file_state: BreakpointFileState = None):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
         self.ground_state_controller.sync(self.editor_notebook, breaked_for)
         # This will show the local and macro variables
-        if breaked_for:
-            self.local_variable_controller.sync(breaked_for)
+        if breaked_for and file_state:
+            self.local_variable_controller.sync(breaked_for, file_state)
         else:
             self.local_variable_controller.disable()
 
@@ -940,7 +940,7 @@ class MainController:
         # This will tell the code editor to refresh the debugger controls for all open editors
         self.editor_notebook.break_pulled(state, ssb.file_name, opcode_addr)
         self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
-        self.load_debugger_state(srs)
+        self.load_debugger_state(srs, breakpoint_file_state)
         self.debug_overlay.break_pulled()
 
         state.add_release_hook(self.break_released)

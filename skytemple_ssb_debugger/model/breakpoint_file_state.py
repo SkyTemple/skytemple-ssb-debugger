@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
+from typing import Optional, Union, Dict
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import ProjectFileManager
@@ -41,6 +42,7 @@ class BreakpointFileState:
         self.opcode_addr = opcode_addr
         self._halted_state = self.BREAK_REGULAR
         self._handler_filename = ssb_filename
+        self._current_macro_variables: Optional[Dict[str, Union[str, int]]] = None
 
     @property
     def halted_on_call(self):
@@ -54,9 +56,9 @@ class BreakpointFileState:
     def handler_filename(self):
         return self._handler_filename
 
-    @handler_filename.setter
-    def handler_filename(self, value):
-        self._handler_filename = value
+    @property
+    def current_macro_variables(self) -> Optional[Dict[str, Union[str, int]]]:
+        return self._current_macro_variables
 
     def process(self, loaded_ssb: SsbLoadedFile, opcode_offset: int, use_explorerscript, project_fm: ProjectFileManager):
         """Set the handler_filename and halted_on_call properties depending
@@ -75,6 +77,8 @@ class BreakpointFileState:
                     self._handler_filename = self._make_epxs_absolute(
                         project_fm, loaded_ssb.filename, mapping.relpath_included_file
                     )
+                if mapping.parameter_mapping:
+                    self._current_macro_variables = mapping.parameter_mapping
         except:
             # We ignore errors here, it's not really important, it just may lead to unexpected experiences
             # during debugging.
