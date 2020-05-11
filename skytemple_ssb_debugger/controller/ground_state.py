@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import os
 from typing import Optional, Dict
 import gi
 from gi.repository.Gtk import TreeViewColumn
@@ -212,7 +213,7 @@ class GroundStateController:
                     breaked = ssb[global_script.script_struct.hanger_ssb].breaked and global_script.script_struct == breaked_for
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
-                    self.get_short_sname(ssb, global_script.script_struct.hanger_ssb), None, '',
+                    self.get_short_sname(ssb, breaked, global_script.script_struct.hanger_ssb), None, '',
                     'media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
                 ])
                 actors_node = self._entities__tree_store.append(None, [
@@ -224,7 +225,7 @@ class GroundStateController:
                         breaked = ssb[actor.script_struct.hanger_ssb].breaked and actor.script_struct == breaked_for
                     self._entities__tree_store.append(actors_node, [
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
-                        self.get_short_sname(ssb, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
+                        self.get_short_sname(ssb, breaked, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
                         'media-playback-pause-symbolic' if breaked else '', '',
                         f'{actor.x_map}', f'{actor.y_map}', SsbRoutineType.ACTOR.value
                     ])
@@ -240,7 +241,7 @@ class GroundStateController:
                         breaked = ssb[object.script_struct.hanger_ssb].breaked and object.script_struct == breaked_for
                     self._entities__tree_store.append(objects_node, [
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
-                        self.get_short_sname(ssb, object.script_struct.hanger_ssb), None, kind_name,
+                        self.get_short_sname(ssb, breaked, object.script_struct.hanger_ssb), None, kind_name,
                         'media-playback-pause-symbolic' if breaked else '', '',
                         f'{object.x_map}', f'{object.y_map}', SsbRoutineType.OBJECT.value
                     ])
@@ -253,7 +254,7 @@ class GroundStateController:
                         breaked = ssb[performer.script_struct.hanger_ssb].breaked and performer.script_struct == breaked_for
                     self._entities__tree_store.append(performers_node, [
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
-                        self.get_short_sname(ssb, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
+                        self.get_short_sname(ssb, breaked, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
                         'media-playback-pause-symbolic' if breaked else '', '',
                         f'{performer.x_map}', f'{performer.y_map}', SsbRoutineType.PERFORMER.value
                     ])
@@ -287,10 +288,18 @@ class GroundStateController:
         return file_name.replace('SCRIPT/', '')
 
     @staticmethod
-    def get_short_sname(ssbs, hanger):
+    def get_short_sname(ssbs, breaked, hanger):
+        """
+        Returns the short ssb file name for display in the script column.
+        If breaked and the ssb file in RAM has a breakpoint handling file currently registered, that
+        is different from it's file name, then this file's name is also returned in parenthesis.
+        """
         try:
             if ssbs[hanger]:
-                return ssbs[hanger].file_name.split('/')[-1]
+                extra = ''
+                if breaked and ssbs[hanger].breaked and ssbs[hanger].breaked__handler_file != ssbs[hanger].file_name:
+                    extra = f' ({ssbs[hanger].breaked__handler_file.split(os.path.sep)[-1]})'
+                return ssbs[hanger].file_name.split('/')[-1] + extra
             return ''
         except IndexError:
             return ''

@@ -333,7 +333,7 @@ class DebuggerController:
         elif current_op == 0x6D:
             # debug_PrintScenario
             var_id = emu.memory.unsigned.read_short(current_op_pnt + 2)
-            game_var_name, game_var_value = GameVariable.read(self.rom_data, emu.memory, var_id, 0, srs)
+            game_var_name, game_var_value = GameVariable.read(emu.memory, self.rom_data, var_id, 0, srs)
             _, level_value = GameVariable.read(emu.memory, self.rom_data, var_id, 1, srs)
             const_string = read_ssb_str_mem(emu.memory, ssb_str_table_pointer,
                                             emu.memory.unsigned.read_short(current_op_pnt + 4))

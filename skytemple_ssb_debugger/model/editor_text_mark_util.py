@@ -20,6 +20,8 @@ from typing import List, Iterable, Tuple, Optional
 from gi.repository import GtkSource, Gtk
 
 # file, opcode offset, optional attribute
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
+
 MARK_PATTERN = re.compile('opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')
 MARK_PATTERN_TMP = re.compile('TMP_opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')
 
@@ -122,6 +124,18 @@ class EditorTextMarkUtil:
                 else:
                     b.create_mark(f'opcode_<<<{str(match.group(1))}>>>_{int(match.group(2))}', textiter)
                 b.delete_mark(m)
+
+    @classmethod
+    def opcode_mark_type(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_offset: int):
+        has_call: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, True)
+        hash_regular: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, False)
+        if has_call and hash_regular:
+            return BreakpointFileState.BREAK_BOTH
+        if has_call:
+            return BreakpointFileState.BREAK_AT_CALL
+        if hash_regular:
+            return BreakpointFileState.BREAK_REGULAR
+        return BreakpointFileState.BREAK_NONE
 
     @classmethod
     def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool) -> Optional[Gtk.TextMark]:

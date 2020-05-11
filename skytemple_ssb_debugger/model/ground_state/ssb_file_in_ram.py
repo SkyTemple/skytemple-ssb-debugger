@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from typing import Optional
 
 
 class SsbFileInRam:
@@ -22,5 +23,10 @@ class SsbFileInRam:
         self.hanger = hanger
         # If true, the debugger is currently breaking at this file.
         self.breaked = False
+        # If breaked is true: This contains the path of the file that handles the breakpoint.
+        # May either be the same as file_name, then the SsbScript or ExplorerScript file for the SSB itself
+        # handles the breakpoint, or the absolute path to an ExplorerScript source file that contains a macro
+        # that is halted at.
+        self.breaked__handler_file: Optional[str] = None
         # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
         self.hash = hash

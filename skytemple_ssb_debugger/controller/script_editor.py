@@ -137,10 +137,10 @@ class ScriptEditorController:
         self.builder.get_object('code_editor_cntrls_step_out').set_sensitive(val)
         self.builder.get_object('code_editor_cntrls_step_next').set_sensitive(val)
 
-    def on_break_pulled(self, ssb_filename, opcode_addr):
+    def on_break_pulled(self, ssb_filename, opcode_addr, halted_on_call):
         """Mark the currently actively halted opcode, if we have one for the current file and opcode."""
         if self._still_loading:
-            self._on_break_pulled_after_load = (ssb_filename, opcode_addr)
+            self._on_break_pulled_after_load = (ssb_filename, opcode_addr, halted_on_call)
         else:
             self.on_break_released()
             ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
@@ -149,7 +149,7 @@ class ScriptEditorController:
                 for buff in (ssbsb, expsb):
                     EditorTextMarkUtil.add_line_mark_for_op(
                         buff, ssb_filename, opcode_addr, 'breaked-line', 'breaked-line',
-                        False  # TODO: Call breaking
+                        halted_on_call
                     )
 
     def on_break_released(self):
@@ -648,19 +648,19 @@ class ScriptEditorController:
 
     # Breapoint Buttons
     def on_code_editor_cntrls_resume_clicked(self, btn: Gtk.Button, *args):
-        self.parent.parent.emu_resume(BreakpointStateType.RESUME)
+        self.parent.pull_break__resume()
 
     def on_code_editor_cntrls_step_into_clicked(self, btn: Gtk.Button, *args):
-        self.parent.parent.emu_resume(BreakpointStateType.STEP_INTO)
+        self.parent.pull_break__step_into()
 
     def on_code_editor_cntrls_step_over_clicked(self, btn: Gtk.Button, *args):
-        self.parent.parent.emu_resume(BreakpointStateType.STEP_OVER)
+        self.parent.pull_break__step_over()
 
     def on_code_editor_cntrls_step_out_clicked(self, btn: Gtk.Button, *args):
-        self.parent.parent.emu_resume(BreakpointStateType.STEP_OUT)
+        self.parent.pull_break__step_out()
 
     def on_code_editor_cntrls_step_next_clicked(self, btn: Gtk.Button, *args):
-        self.parent.parent.emu_resume(BreakpointStateType.STEP_NEXT)
+        self.parent.pull_break__step_next()
 
     def on_code_editor_cntrls_breaks_toggled(self, btn: Gtk.ToggleButton, *args):
         if self.parent.parent.debugger:

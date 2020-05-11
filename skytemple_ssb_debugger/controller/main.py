@@ -40,6 +40,7 @@ from skytemple_ssb_debugger.controller.ground_state import GroundStateController
 from skytemple_ssb_debugger.controller.local_variable import LocalVariableController
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
@@ -69,6 +70,8 @@ class MainController:
         self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_filename = None
         self._emu_is_running = False
+
+        self._enable_explorerscript = True
 
         self.debugger: Optional[DebuggerController] = None
         self.debug_overlay: Optional[DebugOverlayController] = None
@@ -128,7 +131,8 @@ class MainController:
             )
             self._keyboard_tmp = self._keyboard_cfg
 
-        self.editor_notebook: EditorNotebookController = EditorNotebookController(self.builder, self, self.window)
+        self.editor_notebook: EditorNotebookController = EditorNotebookController(
+            self.builder, self, self.window, self._enable_explorerscript)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
@@ -921,6 +925,15 @@ class MainController:
         opcode_addr = srs.current_opcode_addr_relative
         self.breakpoint_state = state
         self._set_buttons_paused()
+
+        # Build the breakpoint file state: This state object controls which source file is handling the breakpoint
+        # and whether we are currently halted on a macro call
+        breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr)
+        breakpoint_file_state.process(
+            self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript, self.project_fm
+        )
+        state.set_file_state(breakpoint_file_state)
+
         self.write_info_bar(Gtk.MessageType.WARNING, f"The debugger is halted at {ssb.file_name}.")
         # This will mark the hanger as being breaked:
         self.debugger.ground_engine_state.break_pulled(state)

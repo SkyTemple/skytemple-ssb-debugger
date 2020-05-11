@@ -16,7 +16,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import threading
 from enum import Enum
+from typing import Optional
 
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.threadsafe import synchronized
 
 
@@ -33,6 +35,7 @@ class BreakpointStateType(Enum):
 
 
 breakpoint_state_state_lock = threading.Lock()
+file_state_lock = threading.Lock()
 
 
 class BreakpointState:
@@ -40,6 +43,9 @@ class BreakpointState:
     The current state of the stepping mechanism of the debugger.
     If is_stopped(), the code execution of the emulator thread is currently on hold
     in skytemple_ssb_debugger.controller.debugger.DebuggerController.hook__breaking_point.
+
+    The object may optionally have a file state object, which describes more about the debugger state
+    for this breakpoint (eg. which source file is breaked in, if breaked on macro call)
 
     These objects are not reusable. They can not transition back to the initial STOPPED state.
     """
@@ -49,8 +55,16 @@ class BreakpointState:
         self.condition = threading.Condition()
         self.hanger_id = hanger_id
         self._state: BreakpointStateType = BreakpointStateType.STOPPED
+        self._file_state: Optional[BreakpointFileState] = None
         # Hook callbacks to call, when somewhere the break is released.
         self._release_hooks = []
+
+    @synchronized(file_state_lock)
+    def set_file_state(self, file_state: BreakpointFileState):
+        self._file_state = file_state
+
+    def get_file_state(self) -> Optional[BreakpointFileState]:
+        return self._file_state
 
     # TO BE CALLED BY EMULATOR THREAD:
 

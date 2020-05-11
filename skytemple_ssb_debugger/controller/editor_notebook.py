@@ -24,8 +24,9 @@ from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.controller.script_editor import ScriptEditorController
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+from ..model.breakpoint_file_state import BreakpointFileState
 from ..model.script_file_context.abstract import AbstractScriptFileContext
 from ..model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
 from ..model.script_file_context.ssb_file import SsbFileScriptFileContext
@@ -45,8 +46,7 @@ class EditorNotebookController:
         self._open_editors: Dict[str, ScriptEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
         self._cached_hanger_halt_lines = {}
-        self._cached_active_halted_filename = None
-        self._cached_active_halted_opcode = None
+        self._cached_file_bpnt_state: BreakpointFileState = None
         self.enable_explorerscript = enable_explorerscript
         self._main_window = main_window
 
@@ -69,11 +69,11 @@ class EditorNotebookController:
         context = SsbFileScriptFileContext(self.file_manager.open_in_editor(ssb_rom_path), self.breakpoint_manager, self)
         return self._open_common(ssb_rom_path, context)
 
-    def open_exps_macro(self, abs_path: str, path_relative_to_pdir: str):
+    def open_exps_macro(self, abs_path: str):
         context = ExpsMacroFileScriptFileContext(
             abs_path, self.file_manager, self.breakpoint_manager, self
         )
-        return self._open_common(path_relative_to_pdir, context)
+        return self._open_common(abs_path, context)
 
     def _open_common(self, registered_fname: str, file_conext: AbstractScriptFileContext):
         if self.file_manager:
@@ -88,10 +88,12 @@ class EditorNotebookController:
                 )
                 for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
                     editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)
-                if self._cached_active_halted_filename is not None:
+                if self._cached_file_bpnt_state is not None:
                     editor_controller.toggle_debugging_controls(True)
                     editor_controller.on_break_pulled(
-                        self._cached_active_halted_filename, self._cached_active_halted_opcode
+                        self._cached_file_bpnt_state.ssb_filename,
+                        self._cached_file_bpnt_state.opcode_addr,
+                        self._cached_file_bpnt_state.halted_on_call
                     )
                 current_page = self._notebook.get_current_page()
                 root = editor_controller.get_root_object()
@@ -149,25 +151,34 @@ class EditorNotebookController:
             del self._open_editors[filename]
             return True
             
-    def focus_by_opcode_addr(self, ssb_filename: str, opcode_addr: int):
+    def focus_by_opcode_addr(self, ssb_filename: str,  opcode_addr: int):
         """
         Pull an editor into focus and tell it to jump to opcode_addr. 
         If the editor is not open, it's opened before.
+        If a BreakpointFileState is currently registered (because the debugger is halted), then
+        calling this method may open the ExplorerScript macro instead that handles the breakpoint,
+        if applicable.
         """
-        # TODO: Handle focusing lines in Macro files
-        if ssb_filename not in self._open_editors:
-            self.open_ssb(ssb_filename)
+        editor_filename = ssb_filename
+        if self._cached_file_bpnt_state is not None:
+            editor_filename = self._cached_file_bpnt_state.handler_filename
+        is_opening_ssb = editor_filename[-4:] == '.ssb'
+        if editor_filename not in self._open_editors:
+            if is_opening_ssb:
+                self.open_ssb(editor_filename)
+            else:
+                self.open_exps_macro(editor_filename)
         else:
-            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[ssb_filename].get_root_object()))
-        self._open_editors[ssb_filename].focus_opcode(ssb_filename, opcode_addr)
+            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[editor_filename].get_root_object()))
+        self._open_editors[editor_filename].focus_opcode(ssb_filename, opcode_addr)
 
     def break_pulled(self, state: BreakpointState, ssb_filename: str, opcode_addr: int):
         """The debugger paused. Enable debugger controls for file_name."""
+        breakpoint_file_state = state.get_file_state()
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
-            editor.on_break_pulled(ssb_filename, opcode_addr)
-        self._cached_active_halted_filename = ssb_filename
-        self._cached_active_halted_opcode = opcode_addr
+            editor.on_break_pulled(ssb_filename, opcode_addr, breakpoint_file_state.halted_on_call)
+        self._cached_file_bpnt_state = breakpoint_file_state
         state.add_release_hook(self.break_released)
 
     def break_released(self, state: BreakpointState):
@@ -175,8 +186,7 @@ class EditorNotebookController:
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(False)
             editor.on_break_released()
-        self._cached_active_halted_filename = None
-        self._cached_active_halted_opcode = None
+        self._cached_file_bpnt_state = None
 
     def insert_hanger_halt_lines(self, halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]]):
         """Mark the current execution position for all running scripts. Dict filename -> list (type, id, opcode_addr)"""
@@ -228,6 +238,21 @@ class EditorNotebookController:
         """
         for editor in self._open_editors.values():
             editor.on_exps_macro_ssb_changed(exps_abs_path, ssb_filename)
+
+    def pull_break__resume(self):
+        self.parent.emu_resume(BreakpointStateType.RESUME)
+
+    def pull_break__step_into(self):
+        self.parent.emu_resume(BreakpointStateType.STEP_INTO)
+
+    def pull_break__step_over(self):
+        self.parent.emu_resume(BreakpointStateType.STEP_OVER)
+
+    def pull_break__step_out(self):
+        self.parent.emu_resume(BreakpointStateType.STEP_OUT)
+
+    def pull_break__step_next(self):
+        self.parent.emu_resume(BreakpointStateType.STEP_NEXT)
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(

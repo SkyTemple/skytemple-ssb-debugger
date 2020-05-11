@@ -102,6 +102,7 @@ class GroundEngineState:
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
         self._loaded_ssb_files[state.hanger_id].breaked = True
+        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
         state.add_release_hook(self.break_released)
 
     @synchronized_now(ground_engine_lock)
@@ -110,6 +111,7 @@ class GroundEngineState:
         for x in self._loaded_ssb_files:
             if x is not None:
                 x.breaked = False
+                x.breaked__handler_file = None
 
     @property
     def running(self):
