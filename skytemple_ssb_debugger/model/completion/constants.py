@@ -21,7 +21,8 @@ from gi.repository import GObject, GtkSource, Gtk
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import *
 from skytemple_files.script.ssb.constants import SsbConstant
-from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate, \
+    backward_until_special_char
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_GLOBAL_SCRIPT
 
 
@@ -31,7 +32,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         self.all_constants = list(SsbConstant.collect_all(rom_data.script_data))
 
     def do_get_name(self) -> str:
-        return "Constants"
+        return "Constants & Variables"
 
     def do_get_priority(self) -> int:
         return 1
@@ -61,7 +62,11 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         return None
 
     def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> Tuple[bool, Optional[Gtk.TextIter]]:
-        return False, None
+        correctly_set, textiter = context.get_iter()
+        assert correctly_set
+        copy = textiter.copy()
+        backward_until_special_char(copy)
+        return True, copy
 
     def do_match(self, context: GtkSource.CompletionContext) -> bool:
         return common_do_match(self._filter, self._all, context)

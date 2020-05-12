@@ -15,8 +15,15 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import string
+from typing import List
 
 from gi.repository import GtkSource, Gtk
+
+from explorerscript.ssb_converting.ssb_special_ops import OPS_ALL_SPECIAL
+from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
+
+SPECIAL_CHARS_COMPLETION_START = string.whitespace + r"""!"#%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+
 
 
 def backward_until_space(it: Gtk.TextIter):
@@ -27,8 +34,15 @@ def backward_until_space(it: Gtk.TextIter):
     it.forward_char()
 
 
+def backward_until_special_char(it: Gtk.TextIter):
+    it.backward_char()
+    while it.get_char() not in SPECIAL_CHARS_COMPLETION_START:
+        if not it.backward_char():
+            return
+    it.forward_char()
+
+
 def common_do_match(filter_func, all_func, context: GtkSource.CompletionContext) -> bool:
-    # TODO: We need to correct textiter because it doesn't work correct for inside function braces.
     _, textiter = context.get_iter()
     buffer: Gtk.TextBuffer = textiter.get_buffer()
 
@@ -38,16 +52,16 @@ def common_do_match(filter_func, all_func, context: GtkSource.CompletionContext)
 
     if textiter.ends_word() or previous_char == '_':
         start_word = textiter.copy()
-        backward_until_space(start_word)
+        backward_until_special_char(start_word)
         word = buffer.get_text(start_word, textiter, False)
         return (
-                       len(word) > 2 or context.get_activation() == GtkSource.CompletionActivation.USER_REQUESTED
+                       len(word) > 2 or (len(word) > 0 and word[0] == '$')
+                       or context.get_activation() == GtkSource.CompletionActivation.USER_REQUESTED
                ) and len(filter_func(word)) > 0
     return not textiter.inside_word() and context.get_activation() == GtkSource.CompletionActivation.USER_REQUESTED
 
 
 def common_do_populate(obj, filter_func, all_func, context: GtkSource.CompletionContext):
-    # TODO: We need to correct textiter because it doesn't work correct for inside function braces.
     _, textiter = context.get_iter()
     buffer: Gtk.TextBuffer = textiter.get_buffer()
 
@@ -57,7 +71,15 @@ def common_do_populate(obj, filter_func, all_func, context: GtkSource.Completion
 
     if textiter.ends_word() or previous_char == '_':
         start_word = textiter.copy()
-        backward_until_space(start_word)
+        backward_until_special_char(start_word)
         word = buffer.get_text(start_word, textiter, False)
         context.add_proposals(obj, filter_func(word), True)
     context.add_proposals(obj, all_func(), True)
+
+
+def filter_special_exps_opcodes(op_codes: List[Pmd2ScriptOpCode]):
+    filtered = []
+    for op_code in op_codes:
+        if op_code.name not in OPS_ALL_SPECIAL:
+            filtered.append(op_code)
+    return filtered

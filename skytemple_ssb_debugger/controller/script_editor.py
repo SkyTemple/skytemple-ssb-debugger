@@ -30,7 +30,9 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointStateType
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
+from skytemple_ssb_debugger.model.completion.exps_statements import GtkSourceCompletionExplorerScriptStatements
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
+from skytemple_ssb_debugger.model.completion.util import filter_special_exps_opcodes
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
 from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUtil
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
@@ -764,7 +766,15 @@ class ScriptEditorController:
         CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes)
 
     def _load_explorerscript_completion(self):
-        pass  # todo
+        view = self._explorerscript_view
+        completion: GtkSource.Completion = view.get_completion()
+
+        completion.add_provider(GtkSourceCompletionSsbConstants(self.rom_data))
+        completion.add_provider(GtkSourceCompletionSsbFunctions(
+            filter_special_exps_opcodes(self.rom_data.script_data.op_codes)
+        ))
+        completion.add_provider(GtkSourceCompletionExplorerScriptStatements())
+        CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes)
 
     def _update_view_editable_state(self):
         """Update which view is editable based on self._explorerscript_active"""

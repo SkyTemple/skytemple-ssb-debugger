@@ -18,10 +18,6 @@
 """
 TODO:
 - Running scripts
-- Completions:
-    - ExplorerScript
-    - TODO: We need to correct textiter because it doesn't work correct for inside function braces.
-    - Better support for new variable syntax (detecting start when inserting) + calling them "variables" in the calltip dropdown
 - Welcome screen
 - US Support
 - Menus (emulator controls, emulator settings, search, replace, undo, redo, export, import, save all, open new file, help, sourceview themes)
