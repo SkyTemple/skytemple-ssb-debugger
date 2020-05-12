@@ -62,9 +62,9 @@ class SsbLoadedFile:
         Returns the position markers. Either from the ExplorerScript file or the SSB model,
         if ExplorerScript is not available.
         """
-        if self.exps.loaded:
-            pass  # todo!
-            # return
+        if True:  # TODO: Way to disable ExplorerScript here.
+            # TODO: From Macros
+            return self.exps.source_map.get_position_marks__direct()
         if not self.ssbs.source_map:
             self.ssbs.load()
         # TODO: From Macros

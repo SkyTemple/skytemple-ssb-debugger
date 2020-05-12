@@ -136,23 +136,22 @@ class DebugOverlayController:
         # Refresh the cache
         with debug_overlay_lock:
             ges = self.debugger.ground_engine_state
-            if not ges:
-                return
-            self._cache_running = ges.running
-            if self._cache_running:
-                self._actor_bbox_cache = []
-                self._object_bbox_cache = []
-                self._perf_bbox_cache = []
-                self._event_bbox_cache = []
-                for actor in not_none(ges.actors):
-                    self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
-                for object in not_none(ges.objects):
-                    self._object_bbox_cache.append(object.get_bounding_box_camera(ges.map))
-                for performer in not_none(ges.performers):
-                    self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
-                for event in not_none(ges.events):
-                    self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
-                self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
+            if ges:
+                self._cache_running = ges.running
+                if self._cache_running:
+                    self._actor_bbox_cache = []
+                    self._object_bbox_cache = []
+                    self._perf_bbox_cache = []
+                    self._event_bbox_cache = []
+                    for actor in not_none(ges.actors):
+                        self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
+                    for object in not_none(ges.objects):
+                        self._object_bbox_cache.append(object.get_bounding_box_camera(ges.map))
+                    for performer in not_none(ges.performers):
+                        self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
+                    for event in not_none(ges.events):
+                        self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
+                    self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache:
             await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop)

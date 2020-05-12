@@ -14,10 +14,12 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 from typing import Optional
 
 from explorerscript.source_map import SourceMap
 from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+logger = logging.getLogger(__name__)
 
 
 class SsbScriptFile(AbstractScriptFile):
@@ -28,6 +30,7 @@ class SsbScriptFile(AbstractScriptFile):
         self._loaded = False
 
     def load(self):
+        logger.debug(f"SSBScript load requested for {self.parent.filename}.")
         self._text, self._source_map = self.parent.ssb_model.to_ssb_script()
         self._loaded = True
 

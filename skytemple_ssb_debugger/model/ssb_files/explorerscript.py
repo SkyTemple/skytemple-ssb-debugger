@@ -14,11 +14,13 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 import os
 from typing import Optional
 
 from explorerscript.source_map import SourceMap
 from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+logger = logging.getLogger(__name__)
 
 
 class ExplorerScriptFile(AbstractScriptFile):
@@ -38,6 +40,7 @@ class ExplorerScriptFile(AbstractScriptFile):
         )
 
     def load(self, force=False):
+        logger.debug(f"ExplorerScript load requested for {self.full_path}.")
         # We delegate the project file handling to the file manager
         fm = self.parent.project_file_manager
         if not fm.explorerscript_exists(self.parent.filename):
