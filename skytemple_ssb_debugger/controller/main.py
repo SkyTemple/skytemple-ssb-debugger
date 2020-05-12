@@ -28,7 +28,7 @@ from gi.repository.GtkSource import StyleSchemeManager
 from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask
-from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
+from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
 from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
 from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
 from explorerscript import EXPLORERSCRIPT_EXT
@@ -162,6 +162,23 @@ class MainController:
                 self.emu_thread, lambda: self.emu_thread.load_controls(self.settings)
             )
             self._keyboard_tmp = self._keyboard_cfg
+
+            lang = self.settings.get_emulator_language()
+            if lang:
+                self._suppress_event = True
+                if lang == Language.JAPANESE:
+                    self.builder.get_object('menu_emulator_language_jp').set_active(True)
+                elif lang == Language.ENGLISH:
+                    self.builder.get_object('menu_emulator_language_en').set_active(True)
+                elif lang == Language.FRENCH:
+                    self.builder.get_object('menu_emulator_language_fr').set_active(True)
+                elif lang == Language.GERMAN:
+                    self.builder.get_object('menu_emulator_language_de').set_active(True)
+                elif lang == Language.ITALIAN:
+                    self.builder.get_object('menu_emulator_language_it').set_active(True)
+                elif lang == Language.SPANISH:
+                    self.builder.get_object('menu_emulator_language_es').set_active(True)
+                self._suppress_event = False
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
             self.builder, self, self.window, self._enable_explorerscript)
@@ -489,6 +506,29 @@ class MainController:
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
         )
         self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
+
+    def on_menu_emulator_language_jp_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.JAPANESE)
+
+    def on_menu_emulator_language_en_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.ENGLISH)
+
+    def on_menu_emulator_language_fr_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.FRENCH)
+
+    def on_menu_emulator_language_de_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.GERMAN)
+
+    def on_menu_emulator_language_it_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.ITALIAN)
+
+    def on_menu_emulator_language_es_toggled(self, button: Gtk.RadioMenuItem):
+        self.on_menu_emulator_language_XX_toggled(Language.SPANISH)
+
+    def on_menu_emulator_language_XX_toggled(self, lang: Language):
+        if self._suppress_event:
+            return
+        self.settings.set_emulator_language(lang)
 
     def on_menu_emulator_savestate1_activate(self, button: Gtk.CheckMenuItem, *args):
         self.on_emulator_controls_savestate1_clicked()
@@ -1049,6 +1089,9 @@ class MainController:
             if self.debugger.ground_engine_state:
                 self.debugger.ground_engine_state.reset(fully=True)
             try:
+                lang = self.settings.get_emulator_language()
+                if lang:
+                    threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.set_language(lang))
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.rom_filename))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
             except RuntimeError:

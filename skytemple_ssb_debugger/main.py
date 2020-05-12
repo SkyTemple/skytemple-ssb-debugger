@@ -17,7 +17,6 @@
 
 """
 TODO:
-    - US Support
     - Packaging, general
     - Packaging, Windows
     - SkyTemple logos

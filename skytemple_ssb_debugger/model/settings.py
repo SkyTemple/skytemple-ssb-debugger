@@ -20,6 +20,7 @@ import threading
 from typing import Optional, Tuple, List
 
 from desmume.controls import key_names
+from desmume.emulator import Language
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_ssb_debugger.threadsafe import synchronized
 
@@ -35,6 +36,7 @@ SECT_JOYKEYS = 'JOYKEYS'
 
 KEY_STYLE_SCHEME = 'style_scheme'
 KEY_ASSISTANT_SHOWN = 'assistant_shown'
+KEY_EMULATOR_LANG = 'emulator_language'
 
 KEY_WINDOW_SIZE_X = 'width'
 KEY_WINDOW_SIZE_Y = 'height'
@@ -144,7 +146,20 @@ class DebuggerSettingsStore:
             self.loaded_config[SECT_JOYKEYS][key_name] = str(key_value)
         self._save()
 
+    @synchronized(settings_lock)
+    def get_emulator_language(self) -> Optional[Language]:
+        if SECT_GENERAL in self.loaded_config:
+            if KEY_EMULATOR_LANG in self.loaded_config[SECT_GENERAL]:
+                return Language(int(self.loaded_config[SECT_GENERAL][KEY_EMULATOR_LANG]))
+        return None
+
+    @synchronized(settings_lock)
+    def set_emulator_language(self, lang: Language):
+        if SECT_GENERAL not in self.loaded_config:
+            self.loaded_config[SECT_GENERAL] = {}
+        self.loaded_config[SECT_GENERAL][KEY_EMULATOR_LANG] = str(lang.value)
+        self._save()
+
     def _save(self):
         with open(self.config_file, 'w') as f:
             self.loaded_config.write(f)
-
