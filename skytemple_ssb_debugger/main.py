@@ -18,9 +18,6 @@
 """
 TODO:
 - Running scripts
-- ExplorerScript:
-    - Stepping commands for macro calls
-    - Macro variables view -> extend MacroSourceMapping with parameter values dict
 - Completions:
     - ExplorerScript
     - TODO: We need to correct textiter because it doesn't work correct for inside function braces.

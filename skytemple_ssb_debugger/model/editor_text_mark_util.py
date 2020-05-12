@@ -126,18 +126,6 @@ class EditorTextMarkUtil:
                 b.delete_mark(m)
 
     @classmethod
-    def opcode_mark_type(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_offset: int):
-        has_call: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, True)
-        hash_regular: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, False)
-        if has_call and hash_regular:
-            return BreakpointFileState.BREAK_BOTH
-        if has_call:
-            return BreakpointFileState.BREAK_AT_CALL
-        if hash_regular:
-            return BreakpointFileState.BREAK_REGULAR
-        return BreakpointFileState.BREAK_NONE
-
-    @classmethod
     def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool) -> Optional[Gtk.TextMark]:
         if is_for_macro_call:
             return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}_call')

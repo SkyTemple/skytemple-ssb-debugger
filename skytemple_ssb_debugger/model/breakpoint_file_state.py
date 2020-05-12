@@ -15,42 +15,44 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
-from typing import Optional, Union, Dict
+from typing import Optional, Union, Dict, TYPE_CHECKING
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
+
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 
 
 class BreakpointFileState:
     """
     Additional information about the debugger state, when halted (eg. if halted on maco and the source file that
     is stopped in).
+
+    This also manages the "exception" in debugging for when at macro calls or inside macro functions, by providing
+    a method to simulate calling macros for the user and providing return address for macros to jump to, when
+    pressing the UI buttons for it.
     """
 
-    # The debugger is halted on a macro call
-    BREAK_AT_CALL = 0
-    # The debugger is halted on a regular opcode
-    BREAK_REGULAR = 1
-    # A source file may contain both situations described above.
-    BREAK_BOTH = 2
-    # A source file contains no breakpoints
-    BREAK_NONE = -1
-
-    def __init__(self, ssb_filename: str, opcode_addr: int):
+    def __init__(self, ssb_filename: str, opcode_addr: int, parent: Optional['BreakpointState']):
         self.ssb_filename = ssb_filename
         self.opcode_addr = opcode_addr
-        self._halted_state = self.BREAK_REGULAR
+        self.parent = parent
+        self._halted_on_call = False
         self._handler_filename = ssb_filename
+        self._inside_call_handler_filename = ssb_filename
         self._current_macro_variables: Optional[Dict[str, Union[str, int]]] = None
+        self._step_over_addr = None
+        self._step_out_addr = None
 
     @property
     def halted_on_call(self):
-        return self._halted_state == self.BREAK_AT_CALL
-
-    @halted_on_call.setter
-    def halted_on_call(self, value):
-        self._halted_state = self.BREAK_AT_CALL if value else self.BREAK_REGULAR
+        """When halted at a macro call, pressing step into should not instruct the debugger to STEP_INTO as usual.
+        Instead step_into_macro_call of this object should be called, and after this the UI should be updated
+        to relect the new _handler_filename. After calling that function halted_on_call will return False, the
+        op that's being halted on this the one INSIDE the macro, and the debugging can resume as normal."""
+        return self._halted_on_call
 
     @property
     def handler_filename(self):
@@ -60,6 +62,25 @@ class BreakpointFileState:
     def current_macro_variables(self) -> Optional[Dict[str, Union[str, int]]]:
         return self._current_macro_variables
 
+    @property
+    def step_over_addr(self) -> Optional[int]:
+        """If set, the debugger should be instructed to do a STEP_MANUAL to this address when stepping over,
+        instead of the regular STEP_OVER instruction."""
+        return self._step_over_addr
+
+    @property
+    def step_out_addr(self) -> Optional[int]:
+        """If set, the debugger should be instructed to do a STEP_MANUAL to this address when stepping out,
+        instead of the regular STEP_OUT instruction."""
+        return self._step_out_addr
+
+    def step_into_macro_call(self):
+        """Step into a macro call, see notes at halted_on_call."""
+        self._halted_on_call = False
+        self._handler_filename = self._inside_call_handler_filename
+        self._step_out_addr = self._step_over_addr
+        self._step_over_addr = None
+
     def process(self, loaded_ssb: SsbLoadedFile, opcode_offset: int, use_explorerscript, project_fm: ProjectFileManager):
         """Set the handler_filename and halted_on_call properties depending
         on what opcode is currently being halted at in the source map."""
@@ -68,15 +89,23 @@ class BreakpointFileState:
             mapping = source_map.get_op_line_and_col(opcode_offset)
             if isinstance(mapping, MacroSourceMapping):
                 if mapping.called_in is not None:
-                    self.halted_on_call = True
+                    self._halted_on_call = True
+                    self._step_over_addr = mapping.return_addr
                     if mapping.called_in[0] is not None:
                         self._handler_filename = self._make_epxs_absolute(
                             project_fm, loaded_ssb.filename, mapping.called_in[0]
+                        )
+                    if mapping.relpath_included_file is not None:
+                        self._inside_call_handler_filename = self._make_epxs_absolute(
+                            project_fm, loaded_ssb.filename, mapping.relpath_included_file
                         )
                 elif mapping.relpath_included_file is not None:
                     self._handler_filename = self._make_epxs_absolute(
                         project_fm, loaded_ssb.filename, mapping.relpath_included_file
                     )
+                    self._step_out_addr = mapping.return_addr
+                else:
+                    self._step_out_addr = mapping.return_addr
                 if mapping.parameter_mapping:
                     self._current_macro_variables = mapping.parameter_mapping
         except:

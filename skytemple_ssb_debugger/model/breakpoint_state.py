@@ -19,6 +19,7 @@ from enum import Enum
 from typing import Optional
 
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
+from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.threadsafe import synchronized
 
 
@@ -32,10 +33,13 @@ class BreakpointStateType(Enum):
     STEP_INTO = 4
     STEP_OUT = 5
     STEP_NEXT = 6
+    # Manually step to an opcode offset of the SSB file currently stopped for.
+    STEP_MANUAL = 10
 
 
 breakpoint_state_state_lock = threading.Lock()
 file_state_lock = threading.Lock()
+manual_step_opcode_offset_lock = threading.Lock()
 
 
 class BreakpointState:
@@ -51,9 +55,11 @@ class BreakpointState:
     """
 
     @synchronized(breakpoint_state_state_lock)
-    def __init__(self, hanger_id: int):
+    def __init__(self, hanger_id: int, script_struct: ScriptRuntimeStruct):
         self.condition = threading.Condition()
         self.hanger_id = hanger_id
+        self.script_struct = script_struct
+        self._manual_step_opcode_offset: Optional[int] = None
         self._state: BreakpointStateType = BreakpointStateType.STOPPED
         self._file_state: Optional[BreakpointFileState] = None
         # Hook callbacks to call, when somewhere the break is released.
@@ -65,6 +71,16 @@ class BreakpointState:
 
     def get_file_state(self) -> Optional[BreakpointFileState]:
         return self._file_state
+
+    @property
+    @synchronized(manual_step_opcode_offset_lock)
+    def manual_step_opcode_offset(self):
+        return self._manual_step_opcode_offset
+
+    @manual_step_opcode_offset.setter
+    @synchronized(manual_step_opcode_offset_lock)
+    def manual_step_opcode_offset(self, value):
+        self._manual_step_opcode_offset = value
 
     # TO BE CALLED BY EMULATOR THREAD:
 
@@ -116,9 +132,15 @@ class BreakpointState:
         self.state = BreakpointStateType.STEP_OUT
         self._wakeup()
 
-    def step_out(self):
+    def step_next(self):
         """Break at the next opcode, even if it's for a different script target."""
         self.state = BreakpointStateType.STEP_NEXT
+        self._wakeup()
+
+    def step_manual(self, opcode_offset: int):
+        """Transition to the STEP_MANUAL state and set the opcode to halt at."""
+        self.state = BreakpointStateType.STEP_MANUAL
+        self.manual_step_opcode_offset = opcode_offset
         self._wakeup()
 
     def transition(self, state_type: BreakpointStateType):

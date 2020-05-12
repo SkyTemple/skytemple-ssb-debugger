@@ -105,6 +105,9 @@ class GroundEngineState:
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
         state.add_release_hook(self.break_released)
 
+    def step_into_macro_call(self, state: BreakpointState):
+        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
+
     @synchronized_now(ground_engine_lock)
     def break_released(self, state: BreakpointState):
         """Reset the breaked property of loaded ssb files again."""

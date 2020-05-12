@@ -170,9 +170,9 @@ class DebuggerController:
                 )):
                     self.breakpoint_manager.reset_temporary()
                     self._breakpoint_force = False
-                    state = BreakpointState(srs.hanger_ssb)
+                    state = BreakpointState(srs.hanger_ssb, srs)
                     state.acquire()
-                    threadsafe_gtk_nonblocking(lambda: self.parent.break_pulled(state, srs))
+                    threadsafe_gtk_nonblocking(lambda: self.parent.break_pulled(state))
                     while not state.wait(0.0005) and state.state == BreakpointStateType.STOPPED:
                         # We haven't gotten the signal to resume yet, process pending events.
                         self.emu_thread.run_one_pending_task()
@@ -214,6 +214,13 @@ class DebuggerController:
                         else:
                             # We just resume
                             pass
+                    elif state.state == BreakpointStateType.STEP_MANUAL:
+                        # We break at the requested opcode offset in the current hanger.
+                        self.breakpoint_manager.add_temporary(
+                            srs.script_target_type, srs.script_target_slot_id,
+                            is_in_unionall=srs.is_in_unionall,
+                            opcode_addr=state.manual_step_opcode_offset
+                        )
             else:
                 debugger_state_lock.release()
         else:

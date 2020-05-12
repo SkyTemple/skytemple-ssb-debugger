@@ -172,14 +172,20 @@ class EditorNotebookController:
             self._notebook.set_current_page(self._notebook.page_num(self._open_editors[editor_filename].get_root_object()))
         self._open_editors[editor_filename].focus_opcode(ssb_filename, opcode_addr)
 
-    def break_pulled(self, state: BreakpointState, ssb_filename: str, opcode_addr: int):
+    def break_pulled(self, state: BreakpointState):
         """The debugger paused. Enable debugger controls for file_name."""
-        breakpoint_file_state = state.get_file_state()
+        file_state = state.get_file_state()
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
-            editor.on_break_pulled(ssb_filename, opcode_addr, breakpoint_file_state.halted_on_call)
-        self._cached_file_bpnt_state = breakpoint_file_state
+            editor.on_break_pulled(file_state.ssb_filename, file_state.opcode_addr, file_state.halted_on_call)
+        self._cached_file_bpnt_state = file_state
         state.add_release_hook(self.break_released)
+
+    def step_into_macro_call(self, state: BreakpointFileState):
+        """The debugger paused. Enable debugger controls for file_name."""
+        for editor in self._open_editors.values():
+            editor.toggle_debugging_controls(True)
+            editor.on_break_pulled(state.ssb_filename, state.opcode_addr, state.halted_on_call)
 
     def break_released(self, state: BreakpointState):
         """The debugger is no longer paused, disable all debugging controls."""
@@ -243,12 +249,19 @@ class EditorNotebookController:
         self.parent.emu_resume(BreakpointStateType.RESUME)
 
     def pull_break__step_into(self):
+        if self._cached_file_bpnt_state and self._cached_file_bpnt_state.halted_on_call:
+            self.parent.step_into_macro_call(self._cached_file_bpnt_state)
+            return
         self.parent.emu_resume(BreakpointStateType.STEP_INTO)
 
     def pull_break__step_over(self):
+        if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_over_addr:
+            return self.parent.emu_resume(BreakpointStateType.STEP_MANUAL, self._cached_file_bpnt_state.step_over_addr)
         self.parent.emu_resume(BreakpointStateType.STEP_OVER)
 
     def pull_break__step_out(self):
+        if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_out_addr:
+            return self.parent.emu_resume(BreakpointStateType.STEP_MANUAL, self._cached_file_bpnt_state.step_out_addr)
         self.parent.emu_resume(BreakpointStateType.STEP_OUT)
 
     def pull_break__step_next(self):

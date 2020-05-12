@@ -450,7 +450,7 @@ class MainController:
                 elif model[treeiter][2] == 'exps_macro':
                     short_path = model[treeiter][0].replace(self.project_fm.dir() + os.path.sep, '')
                     self.editor_notebook.open_exps_macro(
-                        model[treeiter][0], short_path
+                        model[treeiter][0]
                     )
                 else:
                     tree.expand_row(model.get_path(treeiter), False)
@@ -857,7 +857,7 @@ class MainController:
                 md.run()
                 md.destroy()
 
-    def emu_resume(self, state_type = BreakpointStateType.RESUME):
+    def emu_resume(self, state_type=BreakpointStateType.RESUME, step_manual_addr=None):
         """Resume the emulator. If the debugger is currently breaked, the state will transition to state_type."""
         self._stopped = False
         self.toggle_paused_debugging_features(False)
@@ -866,7 +866,9 @@ class MainController:
             self._set_buttons_running()
             if not self._emu_is_running:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.resume())
-            if self.breakpoint_state:
+            if self.breakpoint_state and state_type == BreakpointStateType.STEP_MANUAL:
+                self.breakpoint_state.step_manual(step_manual_addr)
+            elif self.breakpoint_state:
                 self.breakpoint_state.transition(state_type)
             else:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_update(0))
@@ -910,7 +912,7 @@ class MainController:
         # TODO: This is more a quick fix for some issue with the variable syncing.
         threadsafe_gtk_nonblocking(lambda: self.variable_controller.sync())
 
-    def break_pulled(self, state: BreakpointState, srs: ScriptRuntimeStruct):
+    def break_pulled(self, state: BreakpointState):
         """
         The DebuggerController has paused at an instruction.
         - Update reference to state object.
@@ -919,6 +921,7 @@ class MainController:
         - Tell the code editor about which file to open and which instruction to jump to.
         - Add release hook.
         """
+        srs = state.script_struct
         threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(0))
 
         ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]
@@ -928,7 +931,7 @@ class MainController:
 
         # Build the breakpoint file state: This state object controls which source file is handling the breakpoint
         # and whether we are currently halted on a macro call
-        breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr)
+        breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr, state)
         breakpoint_file_state.process(
             self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript, self.project_fm
         )
@@ -938,12 +941,22 @@ class MainController:
         # This will mark the hanger as being breaked:
         self.debugger.ground_engine_state.break_pulled(state)
         # This will tell the code editor to refresh the debugger controls for all open editors
-        self.editor_notebook.break_pulled(state, ssb.file_name, opcode_addr)
+        self.editor_notebook.break_pulled(state)
         self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
         self.load_debugger_state(srs, breakpoint_file_state)
         self.debug_overlay.break_pulled()
 
         state.add_release_hook(self.break_released)
+
+    def step_into_macro_call(self, file_state: BreakpointFileState):
+        """Step into a macro call, by simulating it via the BreakpointFileState."""
+        file_state.step_into_macro_call()
+        self.debugger.ground_engine_state.step_into_macro_call(file_state.parent)
+        self.editor_notebook.step_into_macro_call(file_state)
+        self.editor_notebook.focus_by_opcode_addr(file_state.ssb_filename, file_state.opcode_addr)
+        self.load_debugger_state(
+            file_state.parent.script_struct, file_state
+        )
 
     def break_released(self, state: BreakpointState):
         """

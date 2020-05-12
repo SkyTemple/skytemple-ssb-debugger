@@ -193,7 +193,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
             if self._do_insert_opcode_text_mark:
                 for opcode_offset, source_mapping in loaded_ssb.exps.source_map:
                     if isinstance(source_mapping, MacroSourceMapping) and self._sm_entry_is_for_us(
-                            loaded_ssb, source_mapping
+                            loaded_ssb, source_mapping.relpath_included_file
                     ):
                         self._do_insert_opcode_text_mark(
                             True, ssb_filename, opcode_offset,
