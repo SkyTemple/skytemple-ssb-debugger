@@ -898,6 +898,13 @@ class MainController:
     def open_rom(self, fn: str):
         # TODO: Inject most of this later with SkyTemple via new environment object
         try:
+            # Unload old ROM first
+            if self.rom is not None:
+                if not self.editor_notebook.close_all_tabs():
+                    return
+                self.variable_controller.uninit()
+                if self.debugger:
+                    self.debugger.disable()
             self.rom = NintendoDSRom.fromFile(fn)
             rom_data = get_ppmdu_config_for_rom(self.rom)
             self.project_fm = ProjectFileManager(fn)
