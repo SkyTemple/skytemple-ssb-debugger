@@ -26,13 +26,12 @@ import gi
 from gi.repository.GtkSource import StyleSchemeManager
 from ndspy.rom import NintendoDSRom
 
-from desmume.controls import Keys, keymask, load_configured_config
+from desmume.controls import Keys, keymask
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
 from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
 from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
 from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
-from skytemple_files.common.config.path import skytemple_config_dir
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
@@ -47,6 +46,7 @@ from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileSta
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
+from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, \
@@ -68,6 +68,7 @@ class MainController:
     def __init__(self, builder: Builder, window: Window):
         self.builder = builder
         self.window = window
+        self.settings = DebuggerSettingsStore()
         self.emu_thread: Optional[EmulatorThread] = None
         self.rom: Optional[NintendoDSRom] = None
         self.ssb_fm: Optional[SsbFileManager] = None
@@ -81,15 +82,13 @@ class MainController:
         self.debug_overlay: Optional[DebugOverlayController] = None
         self.breakpoint_state: Optional[BreakpointState] = None
 
-        self.config_dir = os.path.join(skytemple_config_dir(), 'debugger')
-        os.makedirs(self.config_dir, exist_ok=True)
-
         self.project_fm: Optional[ProjectFileManager] = None
 
         self._click = False
         self._debug_log_scroll_to_bottom = False
         self._suppress_event = False
         self._stopped = False
+        self._resize_timeout_id = None
 
         self._search_text = None
         self._ssb_item_filter = None
@@ -101,11 +100,12 @@ class MainController:
 
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
-        self.selected_style_scheme_id = None
+        self.selected_style_scheme_id = self.settings.get_style_scheme()
+        was_none_before = self.selected_style_scheme_id is None
         style_dict: Dict[str, str] = {}
         for style_id in self.style_scheme_manager.get_scheme_ids():
             # TODO: Save the style choice to config
-            if not self.selected_style_scheme_id or style_id == 'builder-dark':
+            if not self.selected_style_scheme_id or (was_none_before and style_id == 'builder-dark'):
                 self.selected_style_scheme_id = style_id
             style_dict[style_id] = self.style_scheme_manager.get_scheme(style_id).get_name()
         menu_view_schemes: Gtk.MenuItem = self.builder.get_object('menu_view_schemes')
@@ -156,7 +156,7 @@ class MainController:
             self.renderer.start()
 
             self._keyboard_cfg, self._joystick_cfg = threadsafe_emu(
-                self.emu_thread, lambda: load_configured_config(self.emu_thread.emu)
+                self.emu_thread, lambda: self.emu_thread.load_controls(self.settings)
             )
             self._keyboard_tmp = self._keyboard_cfg
 
@@ -189,10 +189,15 @@ class MainController:
         # Initial sizes
         self.builder.get_object('frame_debug_log').set_size_request(220, -1)
 
-        builder.connect_signals(self)
+        # Load window sizes
+        window_size = self.settings.get_window_size()
+        if window_size is not None:
+            self.window.resize(*window_size)
+        window_position = self.settings.get_window_position()
+        if window_position is not None:
+            self.window.move(*window_position)
 
-        # DEBUG
-        self.open_rom('/home/marco/austausch/dev/skytemple/skyworkcopy_edit.nds')
+        builder.connect_signals(self)
 
     @property
     def emu_is_running(self):
@@ -427,6 +432,7 @@ class MainController:
         if hasattr(self, 'editor_notebook'):  # skip during __init__
             self.selected_style_scheme_id = scheme_id
             self.editor_notebook.switch_style_scheme(self.style_scheme_manager.get_scheme(scheme_id))
+            self.settings.set_style_scheme(scheme_id)
 
     # MENU DEBUGGER
     def on_menu_debugger_disable_breaks_toggled(self, btn: Gtk.CheckMenuItem, *args):
@@ -463,12 +469,14 @@ class MainController:
         new_keyboard_cfg = KeyboardControlsDialogController(self.window).run(self._keyboard_cfg)
         if new_keyboard_cfg is not None:
             self._keyboard_cfg = new_keyboard_cfg
+            self.settings.set_emulator_keyboard_cfg(self._keyboard_cfg)
 
     def on_menu_emulator_joystick_controls_activate(self, button: Gtk.CheckMenuItem, *args):
         self._joystick_cfg = JoystickControlsDialogController(self.window).run(
             self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
         )
+        self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
     def on_menu_emulator_savestate1_activate(self, button: Gtk.CheckMenuItem, *args):
         self.on_emulator_controls_savestate1_clicked()
@@ -778,6 +786,18 @@ class MainController:
         if self.project_fm:
             self.variable_controller.save(3, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
 
+    def on_main_window_configure_event(self, *args):
+        """Save the window size and position to the settings store"""
+        # We delay handling this, to make sure we only handle it when the user is done resizing/moving.
+        if self._resize_timeout_id is not None:
+            GLib.source_remove(self._resize_timeout_id)
+        self._resize_timeout_id = GLib.timeout_add_seconds(1, self.on_main_window_configure_event__handle)
+
+    def on_main_window_configure_event__handle(self):
+        self.settings.set_window_position(self.window.get_position())
+        self.settings.set_window_size(self.window.get_size())
+        self._resize_timeout_id = None
+
     # TODO: A bit of weird coupling with those two signal handlers.
     def on_ground_state_entities_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
@@ -827,7 +847,8 @@ class MainController:
             self.project_fm = ProjectFileManager(fn)
             self.ssb_fm = SsbFileManager(self.rom, rom_data, fn, self.debugger, self.project_fm)
             self.breakpoint_manager = BreakpointManager(
-                os.path.join(self.config_dir, f'{os.path.basename(fn)}.breakpoints.json'), self.ssb_fm
+                os.path.join(self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{os.path.basename(fn)}.breakpoints.json'),
+                self.ssb_fm
             )
             # Immediately save, because the module packs the ROM differently.
             self.rom.saveToFile(fn)

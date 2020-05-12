@@ -22,7 +22,9 @@ from threading import Thread, current_thread, Lock
 
 import nest_asyncio
 
+from desmume import controls
 from desmume.emulator import DeSmuME
+from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore
 from skytemple_ssb_debugger.threadsafe import THREAD_DEBUG, threadsafe_gtk_nonblocking, synchronized
 
 TICKS_PER_FRAME = 17
@@ -112,6 +114,22 @@ class EmulatorThread(Thread):
         retval = asyncio.run_coroutine_threadsafe(self.coro_runner(coro), self.loop)
         start_lock.release()
         return retval
+
+    def load_controls(self, settings: DebuggerSettingsStore):
+        """Loads the control configuration and returns it."""
+        assert current_thread() == self._thread_instance
+
+        default_keyboard, default_joystick = controls.load_default_config()
+        configured_keyboard = settings.get_emulator_keyboard_cfg()
+        configured_joystick = settings.get_emulator_joystick_cfg()
+
+        kbcfg = configured_keyboard if configured_keyboard is not None else default_keyboard
+        jscfg = configured_joystick if configured_joystick is not None else default_joystick
+
+        for i, jskey in enumerate(jscfg):
+            self.emu.input.joy_set_key(i, jskey)
+
+        return kbcfg, jscfg
 
     def _emu_cycle(self):
         if not self.emu:
