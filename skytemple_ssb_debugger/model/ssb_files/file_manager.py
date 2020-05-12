@@ -54,7 +54,7 @@ class SsbFileManager:
             except ValueError as err:
                 raise FileNotFoundError(str(err)) from err
             self._open_files[filename] = SsbLoadedFile(
-                filename, FileType.SSB.deserialize(ssb_bin), self, self.project_fm
+                filename, FileType.SSB.deserialize(ssb_bin, self.rom_data), self, self.project_fm
             )
             self._open_files[filename].exps.ssb_hash = self._hash(ssb_bin)
         return self._open_files[filename]
@@ -77,7 +77,7 @@ class SsbFileManager:
         f = self._open_files[filename]
         f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
         self.rom.setFileByName(
-            filename, FileType.SSB.serialize(f.ssb_model)
+            filename, FileType.SSB.serialize(f.ssb_model, self.rom_data)
         )
         logger.debug(f"{filename}: Saving to ROM")
         self.rom.saveToFile(self.rom_filename)
@@ -112,7 +112,7 @@ class SsbFileManager:
         f.ssb_model, f.exps.source_map = compiler.compile_explorerscript(
             code, exps_filename, lookup_paths=[self.project_fm.dir(PROJECT_DIR_MACRO_NAME)]
         )
-        ssb_new_bin = FileType.SSB.serialize(f.ssb_model)
+        ssb_new_bin = FileType.SSB.serialize(f.ssb_model, self.rom_data)
 
         # Write ExplorerScript to file
         self.project_fm.explorerscript_save(ssb_filename, code, f.exps.source_map)
