@@ -20,7 +20,6 @@ TODO:
 - Running scripts
 - Welcome screen
 - US Support
-- Menus (emulator controls, emulator settings, search, replace, undo, redo, export, import, save all, open new file, help, sourceview themes)
 - Creating new ssb files [-> only via SkyTemple]
 - Psy's list patch [SkyTemple]
 """

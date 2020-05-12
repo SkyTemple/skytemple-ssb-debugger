@@ -157,7 +157,7 @@
       </packing>
     </child>
     <child>
-      <object class="GtkNotebook">
+      <object class="GtkNotebook" id="code_editor_notebook">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>

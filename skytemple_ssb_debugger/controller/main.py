@@ -19,14 +19,17 @@ import os
 import shutil
 import traceback
 from functools import partial
-from typing import Optional
+from typing import Optional, Dict
 
 import cairo
 import gi
+from gi.repository.GtkSource import StyleSchemeManager
 from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask, load_configured_config
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT
+from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
+from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
 from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.config.path import skytemple_config_dir
@@ -46,7 +49,8 @@ from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, Break
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, \
+    generate_emulator_proxy
 
 gi.require_version('Gtk', '3.0')
 
@@ -94,6 +98,31 @@ class MainController:
 
         self._current_screen_width = SCREEN_WIDTH
         self._current_screen_height = SCREEN_HEIGHT
+
+        # Source editor style schema
+        self.style_scheme_manager = StyleSchemeManager()
+        self.selected_style_scheme_id = None
+        style_dict: Dict[str, str] = {}
+        for style_id in self.style_scheme_manager.get_scheme_ids():
+            # TODO: Save the style choice to config
+            if not self.selected_style_scheme_id or style_id == 'builder-dark':
+                self.selected_style_scheme_id = style_id
+            style_dict[style_id] = self.style_scheme_manager.get_scheme(style_id).get_name()
+        menu_view_schemes: Gtk.MenuItem = self.builder.get_object('menu_view_schemes')
+        first_item = None
+        submenu = Gtk.Menu.new()
+        for style_id, style_name in style_dict.items():
+            new_item: Gtk.RadioMenuItem = Gtk.RadioMenuItem.new()
+            new_item.set_property('group', first_item)  # upstream bug; can't use the constructor for this.
+            new_item.set_label(style_name)
+            if first_item is None:
+                first_item = new_item
+            if self.selected_style_scheme_id == style_id:
+                new_item.set_active(True)
+            new_item.connect('toggled', partial(self.on_menu_view_schemes_switch, style_id))
+            submenu.append(new_item)
+        submenu.show_all()
+        menu_view_schemes.set_submenu(submenu)
 
         self._filter_nds = Gtk.FileFilter()
         self._filter_nds.set_name("Nintendo DS ROMs (*.nds)")
@@ -178,6 +207,20 @@ class MainController:
     @emu_is_running.setter
     def emu_is_running(self, value):
         self._emu_is_running = value
+
+    @property
+    def global_state__breaks_disabled(self):
+        return self.builder.get_object('menu_debugger_disable_breaks').get_active()
+
+    @global_state__breaks_disabled.setter
+    def global_state__breaks_disabled(self, value):
+        if self._suppress_event:
+            return
+        self.builder.get_object('menu_debugger_disable_breaks').set_active(value)
+
+    @property
+    def global_state__audio_enabled(self):
+        return self.builder.get_object('emulator_controls_volume').get_active()
 
     def init_emulator(self):
         try:
@@ -341,11 +384,130 @@ class MainController:
         if self.editor_notebook and self.editor_notebook.currently_open:
             self.editor_notebook.currently_open.save()
 
+    def on_menu_close_activate(self, menu_item: Gtk.MenuItem, *args):
+        self.editor_notebook.close_open_tab()
+
     def on_menu_save_all_activate(self, menu_item: Gtk.MenuItem, *args):
-        pass  # todo
+        self.editor_notebook.save_all()
 
     def on_menu_quit_activate(self, menu_item: Gtk.MenuItem, *args):
         self.gtk_main_quit()
+
+    # MENU EDIT
+    def on_menu_edit_cut_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__cut()
+
+    def on_menu_edit_copy_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__copy()
+
+    def on_menu_edit_paste_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__paste()
+
+    def on_menu_edit_undo_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__undo()
+
+    def on_menu_edit_redo_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__redo()
+
+    def on_menu_edit_search_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__search()
+
+    def on_menu_edit_replace_activate(self, menu_item: Gtk.MenuItem, *args):
+        if self.editor_notebook and self.editor_notebook.currently_open:
+            self.editor_notebook.currently_open.menu__replace()
+
+    # MENU VIEW
+    def on_menu_view_schemes_switch(self, scheme_id: str, *args):
+        if hasattr(self, 'editor_notebook'):  # skip during __init__
+            self.selected_style_scheme_id = scheme_id
+            self.editor_notebook.switch_style_scheme(self.style_scheme_manager.get_scheme(scheme_id))
+
+    # MENU DEBUGGER
+    def on_menu_debugger_disable_breaks_toggled(self, btn: Gtk.CheckMenuItem, *args):
+        if self.debugger:
+            self.debugger.breakpoints_disabled = btn.get_active()
+            self._suppress_event = True
+            self.editor_notebook.toggle_breaks_disabled(btn.get_active())
+            self._suppress_event = False
+
+    def on_menu_debugger_step_over_activate(self, btn: Gtk.MenuItem, *args):
+        if self.breakpoint_state:
+            self.editor_notebook.pull_break__step_over()
+
+    def on_menu_debugger_step_into_activate(self, btn: Gtk.MenuItem, *args):
+        if self.breakpoint_state:
+            self.editor_notebook.pull_break__step_into()
+
+    def on_menu_debugger_step_out_activate(self, btn: Gtk.MenuItem, *args):
+        if self.breakpoint_state:
+            self.editor_notebook.pull_break__step_out()
+
+    def on_menu_debugger_step_next_activate(self, btn: Gtk.MenuItem, *args):
+        if self.breakpoint_state:
+            self.editor_notebook.pull_break__step_next()
+
+    # MENU EMULATOR
+    def on_menu_emulator_execute_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_pause_clicked()
+
+    def on_menu_emulator_reset_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_reset_clicked()
+
+    def on_menu_emulator_keyboard_controls_activate(self, button: Gtk.CheckMenuItem, *args):
+        new_keyboard_cfg = KeyboardControlsDialogController(self.window).run(self._keyboard_cfg)
+        if new_keyboard_cfg is not None:
+            self._keyboard_cfg = new_keyboard_cfg
+
+    def on_menu_emulator_joystick_controls_activate(self, button: Gtk.CheckMenuItem, *args):
+        self._joystick_cfg = JoystickControlsDialogController(self.window).run(
+            self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
+        )
+
+    def on_menu_emulator_savestate1_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_savestate1_clicked()
+
+    def on_menu_emulator_savestate2_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_savestate2_clicked()
+
+    def on_menu_emulator_savestate3_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_savestate3_clicked()
+
+    def on_menu_emulator_loadstate1_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_loadstate1_clicked()
+
+    def on_menu_emulator_loadstate2_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_loadstate2_clicked()
+
+    def on_menu_emulator_loadstate3_activate(self, button: Gtk.CheckMenuItem, *args):
+        self.on_emulator_controls_loadstate3_clicked()
+
+    def on_menu_emulator_volume_toggled(self, button: Gtk.CheckMenuItem, *args):
+        self.builder.get_object('emulator_controls_volume').set_active(button.get_active())
+
+    def on_menu_emulator_screenshot_activate(self, button: Gtk.CheckMenuItem, *args):
+        filter_png = Gtk.FileFilter()
+        filter_png.set_name("PNG Image (*.png)")
+        filter_png.add_pattern("*.png")
+
+        response, fn = self._file_chooser(Gtk.FileChooserAction.SAVE, "Save Screenshot...",
+                                          (filter_png, self._filter_any))
+
+        if response == Gtk.ResponseType.OK:
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.screenshot().save(fn))
+
+    # MENU HELP
+    def on_menu_help_exps_docs_activate(self, btn: Gtk.MenuItem, *args):
+        pass  # TODO!
+
+    def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
+        self.builder.get_object("about_dialog").run()
 
     # EMULATOR CONTROLS
     def on_emulator_controls_playstop_clicked(self, button: Gtk.Button):
@@ -357,46 +519,51 @@ class MainController:
                     self.emu_reset()
                     self.emu_resume()
 
-    def on_emulator_controls_pause_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_pause_clicked(self, *args):
         if self.emu_thread:
             if self.emu_is_running and self.emu_thread.registered_main_loop:
                 self.emu_pause()
             elif not self._stopped:
                 self.emu_resume()
 
-    def on_emulator_controls_reset_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_reset_clicked(self, *args):
         if self.emu_thread:
             self.emu_reset()
             self.emu_resume()
 
     def on_emulator_controls_volume_toggled(self, button: Gtk.ToggleButton):
+        if self._suppress_event:
+            return
         if self.emu_thread:
             if button.get_active():
                 threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
             else:
                 threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(0))
+        self._suppress_event = True
+        self.builder.get_object('menu_emulator_volume').set_active(button.get_active())
+        self._suppress_event = False
 
-    def on_emulator_controls_savestate1_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_savestate1_clicked(self, *args):
         if self.emu_thread:
             self.savestate(1)
 
-    def on_emulator_controls_savestate2_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_savestate2_clicked(self, *args):
         if self.emu_thread:
             self.savestate(2)
 
-    def on_emulator_controls_savestate3_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_savestate3_clicked(self, *args):
         if self.emu_thread:
             self.savestate(3)
 
-    def on_emulator_controls_loadstate1_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_loadstate1_clicked(self, *args):
         if self.emu_thread:
             self.loadstate(1)
 
-    def on_emulator_controls_loadstate2_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_loadstate2_clicked(self, *args):
         if self.emu_thread:
             self.loadstate(2)
 
-    def on_emulator_controls_loadstate3_clicked(self, button: Gtk.Button):
+    def on_emulator_controls_loadstate3_clicked(self, *args):
         if self.emu_thread:
             self.loadstate(3)
 
@@ -965,10 +1132,7 @@ class MainController:
         - Update the main UI (info bar, emulator controls).
         - The ground state controller and code editors have their own hooks for the releasing.
         """
-        # TODO: Don't resume / reset everything until the next tick, so save some time / resources during stepping.
-        #       Because of race conditions, it's probably best not to call break_pulled until tick end
-        #       but we may still need to update variables?
-        if self.builder.get_object('emulator_controls_volume').get_active():
+        if self.global_state__audio_enabled:
             threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
         self.breakpoint_state = None
         self._set_buttons_running()

@@ -60,9 +60,9 @@ class ScriptEditorController:
         self._modified_handler = modified_handler
 
         self._root: Gtk.Box = self.builder.get_object('code_editor')
-        self._ssm = StyleSchemeManager()
-        # TODO: Configurable?
-        self._active_scheme: GtkSource.StyleScheme = self._ssm.get_scheme('builder-dark')
+        self._active_scheme: GtkSource.StyleScheme = self.parent.parent.style_scheme_manager.get_scheme(
+            self.parent.parent.selected_style_scheme_id
+        )
         self._lm = LanguageManager()
         self._lm.set_search_path(self._lm.get_search_path() + [os.path.join(path, '..')])
 
@@ -90,14 +90,13 @@ class ScriptEditorController:
         self._active_search_context: Optional[GtkSource.SearchContext] = None
 
         self._mrk_attrs__breakpoint: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
-        self._mrk_attrs__breakpoint.set_background(self._mix_breakpoint_colors('def:error', 51, 204))
         self._mrk_attrs__breakpoint.set_pixbuf(create_breakpoint_icon())
 
         self._mrk_attrs__breaked_line: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
-        self._mrk_attrs__breaked_line.set_background(self._mix_breakpoint_colors('def:note', 81, 174))
 
         self._mrk_attrs__execution_line: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
-        self._mrk_attrs__execution_line.set_background(self._mix_breakpoint_colors('def:note', 21, 234))
+
+        self.switch_style_scheme(self._active_scheme)
 
         self.file_context.register_ssbs_state_change_handler(self.on_ssbs_state_change)
         self.file_context.register_ssbs_reload_handler(self.switch_to_new_op_marks)
@@ -106,6 +105,8 @@ class ScriptEditorController:
         self.load_views(
             self.builder.get_object('page_ssbscript'), self.builder.get_object('page_explorerscript')
         )
+
+        self.builder.get_object('code_editor_cntrls_breaks').set_active(self.parent.parent.global_state__breaks_disabled)
 
         self.builder.connect_signals(self)
 
@@ -489,34 +490,6 @@ class ScriptEditorController:
                 self.remove_breakpoint(m)
         return True
 
-    def on_sourceview_key_press_event(self, widget: Gtk.Widget, event: Gdk.EventKey):
-        """Handle keyboard shortcuts"""
-        # TODO: Move all of these to accelerators via main! Save is already moved there.
-        if event.state & Gdk.ModifierType.CONTROL_MASK and event.keyval == Gdk.KEY_f:
-            # SEARCH
-            revealer = self._explorerscript_revealer
-            search = self._explorerscript_search
-            if widget == self._ssb_script_view:
-                revealer = self._ssb_script_revealer
-                search = self._ssb_script_search
-            revealer.set_reveal_child(True)
-            search.grab_focus()
-        elif event.state & Gdk.ModifierType.CONTROL_MASK and event.keyval == Gdk.KEY_h:
-            # REPLACE
-            if not self._loaded_search_window:
-                self._active_search_context = self._explorerscript_search_context
-                if widget == self._ssb_script_view:
-                    self._active_search_context = self._ssb_script_search_context
-                search_settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
-                self._loaded_search_window: Gtk.Dialog = self.builder.get_object('sr_dialog')
-                self.builder.get_object('sr_search_setting_case_sensitive').set_active(search_settings.get_case_sensitive())
-                self.builder.get_object('sr_search_setting_match_words').set_active(search_settings.get_at_word_boundaries())
-                self.builder.get_object('sr_search_setting_regex').set_active(search_settings.get_regex_enabled())
-                self.builder.get_object('sr_search_setting_wrap_around').set_active(search_settings.get_wrap_around())
-                self._loaded_search_window.set_title(f'Search and Replace in {self._ssb.filename}')
-                self._loaded_search_window.show_all()
-        return False
-
     def on_search_entry_focus_out_event(self, widget: Gtk.SearchEntry, *args):
         view = self._explorerscript_view
         revealer = self._explorerscript_revealer
@@ -665,14 +638,100 @@ class ScriptEditorController:
         self.parent.pull_break__step_next()
 
     def on_code_editor_cntrls_breaks_toggled(self, btn: Gtk.ToggleButton, *args):
-        if self.parent.parent.debugger:
-            self.parent.parent.debugger.breakpoints_disabled = btn.get_active()
+        self.parent.parent.global_state__breaks_disabled = btn.get_active()
+
+    def toggle_breaks_disabled(self, value):
+        self.builder.get_object('code_editor_cntrls_breaks').set_active(value)
+
+    # Menu actions
+    def menu__cut(self):
+        v = self._active_view()
+        b: GtkSource.Buffer = v.get_buffer()
+        b.cut_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)), v.get_editable())
+
+    def menu__copy(self):
+        v = self._active_view()
+        b: GtkSource.Buffer = v.get_buffer()
+        b.copy_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)))
+
+    def menu__paste(self):
+        v = self._active_view()
+        b: GtkSource.Buffer = v.get_buffer()
+        b.paste_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)), None, v.get_editable())
+
+    def menu__undo(self):
+        um = self._active_view().get_buffer().get_undo_manager()
+        if um.can_undo():
+            um.undo()
+
+    def menu__redo(self):
+        um = self._active_view().get_buffer().get_undo_manager()
+        if um.can_redo():
+            um.redo()
+
+    def menu__search(self):
+        widget = self._active_view()
+        # SEARCH
+        revealer = self._explorerscript_revealer
+        search = self._explorerscript_search
+        if widget == self._ssb_script_view:
+            revealer = self._ssb_script_revealer
+            search = self._ssb_script_search
+        revealer.set_reveal_child(True)
+        search.grab_focus()
+
+    def menu__replace(self):
+        widget = self._active_view()
+        # REPLACE
+        if not self._loaded_search_window:
+            self._active_search_context = self._explorerscript_search_context
+            if widget == self._ssb_script_view:
+                self._active_search_context = self._ssb_script_search_context
+            search_settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
+            self._loaded_search_window: Gtk.Dialog = self.builder.get_object('sr_dialog')
+            self.builder.get_object('sr_search_setting_case_sensitive').set_active(
+                search_settings.get_case_sensitive())
+            self.builder.get_object('sr_search_setting_match_words').set_active(
+                search_settings.get_at_word_boundaries())
+            self.builder.get_object('sr_search_setting_regex').set_active(search_settings.get_regex_enabled())
+            self.builder.get_object('sr_search_setting_wrap_around').set_active(search_settings.get_wrap_around())
+            self._loaded_search_window.set_title(f'Search and Replace in {self.filename}')
+            self._loaded_search_window.show_all()
+
+    def switch_style_scheme(self, scheme):
+        self._active_scheme = scheme
+        for view in (self._ssb_script_view, self._explorerscript_view):
+            if view is not None:
+                view.get_buffer().set_style_scheme(self._active_scheme)
+        self._mrk_attrs__execution_line.set_background(self._mix_breakpoint_colors('def:note', 21, 234, '#6D5900'))
+        self._mrk_attrs__breaked_line.set_background(self._mix_breakpoint_colors('def:note', 81, 174, '#6D5900'))
+        self._mrk_attrs__breakpoint.set_background(self._mix_breakpoint_colors('def:error', 51, 204, '#6D0D00'))
 
     # Utility
-    def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha):
+    def _active_view(self) -> GtkSource.View:
+        ntbk: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
+        if ntbk.get_nth_page(ntbk.get_current_page()) == self.builder.get_object('code_editor_box_es'):
+            return self._explorerscript_view
+        return self._ssb_script_view
+
+    def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha, fallback_color):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
-        breakpoint_bg = color_hex_to_rgb(self._active_scheme.get_style(mix_style_name).props.background, mix_style_alpha)
-        text_bg = color_hex_to_rgb(self._active_scheme.get_style('text').props.background, text_style_alpha)
+        background_mix_style = None
+        text_mix_bg_style = None
+        try:
+            background_mix_style = self._active_scheme.get_style(mix_style_name).props.background
+        except AttributeError:
+            pass
+        if background_mix_style is None:
+            background_mix_style = fallback_color
+        breakpoint_bg = color_hex_to_rgb(background_mix_style, mix_style_alpha)
+        try:
+            text_mix_bg_style = self._active_scheme.get_style('text').props.background
+        except AttributeError:
+            pass
+        if text_mix_bg_style is None:
+            text_mix_bg_style = '#ffffff'
+        text_bg = color_hex_to_rgb(text_mix_bg_style, text_style_alpha)
         return Gdk.RGBA(*get_mixed_color(
             breakpoint_bg, text_bg
         ))
@@ -705,7 +764,6 @@ class ScriptEditorController:
         gutter.insert(PlayIconRenderer(view), -100)
 
         view.connect("line-mark-activated", self.on_sourceview_line_mark_activated)
-        view.connect("key-press-event", self.on_sourceview_key_press_event)
         buffer.connect("delete-range", self.on_sourcebuffer_delete_range)
 
         buffer.connect("modified-changed", self.on_text_buffer_modified)

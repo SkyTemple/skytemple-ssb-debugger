@@ -155,3 +155,18 @@ def wrap_threadsafe_emu():
 
         return wrapper
     return decorator
+
+
+def generate_emulator_proxy(emu_thread, obj_to_generate_for):
+    """Generates a proxy object that proxies all it's methods to threadsafe_emu."""
+    fields = {}
+
+    def wrapper(original_method, *args, **kwargs):
+        return threadsafe_emu(emu_thread, lambda: original_method(*args, **kwargs))
+
+    for method in [attr for attr in dir(obj_to_generate_for) if inspect.ismethod(getattr(obj_to_generate_for, attr))]:
+        fields[method] = functools.partial(wrapper, getattr(obj_to_generate_for, method))
+
+    fields['__init__'] = lambda self: None
+
+    return type(obj_to_generate_for.__class__.__name__ + 'Proxy', (obj_to_generate_for.__class__, ), fields)()

@@ -115,6 +115,14 @@ class EditorNotebookController:
                 all_returned_true = False
         return all_returned_true
 
+    def close_open_tab(self):
+        if self._notebook.get_current_page() > -1:
+            wdg = self._notebook.get_nth_page(self._notebook.get_current_page())
+            for filename, c in self._open_editors.items():
+                if c.get_root_object() == wdg:
+                    self.close_tab(filename)
+                    return
+
     def close_tab(self, filename: str):
         """Close tab for filename. If the tab was not closed, False is returned."""
         if filename in self._open_editors:
@@ -266,6 +274,18 @@ class EditorNotebookController:
 
     def pull_break__step_next(self):
         self.parent.emu_resume(BreakpointStateType.STEP_NEXT)
+
+    def toggle_breaks_disabled(self, value):
+        for editor in self._open_editors.values():
+            editor.toggle_breaks_disabled(value)
+
+    def save_all(self):
+        for editor in self._open_editors.values():
+            editor.save()
+
+    def switch_style_scheme(self, scheme):
+        for editor in self._open_editors.values():
+            editor.switch_style_scheme(scheme)
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(
