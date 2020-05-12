@@ -15,12 +15,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
+import logging
 import os
 from typing import List, Tuple, Dict, Optional
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+logger = logging.getLogger()
 
 
 class BreakpointManager:
@@ -60,7 +62,7 @@ class BreakpointManager:
 
         Callbacks for adding are NOT called as for add.
         """
-        print(f"{fn}: Breakpoint resync")
+        logger.debug(f"{fn}: Breakpoint resync")
         ssb = self.file_manager.get(fn)
         mapping_to_write_to_file = self.breakpoint_mapping
         if ssb.ram_state_up_to_date:
@@ -90,6 +92,7 @@ class BreakpointManager:
         ssb.unregister_reload_event_manager(self.wait_for_ssb_update)
 
     def add(self, fn, op_off):
+        logger.debug(f"{fn}: Breakpoint add: {op_off}")
         op_off = int(op_off)
         if fn not in self.breakpoint_mapping:
             self.breakpoint_mapping[fn] = []
@@ -102,6 +105,7 @@ class BreakpointManager:
             json.dump(self.breakpoint_mapping, f)
 
     def remove(self, fn, op_off):
+        logger.debug(f"{fn}: Breakpoint remove: {op_off}")
         op_off = int(op_off)
         if fn not in self.breakpoint_mapping:
             return
@@ -154,6 +158,7 @@ class BreakpointManager:
         return
 
     def reset_temporary(self):
+        logger.debug(f"Reset temporary")
         self._temporary_breakpoints = []
 
     def add_temporary(
@@ -171,6 +176,7 @@ class BreakpointManager:
 
         See has.
         """
+        logger.debug(f"Set temporary: {script_target_type}, {script_target_slot}, is_in_unionall={is_in_unionall}, opcode_addr={opcode_addr}")
         self._temporary_breakpoints.append((is_in_unionall, opcode_addr, script_target_type, script_target_slot))
 
     def _get(self, t, op_off):

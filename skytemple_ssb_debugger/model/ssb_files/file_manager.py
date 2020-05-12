@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import hashlib
+import logging
 import os
 from typing import Dict, TYPE_CHECKING, List, Tuple, Set
 
@@ -30,6 +31,8 @@ from skytemple_ssb_debugger.threadsafe import threadsafe_now_or_gtk_nonblocking
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.debugger import DebuggerController
+
+logger = logging.getLogger(__name__)
 
 
 class SsbFileManager:
@@ -68,6 +71,7 @@ class SsbFileManager:
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
         # TODO: Put save functions in new classes
+        logger.debug(f"{filename}: Saving from SSBScript")
         self.get(filename)
         compiler = ScriptCompiler(self.rom_data)
         f = self._open_files[filename]
@@ -75,6 +79,7 @@ class SsbFileManager:
         self.rom.setFileByName(
             filename, FileType.SSB.serialize(f.ssb_model)
         )
+        logger.debug(f"{filename}: Saving to ROM")
         self.rom.saveToFile(self.rom_filename)
         # After save:
         return self._handle_after_save(filename)
@@ -96,6 +101,7 @@ class SsbFileManager:
         :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
         """
         # TODO: Put save functions in new classes
+        logger.debug(f"{ssb_filename}: Saving from ExplorerScript")
         from skytemple_ssb_debugger.controller.main import PROJECT_DIR_MACRO_NAME
         project_dir = self.project_fm.dir()
         self.get(ssb_filename)
@@ -129,6 +135,7 @@ class SsbFileManager:
         self.rom.setFileByName(
             ssb_filename, ssb_new_bin
         )
+        logger.debug(f"{ssb_filename}: Saving to ROM")
         self.rom.saveToFile(self.rom_filename)
         # After save:
         return self._handle_after_save(ssb_filename), new_inclusion_list.included_files
@@ -141,6 +148,7 @@ class SsbFileManager:
         Returned is a list of "ready_to_reload" from save_from_explorerscript and a list of sets for ALL included files
         of those ssb files.
         """
+        logger.debug(f"{abs_exps_path}: Saving ExplorerScript macro")
         # Write ExplorerScript to file
         with open(abs_exps_path, 'w') as f:
             f.write(code)
@@ -166,18 +174,18 @@ class SsbFileManager:
         Force a SSB reload event to be triggered. You MUST only call this after one of the save
         methods have returned True.
         """
-        print(f"{filename}: Force reload")
+        logger.debug(f"{filename}: Force reload")
         self._open_files[filename].signal_editor_reload()
 
     def open_in_editor(self, filename: str):
         self.get(filename)
-        print(f"{filename}: Opened in editor")
+        logger.debug(f"{filename}: Opened in editor")
         self._open_files[filename].opened_in_editor = True
         return self._open_files[filename]
 
     def open_in_ground_engine(self, filename: str):
         self.get(filename)
-        print(f"{filename}: Opened in Ground Engine")
+        logger.debug(f"{filename}: Opened in Ground Engine")
         self._open_files[filename].opened_in_ground_engine = True
         # The file was reloaded in RAM:
         if not self._open_files[filename].ram_state_up_to_date:
@@ -196,7 +204,7 @@ class SsbFileManager:
             if not warning_callback():
                 return False
             self._open_files[filename].not_breakable = True
-        print(f"{filename}: Closed in editor")
+        logger.debug(f"{filename}: Closed in editor")
         self._open_files[filename].opened_in_editor = False
         return True
 
@@ -211,7 +219,7 @@ class SsbFileManager:
         if not self._open_files[filename].ram_state_up_to_date:
             threadsafe_now_or_gtk_nonblocking(lambda: self._open_files[filename].signal_editor_reload())
         self._open_files[filename].ram_state_up_to_date = True
-        print(f"{filename}: Closed in Ground Engine")
+        logger.debug(f"{filename}: Closed in Ground Engine")
         pass
 
     def _handle_after_save(self, filename: str):
@@ -222,9 +230,9 @@ class SsbFileManager:
         self._open_files[filename].ram_state_up_to_date = False
         if not self._open_files[filename].opened_in_ground_engine:
             self._open_files[filename].ram_state_up_to_date = True
-            print(f"{filename}: Can be reloaded")
+            logger.debug(f"{filename}: Can be reloaded")
             return True
-        print(f"{filename}: Can NOT be reloaded")
+        logger.debug(f"{filename}: Can NOT be reloaded")
         return False
 
     def hash_for(self, filename: str):

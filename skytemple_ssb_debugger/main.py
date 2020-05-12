@@ -17,12 +17,17 @@
 
 """
 TODO:
+    - US Support
+    - Packaging, general
+    - Packaging, Windows
+    - SkyTemple logos
+    - Explorerscript Doc
+    - Icons & Readme Github
 - Running scripts
 - Creating new ssb files [-> only via SkyTemple]
 - Psy's list patch [SkyTemple]
 """
-
-
+import logging
 import os
 
 import gi
@@ -67,4 +72,6 @@ def main():
 
 if __name__ == '__main__':
     # TODO: At the moment doesn't support any cli arguments.
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
     main()

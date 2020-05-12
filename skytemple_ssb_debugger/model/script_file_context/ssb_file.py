@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 import threading
 from functools import partial
 from typing import Callable, Optional, TYPE_CHECKING
@@ -28,6 +29,7 @@ from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
+logger = logging.getLogger(__name__)
 
 
 class SsbFileScriptFileContext(AbstractScriptFileContext):
@@ -57,14 +59,17 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         return self._breakpoint_manager
 
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
+        logger.debug(f"{loaded_ssb.filename}: Reloaded")
         if self._on_ssbs_state_change:
             self._on_ssbs_reload(loaded_ssb.filename)
 
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
+        logger.debug(f"{loaded_ssb.filename}: Property change")
         if self._on_ssbs_state_change:
             self._on_ssbs_state_change(not loaded_ssb.not_breakable, loaded_ssb.ram_state_up_to_date)
 
     def request_ssbs_state(self):
+        logger.debug(f"State requested.")
         self._on_ssbs_state_change(not self._ssb_file.not_breakable, self._ssb_file.ram_state_up_to_date)
         self._on_ssbs_reload(self._ssb_file.filename)
 
@@ -77,11 +82,14 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
+        logger.debug(f"Loading SSB file.")
         def gtk__chose_force_decompile():
             # we lazily load in the GTK thread now:
             try:
+                logger.debug(f"Loading ExplorerScript: Force decompile.")
                 self._ssb_file.exps.force_decompile()
             except Exception as ex:
+                logger.error(f"Error on load.", exc_info=ex)
                 exps_exception_callback(ex)
             else:
                 load_view_callback(self._ssb_file.exps.text, True, 'exps')
@@ -89,14 +97,17 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         def gtk__chose_force_load():
             # we lazily load in the GTK thread now:
             try:
+                logger.debug(f"Loading ExplorerScript: Force.")
                 self._ssb_file.exps.load(force=True)
             except Exception as ex:
+                logger.error(f"Error on load.", exc_info=ex)
                 exps_exception_callback(ex)
             else:
                 load_view_callback(self._ssb_file.exps.text, True, 'exps')
 
         def load_thread():
             # SSBS Load
+            logger.debug(f"Loading SSBScript.")
             self._ssb_file.ssbs.load()
             GLib.idle_add(partial(
                 load_view_callback, self._ssb_file.ssbs.text, False, 'ssbs'
@@ -105,10 +116,13 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
             # ExplorerScript Load
             if load_exps:
                 try:
+                    logger.debug(f"Loading ExplorerScript.")
                     self._ssb_file.exps.load()
                 except SsbHashError:
+                    logger.warning(f"Hash error on load.")
                     GLib.idle_add(partial(exps_hash_changed_callback, gtk__chose_force_decompile, gtk__chose_force_load))
                 except Exception as ex:
+                    logger.error(f"Error on load.", exc_info=ex)
                     GLib.idle_add(partial(exps_exception_callback, ex))
                 else:
                     GLib.idle_add(partial(
@@ -119,6 +133,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         threading.Thread(target=load_thread).start()
 
     def _after_load(self, after_callback: Callable[[], None]):
+        logger.debug(f"Loaded. Loading in opcode marks.")
         if self._do_insert_opcode_text_mark:
             for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
                 source_map: SourceMap
@@ -137,11 +152,14 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                                     is_exps, self._ssb_file.filename, opcode_offset,
                                     cin_line, cin_col, False, True
                                 )
+        logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
     def save(self, save_text: str, save_exps: bool,
              error_callback: Callable[[BaseException], None],
              success_callback: Callable[[], None]):
+
+        logger.debug(f"Saving SSB. From exps? {save_exps}")
 
         def save_thread():
             try:
@@ -155,6 +173,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                         self._ssb_file.filename, save_text
                     )
             except Exception as err:
+                logger.error(f"Error on save.", exc_info=err)
                 GLib.idle_add(partial(error_callback, err))
                 return
             else:
@@ -165,8 +184,10 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def _after_save(self, ready_to_reload, included_exps_files, success_callback: Callable[[], None]):
         if included_exps_files is not None:
             for exps_abs_path in included_exps_files:
+                logger.error(f"After save: Inform inclusion of macro {exps_abs_path}.")
                 self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, self._ssb_file.filename)
 
+        logger.error(f"After save: Build temporary text marks for opcodes...")
         # Build temporary text marks for the new source map. We will replace
         # the real ones with those in on_ssb_reloaded
         if self._do_insert_opcode_text_mark:
@@ -188,12 +209,15 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                                     cin_line, cin_col, True, True
                                 )
 
+        logger.error(f"After save: Triggering callback...")
         success_callback()
         if ready_to_reload:
+            logger.error(f"After save: NOW READY TO RELOAD!")
             self._ssb_file.file_manager.force_reload(self._ssb_file.filename)
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
         if ssb_filename == self._ssb_file.filename:
+            logger.error(f"{ssb_filename} was changed externally, simulating save.")
             self._after_save(ready_to_reload, [], lambda: None)
 
     def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):

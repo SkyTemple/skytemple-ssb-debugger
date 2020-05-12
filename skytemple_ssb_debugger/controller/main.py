@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
+import logging
 import os
 import shutil
 import traceback
@@ -56,6 +57,8 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, Gdk, GLib
 from gi.repository.Gtk import *
+
+logger = logging.getLogger(__name__)
 
 
 SAVESTATE_EXT_DESUME = 'ds'
@@ -248,8 +251,7 @@ class MainController:
             # Init joysticks
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.joy_init())
         except BaseException as ex:
-            print("DeSmuME load error:")
-            print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
+            logger.error(f"DeSmuME load error.", exc_info=ex)
 
             self.emu_thread = None
             md = Gtk.MessageDialog(self.window,
@@ -999,8 +1001,7 @@ class MainController:
                 else:
                     self._set_buttons_paused()
             except BaseException as ex:
-                print("Savestate load error:")
-                print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
+                logger.error(f"Savestate load error.", exc_info=ex)
                 md = Gtk.MessageDialog(self.window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
                                        Gtk.ButtonsType.OK, str(ex),

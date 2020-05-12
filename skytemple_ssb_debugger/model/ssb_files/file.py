@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from explorerscript.source_map import SourceMapPositionMark
@@ -25,6 +26,8 @@ from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+
+logger = logging.getLogger(__name__)
 
 
 class SsbLoadedFile:
@@ -52,8 +55,6 @@ class SsbLoadedFile:
         self._event_handlers_editor = []
 
         self._event_handlers_property_change = []
-
-        self.register_property_callback(ssb_print_handler)
 
     @property
     def position_markers(self) -> Optional[List[SourceMapPositionMark]]:
@@ -125,7 +126,7 @@ class SsbLoadedFile:
             pass
 
     def signal_editor_reload(self):
-        print(f"{self.filename}: Reload triggered.")
+        logger.debug(f"{self.filename}: Reload triggered.")
         # Breakpoint manager update it's breakpoint
         for handler in self._event_handlers_manager:
             handler(self)
@@ -142,7 +143,3 @@ class SsbLoadedFile:
     def _trigger_property_change(self, name, value):
         for cb in self._event_handlers_property_change:
             cb(self, name, value)
-
-
-def ssb_print_handler(ssb, name, value):
-    print(f'{ssb.filename}.{name} = {value}')

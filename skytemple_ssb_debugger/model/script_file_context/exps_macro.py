@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import json
+import logging
 import os
 import threading
 from functools import partial
@@ -31,6 +32,7 @@ from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
+logger = logging.getLogger(__name__)
 
 
 class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
@@ -61,13 +63,16 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         return self._breakpoint_manager
 
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
+        logger.debug(f"{loaded_ssb.filename}: Reloaded")
         if self._on_ssbs_state_change:
             self._on_ssbs_reload(loaded_ssb.filename)
 
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
+        logger.debug(f"{loaded_ssb.filename}: Property change")
         self._ssbs_states[loaded_ssb.filename] = (not loaded_ssb.not_breakable, loaded_ssb.ram_state_up_to_date)
 
     def request_ssbs_state(self):
+        logger.debug(f"State requested.")
         self._inform_ssbs_state_change()
         for ssb_file in self._registered_ssbs:
             self._on_ssbs_reload(ssb_file.filename)
@@ -90,6 +95,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         ssbs_not_available_callback()
         if not load_exps:
             return  # SsbScript not supported.
+        logger.debug(f"Loading ExplorerScript file.")
 
         def load_thread():
             try:
@@ -104,6 +110,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                     with open(inclusion_map_path, 'r') as f:
                         inclusion_map = json.load(f)
                 for ssb_filename in inclusion_map:
+                    logger.debug(f"Register macro for {ssb_filename}.")
                     try:
                         self._register_ssb_handler(
                             self._ssb_fm.get(ssb_filename)
@@ -112,6 +119,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                         # Ignore deleted ssbs
                         pass
             except Exception as ex:
+                logger.error(f"Error on load.", exc_info=ex)
                 GLib.idle_add(partial(exps_exception_callback, ex))
             else:
                 GLib.idle_add(partial(
@@ -126,6 +134,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         # 3. Compare the hashes of the ssb files and check the state,
         #    of the loaded ssb files. If hashes match and is breakable
         #    add opcode markers to the buffer
+        logger.debug(f"Loaded. Loading in opcode marks.")
         if self._do_insert_opcode_text_mark:
             for loaded_ssb in self._registered_ssbs:
                 if self._is_breakable(loaded_ssb):
@@ -145,6 +154,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                                     True, loaded_ssb.filename, opcode_offset,
                                     cin_line, cin_col, False, True
                                 )
+        logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
     def save(self, save_text: str, save_exps: bool, error_callback: Callable[[BaseException], None],
@@ -152,12 +162,15 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         if not save_exps:
             return  # not supported.
 
+        logger.debug(f"Saving ExlorerScript macro.")
+
         def save_thread():
             try:
                 ready_to_reload_list, included_exps_files_list = self._ssb_fm.save_explorerscript_macro(
                     self._absolute_path, save_text, self._registered_ssbs
                 )
             except Exception as err:
+                logger.error(f"Error on save.", exc_info=err)
                 GLib.idle_add(partial(error_callback, err))
                 return
             else:
@@ -170,15 +183,19 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         self._we_triggered_the_reload = True
         for loaded_ssb, ready_to_reload, included_exps_files in zipped:
             for exps_abs_path in included_exps_files:
+                logger.error(f"After save: Inform macro inclusion {exps_abs_path}.")
                 self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, loaded_ssb.filename)
+            logger.error(f"After save: Inform recompile ssb file {loaded_ssb.filename}.")
             self._editor_notebook_controller.on_ssb_changed_externally(loaded_ssb.filename, ready_to_reload)
         # Temporary text marks were not built by the callback in on_ssb_changed_externally
         self._we_triggered_the_reload = False
 
+        logger.error(f"After save: Success callback.")
         success_callback()
 
         for loaded_ssb, ready_to_reload, included_exps_files in zipped:
             if ready_to_reload:
+                logger.error(f"After save: MACRO - READY TO RELOAD NOW {loaded_ssb.filename}")
                 self._ssb_fm.force_reload(loaded_ssb.filename)
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
@@ -188,6 +205,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 loaded_ssb = candidate
                 break
         if loaded_ssb is not None:
+            logger.error(f"SSB file {ssb_filename} for Macro {self.exps_filepath} was changed externally... Loading temporary opcodes...")
             # Build temporary text marks for the new source map. We will replace
             # the real ones with those in on_ssb_reloaded
             if self._do_insert_opcode_text_mark:
@@ -208,16 +226,19 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                                 cin_line, cin_col, True, True
                             )
             if ready_to_reload and not self._we_triggered_the_reload:
+                logger.error(f"READY TO RELOAD.")
                 self._ssb_fm.force_reload(ssb_filename)
 
     def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):
         # If we don't watch a ssb file yet, we will now.
         if exps_abs_path == self._absolute_path:
             if ssb_filename not in [ssb.filename for ssb in self._registered_ssbs]:
+                logger.error(f"SSB file {ssb_filename} new for Macro {self.exps_filepath}.")
                 self._register_ssb_handler(
                     self._ssb_fm.get(ssb_filename)
                 )
             if not self._we_triggered_the_reload:
+                logger.error(f"SSB file {ssb_filename} macro change treiggered for {self.exps_filepath}.")
                 self.on_ssb_changed_externally(ssb_filename, True)
             # Otherwise opcode text marks get added by on_ssb_changed_externally.
 

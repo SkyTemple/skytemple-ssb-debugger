@@ -15,19 +15,18 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 import os
 import re
-import traceback
 from functools import partial
 from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
 from gi.repository import GtkSource
-from gi.repository.GtkSource import StyleSchemeManager, LanguageManager
+from gi.repository.GtkSource import LanguageManager
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointStateType
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.exps_statements import GtkSourceCompletionExplorerScriptStatements
@@ -40,6 +39,8 @@ from skytemple_ssb_debugger.pixbuf.icons import *
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
+
+logger = logging.getLogger(__name__)
 
 
 EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
@@ -255,7 +256,7 @@ class ScriptEditorController:
         if self._saving_dialog is not None:
             self._saving_dialog.hide()
             self._saving_dialog = None
-        print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
+        logger.error(f"Save error.", exc_info=err)
         prefix = ''
         if isinstance(err, ParseError):
             prefix = 'Parse error: '
@@ -340,7 +341,7 @@ class ScriptEditorController:
                 force_load()
 
         def load__gtk__exps_exception(exception):
-            print(''.join(traceback.format_exception(etype=type(exception), value=exception, tb=exception.__traceback__)))
+            logger.error(f"Load error.", exc_info=exception)
             md = Gtk.MessageDialog(self._main_window,
                                    Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
                                    Gtk.ButtonsType.OK, f"There was an error while loading the ExplorerScript "

@@ -16,6 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import asyncio
+import logging
 import traceback
 from asyncio import Future
 from threading import Thread, current_thread, Lock
@@ -26,7 +27,7 @@ from desmume import controls
 from desmume.emulator import DeSmuME
 from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore
 from skytemple_ssb_debugger.threadsafe import THREAD_DEBUG, threadsafe_gtk_nonblocking, synchronized
-
+logger = logging.getLogger(__name__)
 TICKS_PER_FRAME = 17
 FRAMES_PER_SECOND = 60
 
@@ -180,9 +181,7 @@ class EmulatorThread(Thread):
         try:
             return await asyncio.ensure_future(coro)
         except BaseException as ex:
-            # TODO Proper logging
-            print(f"Uncaught EmulatorThread task exception:")
-            print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
+            logger.error(f"Uncaught EmulatorThread task exception.", exc_info=ex)
 
     @synchronized(display_buffer_lock)
     def display_buffer_as_rgbx(self):
