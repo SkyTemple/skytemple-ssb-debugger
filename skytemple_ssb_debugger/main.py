@@ -18,8 +18,6 @@
 """
 TODO:
 - Running scripts
-- Welcome screen
-- US Support
 - Creating new ssb files [-> only via SkyTemple]
 - Psy's list patch [SkyTemple]
 """
@@ -61,7 +59,6 @@ def main():
         # Load main window + controller
         MainController(builder, main_window)
 
-        main_window.present()
         Gtk.main()
     finally:
         if EmulatorThread.instance():

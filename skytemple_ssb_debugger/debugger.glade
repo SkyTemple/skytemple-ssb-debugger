@@ -2277,6 +2277,84 @@ Besuchen Sie &lt;a href="https://www.gnu.org/licenses/gpl-3.0.html"&gt;GNU Gener
       </object>
     </child>
   </object>
+  <object class="GtkAssistant" id="intro_dialog">
+    <property name="can_focus">False</property>
+    <property name="modal">True</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="skip_taskbar_hint">True</property>
+    <property name="skip_pager_hint">True</property>
+    <property name="transient_for">main_window</property>
+    <property name="attached_to">main_window</property>
+    <property name="use_header_bar">1</property>
+    <signal name="apply" handler="on_intro_dialog_close" swapped="no"/>
+    <signal name="cancel" handler="on_intro_dialog_close" swapped="no"/>
+    <signal name="close" handler="on_intro_dialog_close" swapped="no"/>
+    <signal name="escape" handler="on_intro_dialog_close" swapped="no"/>
+    <child>
+      <object class="GtkBox">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="spacing">20</property>
+        <child>
+          <object class="GtkImage">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="pixel_size">127</property>
+            <property name="icon_name">skytemple-debugger</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="halign">start</property>
+            <property name="label" translatable="yes">&lt;span size="large"&gt;Welcome to SkyTemple Script Engine Debugger!&lt;/span&gt;
+
+This tool will help you to edit and test scripts for the script
+engine of Pokémon Mystery Dungeon Explorers of Sky.
+
+Please note the following:
+- This is still very early software, please make backups of your
+  ROM. Things &lt;i&gt;will&lt;/i&gt; break.
+- The debugger directly saves edited scripts to the ROM.
+  Because of this you will experience corruptions in gameplay,
+  music or graphics over time. Please reload the game in this
+  case. The same applies to savestates.
+- A project directory was created next to the ROM. It contains
+  the ExplorerScript source code files created by the debugger.
+- Please report any issues.</property>
+            <property name="use_markup">True</property>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+      <packing>
+        <property name="page_type">confirm</property>
+        <property name="complete">True</property>
+      </packing>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child>
+      <placeholder/>
+    </child>
+    <child type="titlebar">
+      <placeholder/>
+    </child>
+  </object>
   <object class="GtkTreeStore" id="ssb_file_tree_store">
     <columns>
       <!-- column-name path -->

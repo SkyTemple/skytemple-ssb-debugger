@@ -34,6 +34,7 @@ SECT_KEYS = 'KEYS'
 SECT_JOYKEYS = 'JOYKEYS'
 
 KEY_STYLE_SCHEME = 'style_scheme'
+KEY_ASSISTANT_SHOWN = 'assistant_shown'
 
 KEY_WINDOW_SIZE_X = 'width'
 KEY_WINDOW_SIZE_Y = 'height'
@@ -63,6 +64,20 @@ class DebuggerSettingsStore:
         if SECT_GENERAL not in self.loaded_config:
             self.loaded_config[SECT_GENERAL] = {}
         self.loaded_config[SECT_GENERAL][KEY_STYLE_SCHEME] = scheme_id
+        self._save()
+
+    @synchronized(settings_lock)
+    def get_assistant_shown(self) -> bool:
+        if SECT_GENERAL in self.loaded_config:
+            if KEY_ASSISTANT_SHOWN in self.loaded_config[SECT_GENERAL]:
+                return int(self.loaded_config[SECT_GENERAL][KEY_ASSISTANT_SHOWN]) > 0
+        return False
+
+    @synchronized(settings_lock)
+    def set_assistant_shown(self, value: bool):
+        if SECT_GENERAL not in self.loaded_config:
+            self.loaded_config[SECT_GENERAL] = {}
+        self.loaded_config[SECT_GENERAL][KEY_ASSISTANT_SHOWN] = '1' if value else '0'
         self._save()
 
     @synchronized(settings_lock)
