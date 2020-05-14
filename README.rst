@@ -5,7 +5,7 @@ SkyTemple Script Engine Debugger
 
 |build| |pypi-version| |pypi-downloads| |pypi-license| |pypi-pyversions| |discord|
 
-.. |logo| image:: https://raw.githubusercontent.com/SkyTemple/skytemple-ssb-debugger/master/data/icons/hicolor/256x256/apps/skytemple-debugger.png
+.. |logo| image:: https://raw.githubusercontent.com/SkyTemple/skytemple-ssb-debugger/master/skytemple_ssb_debugger/data/icons/hicolor/256x256/apps/skytemple-debugger.png
 
 .. |build| image:: https://jenkins.riptide.parakoopa.de/buildStatus/icon?job=skytemple-ssb-debugger%2Fmaster
     :target: https://jenkins.riptide.parakoopa.de/blue/organizations/jenkins/skytemple-ssb-debugger/activity
