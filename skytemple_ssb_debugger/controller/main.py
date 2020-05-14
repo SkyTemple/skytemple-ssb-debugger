@@ -109,7 +109,7 @@ class MainController:
         style_dict: Dict[str, str] = {}
         for style_id in self.style_scheme_manager.get_scheme_ids():
             # TODO: Save the style choice to config
-            if not self.selected_style_scheme_id or (was_none_before and style_id == 'builder-dark'):
+            if not self.selected_style_scheme_id or (was_none_before and style_id == 'oblivion'):
                 self.selected_style_scheme_id = style_id
             style_dict[style_id] = self.style_scheme_manager.get_scheme(style_id).get_name()
         menu_view_schemes: Gtk.MenuItem = self.builder.get_object('menu_view_schemes')
@@ -261,9 +261,7 @@ class MainController:
     def init_emulator(self):
         try:
             # Load desmume
-            # TODO: Dummy
-            #self.emu_thread = EmulatorThread(self, "C:\\Users\\Marco\\austausch\\dev\\desmume\\desmume\\src\\frontend\\interface\\windows\\__bins\\DeSmuME Interface-VS2017-x64-Release.dll")
-            self.emu_thread = EmulatorThread(self, "../../../desmume/desmume/src/frontend/interface/.libs/libdesmume.so")
+            self.emu_thread = EmulatorThread(self)
             self.emu_thread.start()
 
             # Init joysticks
@@ -852,8 +850,8 @@ class MainController:
         self._resize_timeout_id = None
 
     def on_intro_dialog_close(self, assistant: Gtk.Assistant):
-        assistant.destroy()
         self.settings.set_assistant_shown(True)
+        assistant.hide()
 
     # TODO: A bit of weird coupling with those two signal handlers.
     def on_ground_state_entities_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):

@@ -17,11 +17,6 @@
 
 """
 TODO:
-    - Packaging, general
-    - Packaging, Windows
-    - SkyTemple logos
-    - Explorerscript Doc
-    - Icons & Readme Github
 - Running scripts
 - Creating new ssb files [-> only via SkyTemple]
 - Psy's list patch [SkyTemple]
@@ -45,9 +40,8 @@ def main():
     try:
         path = os.path.abspath(os.path.dirname(__file__))
 
-        # TODO: Specify this corretly for packaging! - also in the setup.py!
         itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
-        itheme.append_search_path(os.path.abspath(os.path.join(path, "..", "data", "icons")))
+        itheme.append_search_path(os.path.abspath(os.path.join(path, "data", "icons")))
         itheme.rescan_if_needed()
 
         # Load Builder and Window

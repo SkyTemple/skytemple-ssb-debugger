@@ -510,7 +510,7 @@ class ScriptEditorController:
 
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(widget.get_text())
-        found, match_start, match_end, wrap = context.forward(buffer.get_iter_at_offset(buffer.props.cursor_position))
+        found, match_start, match_end = context.forward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
         if found:
             buffer.select_range(match_start, match_end)
 
@@ -524,7 +524,7 @@ class ScriptEditorController:
 
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(search.get_text())
-        found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))
+        found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
         if found:
             buffer.select_range(match_start, match_end)
             if buffer == self._ssb_script_view.get_buffer():
