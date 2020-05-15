@@ -43,7 +43,10 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         self._ssb_fm = ssb_fm
         self._absolute_path = absolute_path
         self._relative_path = absolute_path.replace(self._ssb_fm.project_fm.dir() + os.path.sep, "")
-        assert self._absolute_path != self._relative_path
+        if self._absolute_path == self._relative_path:
+            # You gotta love path handling!
+            self._relative_path = absolute_path.replace(self._ssb_fm.project_fm.dir().replace('\\', '/') + '/', "")
+            assert self._absolute_path != self._relative_path
         self._breakpoint_manager = breakpoint_manager
         self._editor_notebook_controller = editor_notebook_controller
         # A map of all managed ssb states (breakable, ram_state_up_to_date)
