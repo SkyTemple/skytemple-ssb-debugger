@@ -931,6 +931,11 @@ class MainController:
             md.set_position(Gtk.WindowPosition.CENTER)
             md.run()
             md.destroy()
+            self.rom = None
+            self.project_fm = None
+            self.ssb_fm = None
+            self.breakpoint_manager = None
+            self.rom_filename = None
         else:
             self.enable_editing_features()
             if self.emu_thread:

@@ -13,6 +13,7 @@ additional_datas = [
     #(os.path.join(pkg_path, '*.css'), '.'),
     (os.path.join(pkg_path, 'controller', '*.glade'), 'skytemple_ssb_debugger/controller'),
     (os.path.join(site_packages, 'skytemple_files', '_resources'), 'skytemple_files/_resources'),
+    (os.path.join(site_packages, 'desmume', 'frontend', 'control_ui', '*.glade'), 'desmume/frontend/control_ui'),
 ]
 additional_binaries = [
     (os.path.join(site_packages, "desmume", "libdesmume.dll"), "."),

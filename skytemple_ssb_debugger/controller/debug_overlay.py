@@ -26,12 +26,12 @@ from skytemple_ssb_debugger.emulator_thread import FRAMES_PER_SECOND
 from skytemple_ssb_debugger.threadsafe import  synchronized, threadsafe_emu_nonblocking_coro
 
 ALPHA_T = 0.7
-COLOR_ACTOR = (255, 0, 255, ALPHA_T)
-COLOR_OBJECTS = (255, 160, 0, ALPHA_T)
-COLOR_PERFORMER = (0, 255, 255, ALPHA_T)
-COLOR_EVENTS = (0, 0, 255, 100)
+COLOR_ACTOR = (1.0, 0, 1.0, ALPHA_T)
+COLOR_OBJECTS = (1.0, 0.627, 0, ALPHA_T)
+COLOR_PERFORMER = (0, 1.0, 1.0, ALPHA_T)
+COLOR_EVENTS = (0, 0, 1.0, 0.4)
 COLOR_BLACK = (0, 0, 0, ALPHA_T)
-COLOR_POS_MARKERS = (0, 255, 0, ALPHA_T)
+COLOR_POS_MARKERS = (0, 1.0, 0, ALPHA_T)
 REDRAW_DELAY = 2
 
 
