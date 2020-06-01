@@ -35,12 +35,13 @@ if TYPE_CHECKING:
 
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     """Context for running the debugger as a standalone application."""
-    def __init__(self):
+    def __init__(self, main_window: Gtk.Window):
         self._rom: Optional[NintendoDSRom] = None
         self._rom_filename: Optional[str] = None
         self._project_fm: Optional[ProjectFileManager] = None
         self._static_data: Optional[Pmd2Data] = None
         self._open_files: Dict[str, SsbLoadedFile] = {}
+        self._main_window = main_window
 
     def allows_interactive_file_management(self) -> bool:
         return True
@@ -107,3 +108,22 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def _check_loaded(self):
         if self._rom is None:
             raise RuntimeError("No ROM is currently loaded.")
+
+    def open_scene_editor(self, filename):
+        self._scene_editing_not_supported()
+
+    def open_scene_editor_for_map(self, map_name):
+        self._scene_editing_not_supported()
+
+    def _scene_editing_not_supported(self):
+        md = Gtk.MessageDialog(self._main_window,
+                               Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                               Gtk.ButtonsType.OK,
+                               f"Scene editing is not supported in the standalone version of "
+                               f"SkyTemple Script Engine Debugger.\n"
+                               f"Please open the debugger through the SkyTemple main application "
+                               f"instead.",
+                               title="Action not supported")
+        md.set_position(Gtk.WindowPosition.CENTER)
+        md.run()
+        md.destroy()

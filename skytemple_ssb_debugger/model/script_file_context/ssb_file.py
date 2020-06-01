@@ -22,6 +22,7 @@ from typing import Callable, Optional, TYPE_CHECKING
 from gi.repository import GLib
 
 from explorerscript.source_map import SourceMap, MacroSourceMapping
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
@@ -224,3 +225,5 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         # We don't manage a macro, so we don't care.
         pass
 
+    def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
+        debugger_context.open_scene_editor(self.ssb_filepath)

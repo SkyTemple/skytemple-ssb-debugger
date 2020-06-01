@@ -60,7 +60,7 @@ def main():
         main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
 
         # Load main window + controller
-        MainController(builder, main_window, StandaloneDebuggerControlContext())
+        MainController(builder, main_window, StandaloneDebuggerControlContext(main_window))
 
         Gtk.main()
     finally:

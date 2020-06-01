@@ -37,6 +37,10 @@ class SsbFileManager:
         self.debugger = debugger
         self.context: AbstractDebuggerControlContext = context
 
+    @property
+    def project_fm(self):
+        return self.context.get_project_filemanager()
+
     def get(self, filename: str) -> SsbLoadedFile:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
         return self.context.get_ssb(filename, self)

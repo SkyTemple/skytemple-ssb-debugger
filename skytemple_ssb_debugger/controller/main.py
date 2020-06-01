@@ -230,6 +230,9 @@ class MainController:
                 if Gtk.Buildable.get_name(child) in ['menu_open', 'menu_open_sep']:
                     menu_file.remove(child)
 
+    def get_context(self) -> AbstractDebuggerControlContext:
+        return self.context
+
     @property
     def emu_is_running(self):
         """
@@ -698,7 +701,20 @@ class MainController:
             model = self.builder.get_object('ssb_file_tree_store')
             treepath = tree.get_path_at_pos(int(event.x), int(event.y))[0]
             if treepath is not None:
-                # TODO: GOTO SCENES
+                if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
+                    menu: Gtk.Menu = Gtk.Menu.new()
+                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Open Scenes...")
+                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[treepath][0]))
+                    menu.add(open_scene)
+                    menu.show_all()
+                    menu.popup_at_pointer(event)
+                if model[treepath][2] in ['map_sss_entry', 'ssb']:
+                    menu: Gtk.Menu = Gtk.Menu.new()
+                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Open Scene...")
+                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor(model[treepath][0]))
+                    menu.add(open_scene)
+                    menu.show_all()
+                    menu.popup_at_pointer(event)
                 if model[treepath][2] == 'exps_macro_dir':
                     menu: Gtk.Menu = Gtk.Menu.new()
                     create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create directory...")
@@ -791,7 +807,7 @@ class MainController:
 
         # SSB SCRIPT FILES
         #    -> Common [common]
-        common_root = ssb_file_tree_store.append(None, ['', 'Common', ''])
+        common_root = ssb_file_tree_store.append(None, ['', 'Common', 'common_dir'])
         #       -> Master Script (unionall) [ssb]
         #       -> (others) [ssb]
         for name in script_files['common']:
@@ -799,25 +815,25 @@ class MainController:
 
         for i, map_obj in enumerate(script_files['maps'].values()):
             #    -> (Map Name) [map]
-            map_root = ssb_file_tree_store.append(None, ['', map_obj['name'], ''])
+            map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root'])
 
-            enter_root = ssb_file_tree_store.append(map_root, ['', 'Enter (sse)', ''])
+            enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Enter (sse)', 'map_sse'])
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
                 for ssb in map_obj['enter_ssbs']:
                     ssb_file_tree_store.append(enter_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
 
             #       -> Acting Scripts [lsd]
-            acting_root = ssb_file_tree_store.append(map_root, ['', 'Acting (ssa)', ''])
+            acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa'])
             for _, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
                 ssb_file_tree_store.append(acting_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
 
             #       -> Sub Scripts [sub]
-            sub_root = ssb_file_tree_store.append(map_root, ['', 'Sub (sss)', ''])
+            sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Sub (sss)', 'map_sss'])
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
-                sub_entry = ssb_file_tree_store.append(sub_root, ['', sss, ''])
+                sub_entry = ssb_file_tree_store.append(sub_root, [f"{map_obj['name']}/{sss}", sss, 'map_sss_entry'])
                 for ssb in ssbs:
                     #             -> Script X [ssb]
                     ssb_file_tree_store.append(sub_entry, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])

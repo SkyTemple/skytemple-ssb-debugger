@@ -100,3 +100,18 @@ class AbstractDebuggerControlContext(ABC):
     @abstractmethod
     def save_ssb(self, filename, ssb_model):
         """Updates an SSB model in the ROM and then saves the ROM."""
+
+    @abstractmethod
+    def open_scene_editor(self, filename):
+        """
+        If possible, open the scene editor for the scene provided.
+        Both the SSB filename or a SSA/SSS/SSE filename may used.
+        On error show dialog.
+        """
+
+    @abstractmethod
+    def open_scene_editor_for_map(self, map_name):
+        """
+        If possible, open the scene editor for the map provided.
+        On error show dialog.
+        """

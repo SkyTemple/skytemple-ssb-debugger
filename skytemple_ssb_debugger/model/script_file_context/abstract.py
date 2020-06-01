@@ -17,6 +17,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Callable
 
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
@@ -106,6 +107,10 @@ class AbstractScriptFileContext(ABC):
         The ssb file ssb_filename was changed and it imports the ExplorerScript macro file with the absolute path
         of exps_abs_path.
         """
+
+    @abstractmethod
+    def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
+        pass
 
     def _register_ssb_handler(self, loaded_ssb: SsbLoadedFile):
         self._registered_ssbs.append(loaded_ssb)

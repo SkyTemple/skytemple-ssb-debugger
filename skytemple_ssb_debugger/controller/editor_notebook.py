@@ -26,6 +26,7 @@ from skytemple_ssb_debugger.controller.script_editor import ScriptEditorControll
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+from ..context.abstract import AbstractDebuggerControlContext
 from ..model.breakpoint_file_state import BreakpointFileState
 from ..model.script_file_context.abstract import AbstractScriptFileContext
 from ..model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
@@ -286,6 +287,9 @@ class EditorNotebookController:
     def switch_style_scheme(self, scheme):
         for editor in self._open_editors.values():
             editor.switch_style_scheme(scheme)
+
+    def get_context(self) -> AbstractDebuggerControlContext:
+        return self.parent.context
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(

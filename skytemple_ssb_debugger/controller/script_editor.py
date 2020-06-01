@@ -641,6 +641,9 @@ class ScriptEditorController:
     def on_code_editor_cntrls_breaks_toggled(self, btn: Gtk.ToggleButton, *args):
         self.parent.parent.global_state__breaks_disabled = btn.get_active()
 
+    def on_code_editor_cntrls_goto_scene_clicked(self,  *args):
+        self.file_context.goto_scene(self.parent.get_context())
+
     def toggle_breaks_disabled(self, value):
         self.builder.get_object('code_editor_cntrls_breaks').set_active(value)
 

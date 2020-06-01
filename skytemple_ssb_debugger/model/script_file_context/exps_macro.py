@@ -21,10 +21,11 @@ import threading
 from functools import partial
 from typing import Callable, Optional, Dict, Tuple, TYPE_CHECKING
 
-from gi.repository import GLib
+from gi.repository import GLib, Gtk
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import EXPLORERSCRIPT_INCLUSION_MAP_SUFFIX
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
@@ -244,6 +245,17 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 logger.error(f"SSB file {ssb_filename} macro change treiggered for {self.exps_filepath}.")
                 self.on_ssb_changed_externally(ssb_filename, True)
             # Otherwise opcode text marks get added by on_ssb_changed_externally.
+
+    def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
+        # We can't open a scene for a macro.
+        md = Gtk.MessageDialog(None,
+                               Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                               Gtk.ButtonsType.OK,
+                               f"Macros have no scenes.",
+                               title="Action not supported")
+        md.set_position(Gtk.WindowPosition.CENTER)
+        md.run()
+        md.destroy()
 
     def _is_breakable(self, loaded_ssb: SsbLoadedFile):
         return not loaded_ssb.not_breakable and self._ssb_fm.project_fm.explorerscript_hash_up_to_date(
