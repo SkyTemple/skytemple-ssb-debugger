@@ -16,8 +16,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, List
 
+from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles
@@ -114,4 +115,14 @@ class AbstractDebuggerControlContext(ABC):
         """
         If possible, open the scene editor for the map provided.
         On error show dialog.
+        """
+
+    @abstractmethod
+    def edit_position_mark(self, mapname: Optional[str],
+                           pos_marks: List[SourceMapPositionMark], pos_mark_to_edit: int) -> bool:
+        """
+        Edit position marks of an SSB file inside a scene editor, using mapname as a background, if set and exists.
+        Marks are edited in place.
+        On error show dialog.
+        On success returns True.
         """

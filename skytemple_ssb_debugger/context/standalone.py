@@ -14,9 +14,12 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import Optional, TYPE_CHECKING, Dict
+from typing import Optional, TYPE_CHECKING, Dict, List
 
 import gi
+
+from explorerscript.source_map import SourceMapPositionMark
+
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from ndspy.rom import NintendoDSRom
@@ -35,6 +38,7 @@ if TYPE_CHECKING:
 
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     """Context for running the debugger as a standalone application."""
+
     def __init__(self, main_window: Gtk.Window):
         self._rom: Optional[NintendoDSRom] = None
         self._rom_filename: Optional[str] = None
@@ -114,6 +118,21 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def open_scene_editor_for_map(self, map_name):
         self._scene_editing_not_supported()
+
+    def edit_position_mark(self, mapname: Optional[str], pos_marks: List[SourceMapPositionMark],
+                           pos_mark_to_edit: int) -> bool:
+        md = Gtk.MessageDialog(self._main_window,
+                               Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                               Gtk.ButtonsType.OK,
+                               f"Visual Position Mark editing is not supported in the standalone version of "
+                               f"SkyTemple Script Engine Debugger.\n"
+                               f"Please open the debugger through the SkyTemple main application "
+                               f"instead.",
+                               title="Action not supported")
+        md.set_position(Gtk.WindowPosition.CENTER)
+        md.run()
+        md.destroy()
+        return False
 
     def _scene_editing_not_supported(self):
         md = Gtk.MessageDialog(self._main_window,

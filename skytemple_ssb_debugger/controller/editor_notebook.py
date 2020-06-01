@@ -68,7 +68,7 @@ class EditorNotebookController:
 
     def open_ssb(self, ssb_rom_path: str):
         context = SsbFileScriptFileContext(self.file_manager.open_in_editor(ssb_rom_path), self.breakpoint_manager, self)
-        return self._open_common(ssb_rom_path, context)
+        return self._open_common(ssb_rom_path, context, mapname=ssb_rom_path.split('/')[1])
 
     def open_exps_macro(self, abs_path: str):
         context = ExpsMacroFileScriptFileContext(
@@ -76,7 +76,7 @@ class EditorNotebookController:
         )
         return self._open_common(abs_path, context)
 
-    def _open_common(self, registered_fname: str, file_conext: AbstractScriptFileContext):
+    def _open_common(self, registered_fname: str, file_conext: AbstractScriptFileContext, mapname: str = None):
         if self.file_manager:
             if registered_fname in self._open_editors:
                 self._notebook.set_current_page(self._notebook.page_num(
@@ -85,7 +85,7 @@ class EditorNotebookController:
             else:
                 editor_controller = ScriptEditorController(
                     self, self._main_window, file_conext,
-                    self.rom_data, self.on_ssb_editor_modified, self.enable_explorerscript
+                    self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript
                 )
                 for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
                     editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)

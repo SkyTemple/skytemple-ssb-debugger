@@ -49,12 +49,13 @@ EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 class ScriptEditorController:
     def __init__(
             self, parent: 'EditorNotebookController', main_window: Gtk.Window, file_context: AbstractScriptFileContext,
-            rom_data: Pmd2Data, modified_handler, enable_explorerscript=True
+            rom_data: Pmd2Data, modified_handler, mapname: Optional[str], enable_explorerscript=True
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         self.builder = Gtk.Builder()
         self.builder.add_from_file(os.path.join(path, "ssb_editor.glade"))
         self.file_context: AbstractScriptFileContext = file_context
+        self.mapname = mapname
         self.rom_data = rom_data
         self.parent = parent
         self._main_window = main_window
@@ -524,7 +525,7 @@ class ScriptEditorController:
 
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(search.get_text())
-        found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
+        found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:4]
         if found:
             buffer.select_range(match_start, match_end)
             if buffer == self._ssb_script_view.get_buffer():
@@ -825,7 +826,8 @@ class ScriptEditorController:
 
         completion.add_provider(GtkSourceCompletionSsbConstants(self.rom_data))
         completion.add_provider(GtkSourceCompletionSsbFunctions(self.rom_data.script_data.op_codes))
-        CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes)
+        CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes,
+                       self.mapname, self.parent.get_context(), is_ssbs=True)
 
     def _load_explorerscript_completion(self):
         view = self._explorerscript_view
@@ -836,7 +838,8 @@ class ScriptEditorController:
             filter_special_exps_opcodes(self.rom_data.script_data.op_codes)
         ))
         completion.add_provider(GtkSourceCompletionExplorerScriptStatements())
-        CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes)
+        CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes,
+                       self.mapname, self.parent.get_context())
 
     def _update_view_editable_state(self):
         """Update which view is editable based on self._explorerscript_active"""

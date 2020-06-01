@@ -19,16 +19,20 @@ from typing import List, Optional
 from gi.repository import GtkSource, Gtk
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
+from skytemple_ssb_debugger.model.completion.calltips.position_mark import PositionMarkEditorCalltip
 from skytemple_ssb_debugger.model.completion.util import backward_until_space
 
 
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
-    def __init__(self, view: GtkSource.View, opcodes: List[Pmd2ScriptOpCode]):
+    def __init__(self, view: GtkSource.View, opcodes: List[Pmd2ScriptOpCode],
+                 mapname: Optional[str], context: AbstractDebuggerControlContext, is_ssbs=True):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.opcodes = opcodes
         self.buffer.connect('notify::cursor-position', self.on_buffer_notify_cursor_position)
+        self.position_mark_calltip = PositionMarkEditorCalltip(view, mapname, context) if is_ssbs else None
 
         self._active_widget: Optional[GtkSource.CompletionInfo] = None
         self._active_op: Optional[Pmd2ScriptOpCode] = None
@@ -38,6 +42,7 @@ class CalltipEmitter:
         textiter = buffer.get_iter_at_offset(buffer.props.cursor_position)
         tip = self._build_calltip_data(textiter, buffer)
         if not tip:
+            self.position_mark_calltip.reset(self._active_widget)
             if self._active_widget:
                 self._active_widget.destroy()
                 self._active_widget = None
@@ -59,12 +64,14 @@ class CalltipEmitter:
             for c in self._active_widget.get_children():
                 self._active_widget.remove(c)
 
+            outer_box: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 4)
             btn_box: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 4)
-            self._active_widget.add(btn_box)
+            outer_box.pack_start(btn_box, True, False, 0)
+            self._active_widget.add(outer_box)
 
         if not op_was_same or self._active_arg != arg_index:
             self._active_arg = arg_index
-            btn_box: Gtk.Box = self._active_widget.get_children()[0]
+            btn_box: Gtk.Box = self._active_widget.get_children()[0].get_children()[0]
             for c in btn_box.get_children():
                 btn_box.remove(c)
             for i, arg in enumerate(op.arguments):
@@ -93,6 +100,9 @@ class CalltipEmitter:
                     btn_box.pack_start(lbl, True, False, 0)
                 lbl: Gtk.Label = Gtk.Label.new('... ]')
                 btn_box.pack_start(lbl, True, False, 0)
+
+        if self.position_mark_calltip is not None:
+            self.position_mark_calltip.add_button_if_pos_mark(self._active_widget.get_children()[0], buffer)
 
         self._active_widget.show_all()
 
