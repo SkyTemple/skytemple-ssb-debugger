@@ -16,6 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from typing import Optional, Dict
+
 import gi
 from gi.repository.Gtk import TreeViewColumn
 
@@ -259,7 +260,7 @@ class GroundStateController:
                         f'{performer.x_map}', f'{performer.y_map}', SsbRoutineType.PERFORMER.value
                     ])
                 events_node = self._entities__tree_store.append(None, [
-                    'Events', '', '', '', None, '', '', ICON_EVENTS, '', '', -1
+                    'Triggers', '', '', '', None, '', '', ICON_EVENTS, '', '', -1
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [

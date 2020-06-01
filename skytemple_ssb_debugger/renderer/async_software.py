@@ -23,7 +23,7 @@ from gi.repository import Gtk, GLib
 from desmume.emulator import SCREEN_PIXEL_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
 from desmume.frontend.gtk_drawing_impl.software import SoftwareRenderer
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread, FRAMES_PER_SECOND
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, synchronized
+from skytemple_ssb_debugger.threadsafe import synchronized
 
 image_lock = Lock()
 

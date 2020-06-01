@@ -16,12 +16,10 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
 from functools import partial
-from time import sleep
-from typing import Tuple
 
 from desmume.emulator import DeSmuME, DeSmuME_Memory
 from skytemple_files.common import string_codec
-from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode, Pmd2ScriptGameVar
+from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_files.common.ppmdu_config.xml_reader import Pmd2XmlReader
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 

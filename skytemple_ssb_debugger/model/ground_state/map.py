@@ -14,7 +14,6 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from desmume.emulator import DeSmuME_Memory
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, wrap_threadsafe_emu

@@ -16,6 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
 from typing import List, Optional, Callable
+
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 

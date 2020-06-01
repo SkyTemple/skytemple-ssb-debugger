@@ -16,7 +16,6 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Callable, Union
 
-from desmume.emulator import DeSmuME_Memory
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode

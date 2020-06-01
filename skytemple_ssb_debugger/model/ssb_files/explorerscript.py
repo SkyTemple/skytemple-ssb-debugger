@@ -20,6 +20,7 @@ from typing import Optional
 
 from explorerscript.source_map import SourceMap
 from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+
 logger = logging.getLogger(__name__)
 
 

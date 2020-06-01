@@ -20,19 +20,18 @@ from typing import Optional, List, Tuple
 
 from gi.repository import Gtk, GLib
 
-from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
-from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
-from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.model.ground_state.event import Event
-from skytemple_ssb_debugger.model.ground_state.ssb_file_in_ram import SsbFileInRam
-from skytemple_ssb_debugger.model.ground_state.ssx_file_in_ram import SsxFileInRam
+from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
+from skytemple_ssb_debugger.model.ground_state.map import Map
 from skytemple_ssb_debugger.model.ground_state.object import Object
 from skytemple_ssb_debugger.model.ground_state.performer import Performer
+from skytemple_ssb_debugger.model.ground_state.ssb_file_in_ram import SsbFileInRam
+from skytemple_ssb_debugger.model.ground_state.ssx_file_in_ram import SsxFileInRam
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.threadsafe import threadsafe_gtk_nonblocking, threadsafe_emu, synchronized, synchronized_now
 

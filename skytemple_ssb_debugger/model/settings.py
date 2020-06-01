@@ -24,7 +24,6 @@ from desmume.emulator import Language
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_ssb_debugger.threadsafe import synchronized
 
-
 settings_lock = threading.Lock()
 CONFIG_DIR_NAME = 'debugger'
 CONFIG_FILE_NAME = 'config.ini'

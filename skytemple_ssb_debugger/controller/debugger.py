@@ -18,11 +18,8 @@ import threading
 from functools import partial
 from typing import Optional, TYPE_CHECKING
 
-from gi.repository import Gio
-
 from desmume.emulator import DeSmuME
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType

@@ -25,8 +25,8 @@ from typing import Optional, Dict
 
 import cairo
 import gi
+gi.require_version('GtkSource', '4')
 from gi.repository.GtkSource import StyleSchemeManager
-from ndspy.rom import NintendoDSRom
 
 from desmume.controls import Keys, keymask
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
@@ -34,12 +34,11 @@ from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialog
 from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
 from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
-from skytemple_files.common.project_file_manager import ProjectFileManager
-from skytemple_files.common.script_util import load_script_files, SCRIPT_DIR
-from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
-from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
+from skytemple_files.common.script_util import SCRIPT_DIR
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
+from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
 from skytemple_ssb_debugger.controller.local_variable import LocalVariableController
 from skytemple_ssb_debugger.controller.variable import VariableController
@@ -64,20 +63,18 @@ logger = logging.getLogger(__name__)
 
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
-PROJECT_DIR_SUBDIR_NAME = 'debugger'
-PROJECT_DIR_MACRO_NAME = 'Macros'
 
 
 class MainController:
-    def __init__(self, builder: Builder, window: Window):
+    def __init__(self, builder: Builder, window: Window, control_context: AbstractDebuggerControlContext):
         self.builder = builder
         self.window = window
+        self.context: AbstractDebuggerControlContext = control_context
         self.settings = DebuggerSettingsStore()
         self.emu_thread: Optional[EmulatorThread] = None
-        self.rom: Optional[NintendoDSRom] = None
         self.ssb_fm: Optional[SsbFileManager] = None
         self.breakpoint_manager: Optional[BreakpointManager] = None
-        self.rom_filename = None
+        self.rom_was_loaded = False
         self._emu_is_running = False
 
         self._enable_explorerscript = True
@@ -85,8 +82,6 @@ class MainController:
         self.debugger: Optional[DebuggerController] = None
         self.debug_overlay: Optional[DebugOverlayController] = None
         self.breakpoint_state: Optional[BreakpointState] = None
-
-        self.project_fm: Optional[ProjectFileManager] = None
 
         self._click = False
         self._debug_log_scroll_to_bottom = False
@@ -108,7 +103,6 @@ class MainController:
         was_none_before = self.selected_style_scheme_id is None
         style_dict: Dict[str, str] = {}
         for style_id in self.style_scheme_manager.get_scheme_ids():
-            # TODO: Save the style choice to config
             if not self.selected_style_scheme_id or (was_none_before and style_id == 'oblivion'):
                 self.selected_style_scheme_id = style_id
             style_dict[style_id] = self.style_scheme_manager.get_scheme(style_id).get_name()
@@ -230,6 +224,12 @@ class MainController:
             assistant.set_attached_to(self.window)
             assistant.show()
 
+        if not self.context.allows_interactive_file_management():
+            menu_file: Gtk.Menu = self.builder.get_object('menu_file')
+            for child in menu_file:
+                if Gtk.Buildable.get_name(child) in ['menu_open', 'menu_open_sep']:
+                    menu_file.remove(child)
+
     @property
     def emu_is_running(self):
         """
@@ -282,7 +282,7 @@ class MainController:
             return
 
     def on_main_window_delete_event(self, *args):
-        if not self.editor_notebook.close_all_tabs():
+        if not self.editor_notebook.close_all_tabs() or not self.context.before_quit():
             return True
         self.gtk_main_quit()
         return False
@@ -294,8 +294,8 @@ class MainController:
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
         if self.emu_thread:
-            self.emu_thread.stop()
-        Gtk.main_quit()
+            EmulatorThread.end()
+        self.context.on_quit()
 
     def gtk_widget_hide_on_delete(self, w: Gtk.Widget, *args):
         w.hide_on_delete()
@@ -405,13 +405,26 @@ class MainController:
 
     # MENU FILE
     def on_menu_open_activate(self, *args):
+        if not self.context.allows_interactive_file_management():
+            return
         if self.emu_thread:
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
 
         response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, "Open...", (self._filter_nds, self._filter_gba_ds, self._filter_any))
 
         if response == Gtk.ResponseType.OK:
-            self.open_rom(fn)
+            try:
+                self.context.open_rom(fn)
+            except BaseException as ex:
+                print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
+                md = Gtk.MessageDialog(self.window,
+                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                       Gtk.ButtonsType.OK, f"Unable to load: {fn}\n{ex}",
+                                       title="Error!")
+                md.set_position(Gtk.WindowPosition.CENTER)
+                md.run()
+                md.destroy()
+            self.load_rom()
 
     def on_menu_save_activate(self, menu_item: Gtk.MenuItem, *args):
         if self.editor_notebook and self.editor_notebook.currently_open:
@@ -424,7 +437,7 @@ class MainController:
         self.editor_notebook.save_all()
 
     def on_menu_quit_activate(self, menu_item: Gtk.MenuItem, *args):
-        self.gtk_main_quit()
+        self.on_main_window_delete_event()
 
     # MENU EDIT
     def on_menu_edit_cut_activate(self, menu_item: Gtk.MenuItem, *args):
@@ -674,7 +687,7 @@ class MainController:
                 elif model[treeiter][2] == 'ssb':
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + model[treeiter][0])
                 elif model[treeiter][2] == 'exps_macro':
-                    short_path = model[treeiter][0].replace(self.project_fm.dir() + os.path.sep, '')
+                    short_path = model[treeiter][0].replace(self.context.get_project_dir() + os.path.sep, '')
                     self.editor_notebook.open_exps_macro(
                         model[treeiter][0]
                     )
@@ -685,6 +698,7 @@ class MainController:
             model = self.builder.get_object('ssb_file_tree_store')
             treepath = tree.get_path_at_pos(int(event.x), int(event.y))[0]
             if treepath is not None:
+                # TODO: GOTO SCENES
                 if model[treepath][2] == 'exps_macro_dir':
                     menu: Gtk.Menu = Gtk.Menu.new()
                     create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create directory...")
@@ -759,11 +773,11 @@ class MainController:
 
         self._set_sensitve('ssb_file_search', True)
 
-        script_files = load_script_files(get_rom_folder(self.rom, SCRIPT_DIR))
+        script_files = self.context.load_script_files()
 
         # EXPLORERSCRIPT MACROS
         #    -> Macros
-        macros_dir_name = self.project_fm.dir(PROJECT_DIR_MACRO_NAME)
+        macros_dir_name = self.context.get_project_macro_dir()
         macros_tree_nodes = {macros_dir_name: ssb_file_tree_store.append(None, [macros_dir_name, 'Macros', 'exps_macro_dir'])}
         for root, dnames, fnames in os.walk(macros_dir_name):
             root_node = macros_tree_nodes[root]
@@ -814,28 +828,28 @@ class MainController:
         self.variable_controller.sync()
 
     def on_variables_load1_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.load(1, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.load(1, self.context.get_project_debugger_dir())
 
     def on_variables_load2_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.load(2, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.load(2, self.context.get_project_debugger_dir())
 
     def on_variables_load3_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.load(3, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.load(3, self.context.get_project_debugger_dir())
 
     def on_variables_save1_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.save(1, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.save(1, self.context.get_project_debugger_dir())
 
     def on_variables_save2_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.save(2, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.save(2, self.context.get_project_debugger_dir())
 
     def on_variables_save3_clicked(self, *args):
-        if self.project_fm:
-            self.variable_controller.save(3, self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME))
+        if self.context.is_project_loaded():
+            self.variable_controller.save(3, self.context.get_project_debugger_dir())
 
     def on_main_window_configure_event(self, *args):
         """Save the window size and position to the settings store"""
@@ -894,27 +908,25 @@ class MainController:
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + path)
 
     # More functions
-    def open_rom(self, fn: str):
-        # TODO: Inject most of this later with SkyTemple via new environment object
+    def load_rom(self):
         try:
             # Unload old ROM first
-            if self.rom is not None:
+            if self.rom_was_loaded:
                 if not self.editor_notebook.close_all_tabs():
                     return
                 self.variable_controller.uninit()
                 if self.debugger:
                     self.debugger.disable()
-            self.rom = NintendoDSRom.fromFile(fn)
-            rom_data = get_ppmdu_config_for_rom(self.rom)
-            self.project_fm = ProjectFileManager(fn)
-            self.ssb_fm = SsbFileManager(self.rom, rom_data, fn, self.debugger, self.project_fm)
+                self.rom_was_loaded = False
+            self.ssb_fm = SsbFileManager(self.context, self.debugger)
+            fn = self.context.get_rom_filename()
             self.breakpoint_manager = BreakpointManager(
-                os.path.join(self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{os.path.basename(fn)}.breakpoints.json'),
+                os.path.join(self.context.get_project_debugger_dir(), f'{os.path.basename(fn)}.breakpoints.json'),
                 self.ssb_fm
             )
             # Immediately save, because the module packs the ROM differently.
-            self.rom.saveToFile(fn)
-            self.rom_filename = fn
+            self.context.save_rom()
+            rom_data = self.context.get_static_data()
             if self.debugger:
                 self.debugger.enable(rom_data, self.ssb_fm, self.breakpoint_manager,
                                      self.on_ground_engine_start)
@@ -922,20 +934,18 @@ class MainController:
             self.variable_controller.init(rom_data)
             self.local_variable_controller.init(rom_data)
             self.editor_notebook.init(self.ssb_fm, self.breakpoint_manager, rom_data)
+            self.rom_was_loaded = True
         except BaseException as ex:
             print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
             md = Gtk.MessageDialog(self.window,
                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, f"Unable to load: {fn}\n{ex}",
+                                   Gtk.ButtonsType.OK, f"Unable to load: {self.context.get_rom_filename()}\n{ex}",
                                    title="Error!")
             md.set_position(Gtk.WindowPosition.CENTER)
             md.run()
             md.destroy()
-            self.rom = None
-            self.project_fm = None
             self.ssb_fm = None
             self.breakpoint_manager = None
-            self.rom_filename = None
         else:
             self.enable_editing_features()
             if self.emu_thread:
@@ -998,17 +1008,17 @@ class MainController:
 
     def savestate(self, i: int):
         """Save both the emulator state and the ground engine state to files."""
-        if not self.project_fm:
+        if not self.context.is_project_loaded():
             return
         try:
             #if self.breakpoint_state.is_stopped():
             #    raise RuntimeError("Savestates can not be created while debugging.")
-            rom_basename = os.path.basename(self.rom_filename)
+            rom_basename = os.path.basename(self.context.get_rom_filename())
             desmume_savestate_path = os.path.join(
-                self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
+                self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
             )
             ground_engine_savestate_path = os.path.join(
-                self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
+                self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
             )
 
             with open(ground_engine_savestate_path, 'w') as f:
@@ -1026,14 +1036,14 @@ class MainController:
 
     def loadstate(self, i: int):
         """Loads both the emulator state and the ground engine state from files."""
-        if not self.project_fm:
+        if not self.context.is_project_loaded():
             return
-        rom_basename = os.path.basename(self.rom_filename)
+        rom_basename = os.path.basename(self.context.get_rom_filename())
         desmume_savestate_path = os.path.join(
-            self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
+            self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_DESUME}'
         )
         ground_engine_savestate_path = os.path.join(
-            self.project_fm.dir(PROJECT_DIR_SUBDIR_NAME), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
+            self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
         )
 
         if os.path.exists(ground_engine_savestate_path):
@@ -1103,12 +1113,12 @@ class MainController:
                 lang = self.settings.get_emulator_language()
                 if lang:
                     threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.set_language(lang))
-                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.rom_filename))
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.context.get_rom_filename()))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
             except RuntimeError:
                 md = Gtk.MessageDialog(self.window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, f"Emulator failed to load: {self.rom_filename}",
+                                       Gtk.ButtonsType.OK, f"Emulator failed to load: {self.context.get_rom_filename()}",
                                        title="Error!")
                 md.set_position(Gtk.WindowPosition.CENTER)
                 md.run()
@@ -1190,7 +1200,8 @@ class MainController:
         # and whether we are currently halted on a macro call
         breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr, state)
         breakpoint_file_state.process(
-            self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript, self.project_fm
+            self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript,
+            self.context.get_project_filemanager()
         )
         state.set_file_state(breakpoint_file_state)
 

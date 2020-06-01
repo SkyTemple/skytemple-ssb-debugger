@@ -22,6 +22,7 @@ from typing import List, Tuple, Dict, Optional
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+
 logger = logging.getLogger()
 
 

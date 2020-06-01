@@ -17,13 +17,11 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
 from functools import partial
-from typing import Tuple, List, Optional
 
 from desmume.emulator import DeSmuME
-from skytemple_ssb_debugger.sandbox.sandbox import hook__primary_opcode_parsing, hook__debug_print, \
-    hook__debug_print_script_engine, hook__debug_enable_branch, start_of_call_to_opcode_parsing, debug_print_start, \
-    point_to_print_print_debug, point_where_branch_debug_decides, static_data, debug_print2_start, \
-    hook__get_script_id_name, start_of_get_script_id_name
+from skytemple_ssb_debugger.sandbox.sandbox import hook__debug_print, \
+    hook__debug_print_script_engine, hook__debug_enable_branch, debug_print_start, \
+    point_to_print_print_debug, point_where_branch_debug_decides, debug_print2_start
 
 
 def hook__read_pos(emu: DeSmuME, address, size):

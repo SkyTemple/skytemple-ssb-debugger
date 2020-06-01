@@ -20,7 +20,6 @@ from typing import List, Iterable, Tuple, Optional
 from gi.repository import GtkSource, Gtk
 
 # file, opcode offset, optional attribute
-from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 
 MARK_PATTERN = re.compile('opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')
 MARK_PATTERN_TMP = re.compile('TMP_opcode_<<<(.*)>>>_(\\d+)(?:_(.*))?')

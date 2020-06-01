@@ -24,8 +24,8 @@ from gi.repository import GLib
 from explorerscript.source_map import SourceMap, MacroSourceMapping
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
-from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
+from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController

@@ -16,11 +16,10 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from typing import Tuple, Optional, Iterable
 
-from gi.repository import GtkSource, Gtk
 from gi.repository import GObject
+from gi.repository import GtkSource, Gtk
 
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
-
 
 ALL_STATEMENTS = ['return', 'end', 'hold', 'if', 'elseif', 'else', 'with', 'actor', 'object', 'performer', 'jump',
                   'for', 'while', 'forever', 'break', 'break_loop', 'continue', 'case',

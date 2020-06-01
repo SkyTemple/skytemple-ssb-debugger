@@ -19,7 +19,8 @@ import math
 import os
 from functools import partial
 from threading import Lock
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict
+
 import gi
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -195,11 +196,11 @@ class VariableController:
             notebook.remove_page(0)
 
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['overlay/overlay_0011.bin'].functions['SaveScriptVariableValue'],
+            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValue'].begin_absolute,
             None
         ))
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['overlay/overlay_0011.bin'].functions['SaveScriptVariableValueWithOffset'],
+            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValueWithOffset'].begin_absolute,
             None
         ))
 

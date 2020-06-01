@@ -17,7 +17,7 @@
 import math
 
 import cairo
-from gi.repository import Gdk, Pango, Gtk
+from gi.repository import Gdk
 
 from skytemple_ssb_debugger.controller.debug_overlay import COLOR_ACTOR, COLOR_OBJECTS, COLOR_PERFORMER
 

@@ -21,7 +21,7 @@ import re
 from functools import partial
 from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
-from gi.repository import GtkSource
+from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
 
 from explorerscript.error import ParseError

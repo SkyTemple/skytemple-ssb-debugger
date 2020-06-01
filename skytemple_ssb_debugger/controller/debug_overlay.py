@@ -23,7 +23,7 @@ import cairo
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.emulator_thread import FRAMES_PER_SECOND
-from skytemple_ssb_debugger.threadsafe import  synchronized, threadsafe_emu_nonblocking_coro
+from skytemple_ssb_debugger.threadsafe import synchronized, threadsafe_emu_nonblocking_coro
 
 ALPHA_T = 0.7
 COLOR_ACTOR = (1.0, 0, 1.0, ALPHA_T)

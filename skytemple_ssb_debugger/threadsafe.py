@@ -2,6 +2,7 @@
 Utility functions for easier thread-safe asynchronous / synchronous calling.
 This module happens, when you forget that you might need multiple threads before starting a project...
 """
+import functools
 #  Copyright 2020 Parakoopa
 #
 #  This file is part of SkyTemple.
@@ -18,21 +19,13 @@ This module happens, when you forget that you might need multiple threads before
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-import asyncio
 import inspect
 import sys
 import traceback
-import types
-from abc import abstractmethod, ABC
-from concurrent.futures._base import wait, Future
-from threading import Lock, current_thread
-from typing import Callable, Awaitable
+from threading import current_thread
+from typing import Callable
 
-import nest_asyncio
 from gi.repository import GLib
-
-import functools
-
 
 # If true, we check which threads call the threadsafe methods. They can only be called
 # by the other respective other thread, otherwise there will be deadlocks or Exceptions.

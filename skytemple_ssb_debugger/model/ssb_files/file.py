@@ -15,11 +15,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
-from skytemple_files.script.ssa_sse_sss.position_marker import SsaPositionMarker
 from skytemple_files.script.ssb.model import Ssb
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile

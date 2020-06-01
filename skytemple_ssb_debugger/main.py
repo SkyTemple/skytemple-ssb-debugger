@@ -27,7 +27,7 @@ import sys
 
 import gi
 
-from desmume.emulator import DeSmuME
+from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
 from skytemple_ssb_debugger.controller.main import MainController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 
@@ -60,7 +60,7 @@ def main():
         main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
 
         # Load main window + controller
-        MainController(builder, main_window)
+        MainController(builder, main_window, StandaloneDebuggerControlContext())
 
         Gtk.main()
     finally:

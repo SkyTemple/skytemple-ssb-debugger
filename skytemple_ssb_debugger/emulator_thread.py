@@ -18,7 +18,6 @@
 import asyncio
 import logging
 import sys
-import traceback
 from asyncio import Future
 from threading import Thread, current_thread, Lock
 
@@ -27,7 +26,8 @@ import nest_asyncio
 from desmume import controls
 from desmume.emulator import DeSmuME
 from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore
-from skytemple_ssb_debugger.threadsafe import THREAD_DEBUG, threadsafe_gtk_nonblocking, synchronized
+from skytemple_ssb_debugger.threadsafe import THREAD_DEBUG, synchronized
+
 logger = logging.getLogger(__name__)
 TICKS_PER_FRAME = 17
 FRAMES_PER_SECOND = 60
