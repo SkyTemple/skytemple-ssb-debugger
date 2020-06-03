@@ -97,6 +97,11 @@ class MainController:
         self._current_screen_width = SCREEN_WIDTH
         self._current_screen_height = SCREEN_HEIGHT
 
+        # A mapping for ssb filenames and their scene types ('ssa'/'sse'/'sss'/''[if n/a])
+        # - For opening the scene editor.
+        self._scene_types: Dict[str, str] = {}
+        self._scene_names: Dict[str, str] = {}
+
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
         self.selected_style_scheme_id = self.settings.get_style_scheme()
@@ -736,7 +741,9 @@ class MainController:
                 if model[treepath][2] in ['map_sss_entry', 'ssb']:
                     menu: Gtk.Menu = Gtk.Menu.new()
                     open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Open Scene...")
-                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor(model[treepath][0]))
+                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
+                        self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
+                    ))
                     menu.add(open_scene)
                     menu.show_all()
                     menu.popup_at_pointer(event)
@@ -846,22 +853,34 @@ class MainController:
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
                 for ssb in map_obj['enter_ssbs']:
-                    ssb_file_tree_store.append(enter_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
+                    ssb_name = f"{map_obj['name']}/{ssb}"
+                    self._scene_types[ssb_name] = 'sse'
+                    self._scene_names[ssb_name] = ssb_name
+                    ssb_file_tree_store.append(enter_root, [ssb_name, ssb, 'ssb'])
 
             #       -> Acting Scripts [lsd]
             acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa'])
             for _, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
-                ssb_file_tree_store.append(acting_root, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
+                ssb_name = f"{map_obj['name']}/{ssb}"
+                self._scene_types[ssb_name] = 'ssa'
+                self._scene_names[ssb_name] = ssb_name
+                ssb_file_tree_store.append(acting_root, [ssb_name, ssb, 'ssb'])
 
             #       -> Sub Scripts [sub]
             sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Sub (sss)', 'map_sss'])
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
-                sub_entry = ssb_file_tree_store.append(sub_root, [f"{map_obj['name']}/{sss}", sss, 'map_sss_entry'])
+                sss_name = f"{map_obj['name']}/{sss}"
+                self._scene_types[sss_name] = 'sss'
+                self._scene_names[sss_name] = sss_name
+                sub_entry = ssb_file_tree_store.append(sub_root, [sss_name, sss, 'map_sss_entry'])
                 for ssb in ssbs:
                     #             -> Script X [ssb]
-                    ssb_file_tree_store.append(sub_entry, [f"{map_obj['name']}/{ssb}", ssb, 'ssb'])
+                    ssb_name = f"{map_obj['name']}/{ssb}"
+                    self._scene_types[ssb_name] = 'sss'
+                    self._scene_names[ssb_name] = sss_name
+                    ssb_file_tree_store.append(sub_entry, [ssb_name, ssb, 'ssb'])
 
     # VARIABLES VIEW
 
@@ -1286,6 +1305,20 @@ class MainController:
         # This is faster than syncing the entire debugger state again.
         self.ground_state_controller.sync_break_hanger()
         self.debug_overlay.break_released()
+
+    def get_scene_name_for(self, ssb_rom_path):
+        """Try to find the ssb file's scene name. if not found, returns an empty string"""
+        ssb_rom_path = ssb_rom_path.replace('SCRIPT/', '')
+        if ssb_rom_path in self._scene_names :
+            return self._scene_names[ssb_rom_path]
+        return ''
+
+    def get_scene_type_for(self, ssb_rom_path):
+        """Try to find the ssb file's scene type. if not found, returns an empty string"""
+        ssb_rom_path = ssb_rom_path.replace('SCRIPT/', '')
+        if ssb_rom_path in self._scene_types :
+            return self._scene_types[ssb_rom_path]
+        return ''
 
     def _ssb_item_filter_visible_func(self, model, iter, data):
         return self._recursive_filter_func(self._search_text, model, iter)

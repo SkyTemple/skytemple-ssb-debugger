@@ -119,7 +119,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         if self._rom is None:
             raise RuntimeError("No ROM is currently loaded.")
 
-    def open_scene_editor(self, filename):
+    def open_scene_editor(self, type_of_scene, filename):
         self._scene_editing_not_supported()
 
     def open_scene_editor_for_map(self, map_name):

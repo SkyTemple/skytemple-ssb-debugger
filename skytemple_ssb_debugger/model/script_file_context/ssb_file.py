@@ -36,10 +36,12 @@ logger = logging.getLogger(__name__)
 class SsbFileScriptFileContext(AbstractScriptFileContext):
     """Context for a script file that directly represents a single compiled SSB script."""
 
-    def __init__(self, ssb_loaded_file: SsbLoadedFile,
+    def __init__(self, ssb_loaded_file: SsbLoadedFile, scene_type: str, scene_name: str,
                  breakpoint_manager: BreakpointManager, editor_notebook_controller: 'EditorNotebookController'):
         super().__init__()
         self._ssb_file = ssb_loaded_file
+        self.scene_type = scene_type
+        self.scene_name = scene_name
         self._register_ssb_handler(ssb_loaded_file)
         self._breakpoint_manager = breakpoint_manager
         self._editor_notebook_controller = editor_notebook_controller
@@ -226,4 +228,4 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         pass
 
     def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
-        debugger_context.open_scene_editor(self.ssb_filepath)
+        debugger_context.open_scene_editor(self.scene_type, self.scene_name)
