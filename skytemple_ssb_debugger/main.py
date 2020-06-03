@@ -39,19 +39,16 @@ from gi.repository.Gtk import Window
 
 def main():
     try:
-        path = os.path.abspath(os.path.dirname(__file__))
-
         if sys.platform.startswith('win'):
             # Load theming under Windows
             _windows_load_theme()
 
         itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
-        itheme.append_search_path(os.path.abspath(os.path.join(path, "data", "icons")))
+        itheme.append_search_path(os.path.abspath(os.path.join(get_debugger_data_dir(), "icons")))
         itheme.rescan_if_needed()
 
         # Load Builder and Window
-        builder = Gtk.Builder()
-        builder.add_from_file(os.path.join(path, "debugger.glade"))
+        builder = get_debugger_builder()
         main_window: Window = builder.get_object("main_window")
         main_window.set_role("SkyTemple Script Engine Debugger")
         GLib.set_application_name("SkyTemple Script Engine Debugger")
@@ -66,6 +63,20 @@ def main():
     finally:
         if EmulatorThread.instance():
             EmulatorThread.instance().stop()
+
+
+def get_debugger_builder() -> Gtk.Builder:
+    builder = Gtk.Builder()
+    builder.add_from_file(os.path.join(get_debugger_package_dir(), "debugger.glade"))
+    return builder
+
+
+def get_debugger_package_dir():
+    return os.path.abspath(os.path.dirname(__file__))
+
+
+def get_debugger_data_dir():
+    return os.path.join(get_debugger_package_dir(), "data")
 
 
 def _windows_load_theme():

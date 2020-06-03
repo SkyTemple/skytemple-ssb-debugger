@@ -25,6 +25,7 @@ from skytemple_files.common.script_util import ScriptFiles
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+    from skytemple_ssb_debugger.model.ssb_files import SsbLoadedFile
 
 PROJECT_DIR_SUBDIR_NAME = 'debugger'
 PROJECT_DIR_MACRO_NAME = 'Macros'
@@ -95,11 +96,11 @@ class AbstractDebuggerControlContext(ABC):
         """Returns the project file manager for the currently open ROM."""
 
     @abstractmethod
-    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager'):
+    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
         """Returns the SSB with the given filename from the ROM."""
 
     @abstractmethod
-    def save_ssb(self, filename, ssb_model):
+    def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
         """Updates an SSB model in the ROM and then saves the ROM."""
 
     @abstractmethod

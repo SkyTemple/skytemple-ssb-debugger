@@ -62,7 +62,7 @@ class SsbFileManager:
         f = self.get(filename)
         f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
         logger.debug(f"{filename}: Saving to ROM")
-        self.context.save_ssb(filename, f.ssb_model)
+        self.context.save_ssb(filename, f.ssb_model, self)
         # After save:
         return self._handle_after_save(filename)
 
@@ -113,7 +113,7 @@ class SsbFileManager:
             project_fm.explorerscript_include_usage_add(added_path.replace(pd_w_pathsetp, ''), ssb_filename)
 
         # Save ROM
-        self.context.save_ssb(ssb_filename, f.ssb_model)
+        self.context.save_ssb(ssb_filename, f.ssb_model, self)
         # After save:
         return self._handle_after_save(ssb_filename), new_inclusion_list.included_files
 

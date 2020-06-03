@@ -19,6 +19,8 @@ from typing import Optional, TYPE_CHECKING, Dict, List
 import gi
 
 from explorerscript.source_map import SourceMapPositionMark
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -30,10 +32,10 @@ from skytemple_files.common.script_util import ScriptFiles, load_script_files, S
 from skytemple_files.common.types.file_types import FileType
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+    from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
@@ -55,6 +57,10 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def on_quit(self):
         Gtk.main_quit()
+        emu_instance = EmulatorThread.instance()
+        if emu_instance is not None:
+            emu_instance.end()
+        EmulatorThread.destroy_lib()
 
     def open_rom(self, filename: str):
         self._rom = NintendoDSRom.fromFile(filename)
@@ -88,7 +94,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         self._check_loaded()
         return self._project_fm
 
-    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager'):
+    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
         self._check_loaded()
         if filename not in self._open_files:
             try:
@@ -102,7 +108,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
         return self._open_files[filename]
 
-    def save_ssb(self, filename, ssb_model):
+    def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
         self._check_loaded()
         self._rom.setFileByName(
             filename, FileType.SSB.serialize(ssb_model, self._static_data)

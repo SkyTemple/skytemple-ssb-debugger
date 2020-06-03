@@ -153,10 +153,10 @@ class MainController:
             self.renderer.init()
             self.renderer.start()
 
-            self._keyboard_cfg, self._joystick_cfg = threadsafe_emu(
+            threadsafe_emu(
                 self.emu_thread, lambda: self.emu_thread.load_controls(self.settings)
             )
-            self._keyboard_tmp = self._keyboard_cfg
+            self._keyboard_tmp = self.emu_thread.get_kbcfg()
 
             lang = self.settings.get_emulator_language()
             if lang:
@@ -248,6 +248,26 @@ class MainController:
         self._emu_is_running = value
 
     @property
+    def _keyboard_cfg(self):
+        if self.emu_thread is None:
+            return None
+        return self.emu_thread.get_kbcfg()
+
+    @_keyboard_cfg.setter
+    def _keyboard_cfg(self, value):
+        self.emu_thread.set_kbcfg(value)
+
+    @property
+    def _joystick_cfg(self):
+        if self.emu_thread is None:
+            return None
+        return self.emu_thread.get_jscfg()
+
+    @_joystick_cfg.setter
+    def _joystick_cfg(self, value):
+        self.emu_thread.set_jscfg(value)
+
+    @property
     def global_state__breaks_disabled(self):
         return self.builder.get_object('menu_debugger_disable_breaks').get_active()
 
@@ -268,7 +288,7 @@ class MainController:
             self.emu_thread.start()
 
             # Init joysticks
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.input.joy_init())
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.joy_init())
         except BaseException as ex:
             logger.error(f"DeSmuME load error.", exc_info=ex)
 
@@ -287,6 +307,8 @@ class MainController:
     def on_main_window_delete_event(self, *args):
         if not self.editor_notebook.close_all_tabs() or not self.context.before_quit():
             return True
+        if self.rom_was_loaded:
+            self.uninit_project()
         self.gtk_main_quit()
         return False
 
@@ -296,6 +318,9 @@ class MainController:
     def gtk_main_quit(self, *args):
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
+        if self.emu_thread:
+            if not self._stopped:
+                self.emu_stop()
         if self.emu_thread:
             EmulatorThread.end()
         self.context.on_quit()
@@ -924,16 +949,19 @@ class MainController:
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + path)
 
     # More functions
+    def uninit_project(self):
+        if not self.editor_notebook.close_all_tabs():
+            return
+        self.variable_controller.uninit()
+        if self.debugger:
+            self.debugger.disable()
+        self.rom_was_loaded = False
+
     def load_rom(self):
         try:
             # Unload old ROM first
             if self.rom_was_loaded:
-                if not self.editor_notebook.close_all_tabs():
-                    return
-                self.variable_controller.uninit()
-                if self.debugger:
-                    self.debugger.disable()
-                self.rom_was_loaded = False
+                self.uninit_project()
             self.ssb_fm = SsbFileManager(self.context, self.debugger)
             fn = self.context.get_rom_filename()
             self.breakpoint_manager = BreakpointManager(

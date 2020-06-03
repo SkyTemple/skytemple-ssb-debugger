@@ -9,9 +9,9 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg8"
    version="1.1"
-   viewBox="0 0 35.583466 38.281597"
-   height="38.281597mm"
-   width="35.583466mm"
+   viewBox="0 0 29.194233 31.4079"
+   height="31.4079mm"
+   width="29.194233mm"
    sodipodi:docname="skytemple-debugger-debug-symbolic.svg"
    inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
   <sodipodi:namedview
@@ -28,12 +28,16 @@
      id="namedview7"
      showgrid="false"
      inkscape:zoom="2.3067442"
-     inkscape:cx="-17.32878"
-     inkscape:cy="68.305842"
+     inkscape:cx="-118.92303"
+     inkscape:cy="55.31618"
      inkscape:window-x="0"
      inkscape:window-y="28"
      inkscape:window-maximized="0"
-     inkscape:current-layer="svg8" />
+     inkscape:current-layer="svg8"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
   <defs
      id="defs2" />
   <metadata
@@ -44,12 +48,12 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     transform="matrix(0.82044377,0,0,0.82044377,3.0311719,3.2159561)"
+     transform="matrix(0.82044377,0,0,0.82044377,-0.16344462,-0.22089366)"
      id="layer1">
     <path
        id="path21"

@@ -19,7 +19,8 @@ import asyncio
 import logging
 import sys
 from asyncio import Future
-from threading import Thread, current_thread, Lock
+from threading import Thread, current_thread, Lock, Condition
+from typing import Optional
 
 import nest_asyncio
 
@@ -36,14 +37,20 @@ FRAMES_PER_SECOND = 60
 start_lock = Lock()
 display_buffer_lock = Lock()
 fps_frame_count_lock = Lock()
+thread_stop_condition = Condition()
 
 
 class EmulatorThread(Thread):
     _instance = None
+    _joy_was_init = False
+    _kbcfg = None
+    _jscfg = None
+    _emu: Optional[DeSmuME] = None
+    
     daemon = True
 
     @classmethod
-    def instance(cls):
+    def instance(cls) -> 'EmulatorThread':
         if cls._instance is None:
             return None
         return cls._instance
@@ -51,14 +58,20 @@ class EmulatorThread(Thread):
     @classmethod
     def end(cls):
         if cls._instance:
-            cls._instance.stop()
-            cls._instance = None
+            with thread_stop_condition:
+                cls._instance.stop()
+                cls._instance = None
+                thread_stop_condition.wait()
 
     def __init__(self, parent, override_dll = None):
+        if self.__class__._instance is not None:
+            raise RuntimeError("Only one instance of EmulatorThread can exist at a time. "
+                               "Be sure to call end() on old instances.")
         self.__class__._instance = self
         Thread.__init__(self)
         self.loop: asyncio.AbstractEventLoop = None
-        self._emu = DeSmuME(override_dll)
+        if self.__class__._emu is None:
+            self.__class__._emu = DeSmuME(override_dll)
         self._thread_instance = None
         self.registered_main_loop = False
         self.parent = parent
@@ -70,11 +83,25 @@ class EmulatorThread(Thread):
         self._ticks_prev_frame = 0
         self._ticks_cur_frame = 0
 
+    def assign(self, parent):
+        self.parent = parent
+        return self
+
     @property
     def emu(self):
         if THREAD_DEBUG and current_thread() != self._thread_instance:
             raise RuntimeError("The emulator may only be accessed from withing the emulator thread")
-        return self._emu
+        return self.__class__._emu
+
+    @classmethod
+    def destroy_lib(cls):
+        """Destroy the emulator library."""
+        if cls._instance is not None:
+            raise RuntimeError("Destroying the DeSmuME library is unsafe while an "
+                               "EmulatorThread instance is still running.")
+        if cls._emu is not None:
+            cls._emu.destroy()
+            cls._emu = None
 
     def start(self):
         start_lock.acquire()
@@ -95,7 +122,9 @@ class EmulatorThread(Thread):
             self.loop.run_forever()
         except (KeyboardInterrupt, SystemExit):
             pass
-        self.emu.destroy()
+
+        with thread_stop_condition:
+            thread_stop_condition.notifyAll()
 
     def run_one_pending_task(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
@@ -125,17 +154,35 @@ class EmulatorThread(Thread):
         """Loads the control configuration and returns it."""
         assert current_thread() == self._thread_instance
 
-        default_keyboard, default_joystick = controls.load_default_config()
-        configured_keyboard = settings.get_emulator_keyboard_cfg()
-        configured_joystick = settings.get_emulator_joystick_cfg()
+        if self.__class__._kbcfg is None:
+            default_keyboard, default_joystick = controls.load_default_config()
+            configured_keyboard = settings.get_emulator_keyboard_cfg()
+            configured_joystick = settings.get_emulator_joystick_cfg()
 
-        kbcfg = configured_keyboard if configured_keyboard is not None else default_keyboard
-        jscfg = configured_joystick if configured_joystick is not None else default_joystick
+            self.__class__._kbcfg, self.__class__._jscfg = (
+                configured_keyboard if configured_keyboard is not None else default_keyboard,
+                configured_joystick if configured_joystick is not None else default_joystick
+            )
 
-        for i, jskey in enumerate(jscfg):
-            self.emu.input.joy_set_key(i, jskey)
+            for i, jskey in enumerate(self.__class__._jscfg):
+                self.emu.input.joy_set_key(i, jskey)
 
-        return kbcfg, jscfg
+    def get_kbcfg(self):
+        return self.__class__._kbcfg
+
+    def get_jscfg(self):
+        return self.__class__._jscfg
+
+    def set_kbcfg(self, value):
+        self.__class__._kbcfg = value
+
+    def set_jscfg(self, value):
+        self.__class__._jscfg = value
+        
+    def joy_init(self):
+        if not self.__class__._joy_was_init:
+            self.emu.input.joy_init()
+            self.__class__._joy_was_init = True
 
     def _emu_cycle(self):
         if not self.emu:
@@ -197,3 +244,7 @@ class EmulatorThread(Thread):
     def current_frame_id(self):
         """The ID of the current frame. Warning: Resets every 1000 frames back to 0."""
         return self._fps_frame_count
+
+    @classmethod
+    def has_instance(cls):
+        return cls._instance is not None
