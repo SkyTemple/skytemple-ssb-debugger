@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Tuple
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -121,3 +121,7 @@ class AbstractScriptFileContext(ABC):
         for loaded_ssb in self._registered_ssbs:
             loaded_ssb.unregister_reload_event_editor(self.on_ssb_reload)
             loaded_ssb.unregister_property_callback(self.on_ssb_property_change)
+
+    @abstractmethod
+    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+        pass

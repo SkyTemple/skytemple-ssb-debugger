@@ -27,12 +27,16 @@ from skytemple_ssb_debugger.model.completion.util import backward_until_space
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
     def __init__(self, view: GtkSource.View, opcodes: List[Pmd2ScriptOpCode],
-                 mapname: Optional[str], context: AbstractDebuggerControlContext, is_ssbs=True):
+                 mapname: str, scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.opcodes = opcodes
         self.buffer.connect('notify::cursor-position', self.on_buffer_notify_cursor_position)
-        self.position_mark_calltip = PositionMarkEditorCalltip(view, mapname, context) if is_ssbs else None
+        self.position_mark_calltip = None
+        if not is_ssbs and mapname is not None and scene_name is not None and scene_type is not None:
+            self.position_mark_calltip = PositionMarkEditorCalltip(
+                view, mapname, scene_name, scene_type, context
+            )
 
         self._active_widget: Optional[GtkSource.CompletionInfo] = None
         self._active_op: Optional[Pmd2ScriptOpCode] = None
@@ -42,7 +46,8 @@ class CalltipEmitter:
         textiter = buffer.get_iter_at_offset(buffer.props.cursor_position)
         tip = self._build_calltip_data(textiter, buffer)
         if not tip:
-            self.position_mark_calltip.reset(self._active_widget)
+            if self.position_mark_calltip is not None:
+                self.position_mark_calltip.reset(self._active_widget)
             if self._active_widget:
                 self._active_widget.destroy()
                 self._active_widget = None

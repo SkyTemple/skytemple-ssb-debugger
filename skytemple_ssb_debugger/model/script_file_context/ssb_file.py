@@ -17,7 +17,7 @@
 import logging
 import threading
 from functools import partial
-from typing import Callable, Optional, TYPE_CHECKING
+from typing import Callable, Optional, TYPE_CHECKING, Tuple
 
 from gi.repository import GLib
 
@@ -229,3 +229,6 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
     def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
         debugger_context.open_scene_editor(self.scene_type, self.scene_name)
+
+    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+        return self.scene_name, self.scene_type

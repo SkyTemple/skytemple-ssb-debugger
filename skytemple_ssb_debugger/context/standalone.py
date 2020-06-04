@@ -125,7 +125,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def open_scene_editor_for_map(self, map_name):
         self._scene_editing_not_supported()
 
-    def edit_position_mark(self, mapname: Optional[str], pos_marks: List[SourceMapPositionMark],
+    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: List[SourceMapPositionMark],
                            pos_mark_to_edit: int) -> bool:
         md = Gtk.MessageDialog(self._main_window,
                                Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,

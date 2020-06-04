@@ -119,10 +119,11 @@ class AbstractDebuggerControlContext(ABC):
         """
 
     @abstractmethod
-    def edit_position_mark(self, mapname: Optional[str],
+    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str,
                            pos_marks: List[SourceMapPositionMark], pos_mark_to_edit: int) -> bool:
         """
-        Edit position marks of an SSB file inside a scene editor, using mapname as a background, if set and exists.
+        Edit position marks of an SSB file inside a scene editor, using mapname as a
+        background and the scene's entities for reference.
         Marks are edited in place.
         On error show dialog.
         On success returns True.

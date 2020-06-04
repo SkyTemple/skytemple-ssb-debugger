@@ -265,3 +265,6 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
     def _sm_entry_is_for_us(self, loaded_ssb: SsbLoadedFile, cmp_path: str):
         relpath_of_us_to_ssb_source = os.path.relpath(self._absolute_path, os.path.dirname(loaded_ssb.exps.full_path))
         return cmp_path == relpath_of_us_to_ssb_source
+
+    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+        return None, None

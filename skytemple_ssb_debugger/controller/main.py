@@ -859,7 +859,7 @@ class MainController:
                 for ssb in map_obj['enter_ssbs']:
                     ssb_name = f"{map_obj['name']}/{ssb}"
                     self._scene_types[ssb_name] = 'sse'
-                    self._scene_names[ssb_name] = ssb_name
+                    self._scene_names[ssb_name] = f"{map_obj['name']}/enter.sse"
                     ssb_file_tree_store.append(enter_root, [ssb_name, ssb, 'ssb'])
 
             #       -> Acting Scripts [lsd]

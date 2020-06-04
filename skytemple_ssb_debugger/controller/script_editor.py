@@ -827,7 +827,7 @@ class ScriptEditorController:
         completion.add_provider(GtkSourceCompletionSsbConstants(self.rom_data))
         completion.add_provider(GtkSourceCompletionSsbFunctions(self.rom_data.script_data.op_codes))
         CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes,
-                       self.mapname, self.parent.get_context(), is_ssbs=True)
+                       self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context(), is_ssbs=True)
 
     def _load_explorerscript_completion(self):
         view = self._explorerscript_view
@@ -839,7 +839,7 @@ class ScriptEditorController:
         ))
         completion.add_provider(GtkSourceCompletionExplorerScriptStatements())
         CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes,
-                       self.mapname, self.parent.get_context())
+                       self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context())
 
     def _update_view_editable_state(self):
         """Update which view is editable based on self._explorerscript_active"""

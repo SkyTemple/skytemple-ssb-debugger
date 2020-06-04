@@ -35,11 +35,15 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
     When it's confirmed, the returned position mark data will be read, and the text in the buffer will
     replace this position marks.
     """
-    def __init__(self, view: GtkSource.View, mapname: Optional[str], context: AbstractDebuggerControlContext):
+    def __init__(self, view: GtkSource.View,
+                 mapname: str, scene_name: str, scene_type: str,
+                 context: AbstractDebuggerControlContext):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.is_ssbs = False
         self.mapname = mapname
+        self.scene_name = scene_name
+        self.scene_type = scene_type
         self.context = context
 
         self._active_widget: Optional[Gtk.Button] = None
@@ -96,7 +100,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
         if pos_mark_to_edit is None:
             return
         self.buffer.begin_user_action()
-        if self.context.edit_position_mark(self.mapname, pos_marks, pos_mark_to_edit):
+        if self.context.edit_position_mark(self.mapname, self.scene_name, self.scene_type, pos_marks, pos_mark_to_edit):
             for mark in pos_marks:
                 start = self.buffer.get_iter_at_line_offset(mark.line_number, mark.column_number)
                 end = self.buffer.get_iter_at_line_offset(mark.end_line_number, mark.end_column_number + 1)
