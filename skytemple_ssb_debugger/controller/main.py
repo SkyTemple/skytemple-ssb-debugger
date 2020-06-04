@@ -880,7 +880,7 @@ class MainController:
                 self._scene_types[sss_name] = 'sss'
                 self._scene_names[sss_name] = sss_name
                 sub_entry = ssb_file_tree_store.append(sub_root, [sss_name, sss, 'map_sss_entry'])
-                self._tree_branches[sss_name] = sub_entry
+                self._tree_branches[sss_name.replace('/', '_')] = sub_entry
                 for ssb in ssbs:
                     #             -> Script X [ssb]
                     ssb_name = f"{map_obj['name']}/{ssb}"
