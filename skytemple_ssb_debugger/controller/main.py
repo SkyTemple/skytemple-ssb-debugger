@@ -101,6 +101,9 @@ class MainController:
         # - For opening the scene editor.
         self._scene_types: Dict[str, str] = {}
         self._scene_names: Dict[str, str] = {}
+        # Significant sub-branches of the file list. Contains entries in the form:
+        # mapname_{enter,acting,{sss_name_with_extension}}
+        self._tree_branches: Dict[str, Gtk.TreeIter] = {}
 
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
@@ -850,6 +853,7 @@ class MainController:
             map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root'])
 
             enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Enter (sse)', 'map_sse'])
+            self._tree_branches[f"{map_obj['name']}_enter"] = enter_root
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
                 for ssb in map_obj['enter_ssbs']:
@@ -860,6 +864,7 @@ class MainController:
 
             #       -> Acting Scripts [lsd]
             acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa'])
+            self._tree_branches[f"{map_obj['name']}_acting"] = acting_root
             for _, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
                 ssb_name = f"{map_obj['name']}/{ssb}"
@@ -875,6 +880,7 @@ class MainController:
                 self._scene_types[sss_name] = 'sss'
                 self._scene_names[sss_name] = sss_name
                 sub_entry = ssb_file_tree_store.append(sub_root, [sss_name, sss, 'map_sss_entry'])
+                self._tree_branches[sss_name] = sub_entry
                 for ssb in ssbs:
                     #             -> Script X [ssb]
                     ssb_name = f"{map_obj['name']}/{ssb}"
@@ -1241,6 +1247,33 @@ class MainController:
         """The ground engine stopped"""
         # TODO: This is more a quick fix for some issue with the variable syncing.
         threadsafe_gtk_nonblocking(lambda: self.variable_controller.sync())
+
+    def on_script_added(self, ssb_path, mapname, scene_type, scene_name):
+        """Handle a newly added SSB file."""
+        ssb_path = ssb_path.replace(SCRIPT_DIR + '/', '')
+        if scene_type == 'sse':
+            branch_name = f'{mapname}_enter'
+        elif scene_type == 'ssa':
+            branch_name = f'{mapname}_acting'
+        elif scene_type == 'sss':
+            branch_name = f'{mapname}_{scene_name}'
+        else:
+            return  # todo: raise error?
+        ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
+        if branch_name not in self._tree_branches:
+            return  # todo: raise error?
+        self._scene_types[ssb_path] = scene_type
+        self._scene_names[ssb_path] = f'{mapname}/{scene_name}'
+        ssb_file_tree_store.append(self._tree_branches[branch_name], [
+            ssb_path, ssb_path.split('/')[-1], 'ssb'
+        ])
+
+        if self._ssb_item_filter is not None:
+            self._ssb_item_filter.refilter()
+
+    def on_script_removed(self, ssb_path):
+        """Handle a SSB file removal."""
+        # todo
 
     def break_pulled(self, state: BreakpointState):
         """

@@ -31,10 +31,12 @@ logger = logging.getLogger(__name__)
 
 class SsbLoadedFile:
     def __init__(self, filename: str, model: Ssb,
-                 ssb_file_manager: 'SsbFileManager', project_file_manager: 'ProjectFileManager'):
+                 ssb_file_manager: Optional['SsbFileManager'], project_file_manager: 'ProjectFileManager'):
         self.filename = filename
         self.ssb_model = model
-        self.file_manager: 'SsbFileManager' = ssb_file_manager
+        # TODO: we really have to fix this weird coupling. SsbLoadedFile should not need a file manager reference
+        #       and the saving of SsbScript and ExplorerScript should not be within the SSBS/EXPS sub models.
+        self.file_manager: Optional['SsbFileManager'] = ssb_file_manager
         self.project_file_manager: 'ProjectFileManager' = project_file_manager
         self.ssbs: SsbScriptFile = SsbScriptFile(self)
         self.exps: ExplorerScriptFile = ExplorerScriptFile(self)

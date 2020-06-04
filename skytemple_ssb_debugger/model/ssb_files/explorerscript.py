@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class ExplorerScriptFile(AbstractScriptFile):
     def __init__(self, parent: 'SsbLoadedFile'):
         super().__init__(parent)
-        self.ssb_hash: Optional[str] = None
+        self.ssb_hash: str = ''
         self._text: str = ''
         self._source_map: Optional[SourceMap] = None
         self._loaded = False
