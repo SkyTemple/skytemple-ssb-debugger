@@ -359,6 +359,9 @@ class MainController:
             if event.state & mask == 0:
                 if key and self.emu_is_running:
                     threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_add_key(key))
+                    if key == keymask(Keys.KEY_BOOST - 1):
+                        # Handle boost
+                        self.toggle_boost(True)
                     return True
             return False
 
@@ -367,6 +370,9 @@ class MainController:
             key = self.lookup_key(event.keyval)
             if key and self.emu_is_running:
                 threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_rm_key(key))
+                if key == keymask(Keys.KEY_BOOST - 1):
+                    # Handle boost
+                    self.toggle_boost(False)
 
     def on_draw_main_draw(self, widget: Gtk.DrawingArea, ctx: cairo.Context, *args):
         if self.renderer:
@@ -1352,6 +1358,19 @@ class MainController:
         if ssb_rom_path in self._scene_types :
             return self._scene_types[ssb_rom_path]
         return ''
+
+    def toggle_boost(self, state):
+        if self.emu_thread:
+            self.emu_thread.set_boost(state)
+        if self.debug_overlay:
+            self.debug_overlay.set_boost(state)
+        if self.debugger:
+            self.debugger.set_boost(state)
+        if self.variable_controller:
+            self.variable_controller.set_boost(state)
+        if self.renderer:
+            self.renderer.set_boost(state)
+
 
     def _ssb_item_filter_visible_func(self, model, iter, data):
         return self._recursive_filter_func(self._search_text, model, iter)

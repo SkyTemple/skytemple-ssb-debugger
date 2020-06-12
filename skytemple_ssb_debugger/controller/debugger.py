@@ -77,6 +77,7 @@ class DebuggerController:
         self._log_printfs = False
         self._debug_mode = False
         self._log_ground_engine_state = False
+        self._boost = False
 
     @property
     def breakpoints_disabled(self):
@@ -147,6 +148,8 @@ class DebuggerController:
 
     def hook__breaking_point(self, address, size):
         """MAIN DEBUGGER HOOK. The emulator thread pauses here and publishes it's state via BreakpointState."""
+        if self._boost:
+            return
         debugger_state_lock.acquire()
         srs = ScriptRuntimeStruct(
             self.emu_thread.emu.memory, self.rom_data,
@@ -225,7 +228,7 @@ class DebuggerController:
 
     @synchronized(debugger_state_lock)
     def hook__log_printfs(self, register_offset, address, size):
-        if not self._log_printfs:
+        if not self._log_printfs or self._boost:
             return
         emu = self.emu_thread.emu
         dbg_string = str(NdsStrPnt(emu, emu.memory.register_arm9[register_offset]))
@@ -311,7 +314,7 @@ class DebuggerController:
 
     @synchronized(debugger_state_lock)
     def hook__log_debug_print(self, address, size):
-        if not self._log_debug_print:
+        if not self._log_debug_print or self._boost:
             return
         emu = self.emu_thread.emu
 
@@ -365,3 +368,8 @@ class DebuggerController:
         else:
             len += 2 * current_opcode.params
         return current_opcode_addr_relative + len
+
+    @synchronized(debugger_state_lock)
+    def set_boost(self, state):
+        self._boost = state
+        self.ground_engine_state.set_boost(state)

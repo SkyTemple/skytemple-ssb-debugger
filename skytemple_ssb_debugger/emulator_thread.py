@@ -37,6 +37,7 @@ FRAMES_PER_SECOND = 60
 start_lock = Lock()
 display_buffer_lock = Lock()
 fps_frame_count_lock = Lock()
+boost_lock = Lock()
 thread_stop_condition = Condition()
 
 
@@ -82,6 +83,7 @@ class EmulatorThread(Thread):
         self._fps = 0
         self._ticks_prev_frame = 0
         self._ticks_cur_frame = 0
+        self._boost = False
 
     def assign(self, parent):
         self.parent = parent
@@ -204,26 +206,33 @@ class EmulatorThread(Thread):
 
             self._ticks_cur_frame = self.emu.get_ticks()
 
-            if self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
-                while self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
-                    self._ticks_cur_frame = self.emu.get_ticks()
+            ticks_to_wait = 0
+            with boost_lock:
+                if not self._boost:
+                    if self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
+                        while self._ticks_cur_frame - self._ticks_prev_frame < TICKS_PER_FRAME:
+                            self._ticks_cur_frame = self.emu.get_ticks()
 
-            # TODO: This can be done better.
-            ticks_to_wait = (1 / FRAMES_PER_SECOND) - (self._ticks_cur_frame - self._ticks_prev_frame - TICKS_PER_FRAME + 2) / 1000
+                    # TODO: This can be done better.
+                    ticks_to_wait = (1 / FRAMES_PER_SECOND) - (self._ticks_cur_frame - self._ticks_prev_frame - TICKS_PER_FRAME + 2) / 1000
 
-            if ticks_to_wait < 0:
-                ticks_to_wait = 0
+                    if ticks_to_wait < 0:
+                        ticks_to_wait = 0
 
             self._ticks_prev_frame = self.emu.get_ticks()
 
             self.loop.call_later(ticks_to_wait, self._emu_cycle)
 
             with display_buffer_lock:
-                self._display_buffer = self.emu.display_buffer_as_rgbx()
+                with boost_lock:
+                    if not self._boost or self._fps_frame_count % 60 == 0:
+                        self._display_buffer = self.emu.display_buffer_as_rgbx()
             return True
 
         with display_buffer_lock:
-            self._display_buffer = self.emu.display_buffer_as_rgbx()
+            with boost_lock:
+                if not self._boost or self._fps_frame_count % 60 == 0:
+                    self._display_buffer = self.emu.display_buffer_as_rgbx()
         self.registered_main_loop = False
         return False
 
@@ -248,3 +257,7 @@ class EmulatorThread(Thread):
     @classmethod
     def has_instance(cls):
         return cls._instance is not None
+
+    @synchronized(boost_lock)
+    def set_boost(self, state):
+        self._boost = state

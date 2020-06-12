@@ -52,6 +52,7 @@ class GroundEngineState:
         self.rom_data = rom_data
         self.ssb_file_manager = ssb_file_manager
         self.logging_enabled = False
+        self._boost = False
 
         self.pnt_map = rom_data.binaries['overlay/overlay_0011.bin'].pointers['GroundStateMap'].begin_absolute
         base_pnt = rom_data.binaries['overlay/overlay_0011.bin'].blocks['GroundStatePntrs'].begin_absolute
@@ -289,7 +290,7 @@ class GroundEngineState:
         threadsafe_emu(self.emu_thread, lambda: self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr)))
 
     def _print(self, string):
-        if self.logging_enabled:
+        if self.logging_enabled and not self._boost:
             self._print_callback(f"Ground Event >> {string}")
 
     # >>> ALL CALLBACKS BELOW ARE RUNNING IN THE EMULATOR THREAD <<<
@@ -371,3 +372,7 @@ class GroundEngineState:
         """TODO: Replace with a proper check..."""
         begin_offset = self.rom_data.binaries['overlay/overlay_0011.bin'].functions['GroundMainLoop'].begin_absolute
         return self.emu_thread.emu.memory.unsigned[begin_offset:begin_offset+len(O11_BYTE_CHECK)] == O11_BYTE_CHECK
+
+    @synchronized(ground_engine_lock)
+    def set_boost(self, state):
+        self._boost = state

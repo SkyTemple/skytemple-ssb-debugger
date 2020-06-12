@@ -53,12 +53,16 @@ class DebugOverlayController:
         self._perf_bbox_cache = []
         self._event_bbox_cache = []
         self._camera_pos_cache = (0, 0)
+        self._boost = False
 
     def toggle(self, state):
         self.enabled = state
 
     @synchronized(debug_overlay_lock)
     def draw(self, ctx: cairo.Context, display_id: int):
+        if self._boost:
+            self._draw_boost(ctx, display_id)
+            return
         # TODO: Support other display drawing.
         if display_id == 1 and self.enabled and self.debugger:
             if self._refresh_cache and not self._cache_redrawing_registered:
@@ -153,11 +157,24 @@ class DebugOverlayController:
                         self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
                     self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
-        if self._refresh_cache:
+        if self._refresh_cache and not self._boost:
             await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop)
             threadsafe_emu_nonblocking_coro(self.debugger.emu_thread, self._update_cache())
         else:
             self._cache_redrawing_registered = False
+
+    def set_boost(self, state):
+        self._boost = state
+
+    def _draw_boost(self, ctx: cairo.Context, display_id: int):
+        if display_id == 0:
+            ctx.set_source_rgb(1.0, 0, 0)
+            ctx.move_to(10, 20)
+            ctx.set_font_size(20)
+            ctx.show_text("BOOST")
+            ctx.set_font_size(12)
+            ctx.move_to(10, 30)
+            ctx.show_text("Debugging disabled.")
 
 
 def not_none(it: Iterable):

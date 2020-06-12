@@ -83,6 +83,7 @@ class VariableController:
         self.rom_data: Pmd2Data = None
         self.var_form_elements = None
         self._suppress_events = False
+        self._boost = False
         # Cached variable values
         self._variable_cache: Dict[Pmd2ScriptGameVar, List[int]] = {}
 
@@ -336,6 +337,8 @@ class VariableController:
 
     @synchronized(variables_lock)
     def hook__variable_set(self, address: int, size: int):
+        if self._boost:
+            return
         var_id = self.emu_thread.emu.memory.register_arm9.r1
         if var_id >= 0x400:
             return
@@ -348,6 +351,8 @@ class VariableController:
 
     @synchronized(variables_lock)
     def hook__variable_set_with_offset(self, address: int, size: int):
+        if self._boost:
+            return
         var_id = self.emu_thread.emu.memory.register_arm9.r1
         if var_id >= 0x400:
             return
@@ -370,3 +375,11 @@ class VariableController:
                 else:
                     entry.set_active(bool(value))
         self._suppress_events = False
+
+    def set_boost(self, state):
+        with variables_lock:
+            boost_before = self._boost
+            self._boost = state
+
+        if not state and boost_before:
+            self.sync()

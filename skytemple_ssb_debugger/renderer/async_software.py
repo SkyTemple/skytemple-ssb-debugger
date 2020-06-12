@@ -35,6 +35,7 @@ class AsyncSoftwareRenderer(SoftwareRenderer):
     def __init__(self, emu_thread: EmulatorThread,
                  top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
                  after_render_hook: Callable[[cairo.Context, int], None] = None):
+        self._boost = False
         self._upper_image = None
         self._lower_image = None
         self.emu_thread = emu_thread
@@ -69,3 +70,6 @@ class AsyncSoftwareRenderer(SoftwareRenderer):
         self.top_screen.queue_draw()
         self.bottom_screen.queue_draw()
         return True
+
+    def set_boost(self, state):
+        self._boost = state
