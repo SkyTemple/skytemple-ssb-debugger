@@ -25,6 +25,7 @@ from gi.repository import GLib, Gtk
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import EXPLORERSCRIPT_INCLUSION_MAP_SUFFIX
+from skytemple_files.common.util import open_utf8
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
@@ -111,7 +112,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 inclusion_map_path = self._absolute_path + EXPLORERSCRIPT_INCLUSION_MAP_SUFFIX
                 inclusion_map = []
                 if os.path.exists(inclusion_map_path):
-                    with open(inclusion_map_path, 'r') as f:
+                    with open_utf8(inclusion_map_path, 'r') as f:
                         inclusion_map = json.load(f)
                 for ssb_filename in inclusion_map:
                     logger.debug(f"Register macro for {ssb_filename}.")

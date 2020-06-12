@@ -20,6 +20,7 @@ import os
 from typing import List, Tuple, Dict, Optional
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
+from skytemple_files.common.util import open_utf8
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 
@@ -40,7 +41,7 @@ class BreakpointManager:
             self.breakpoint_mapping: Dict[str, List[int]] = {}
         else:
             try:
-                with open(breakpoint_filename, 'r') as f:
+                with open_utf8(breakpoint_filename, 'r') as f:
                     self.breakpoint_mapping = json.load(f)
             except ValueError:
                 self.breakpoint_mapping = {}
@@ -76,7 +77,7 @@ class BreakpointManager:
             mapping_to_write_to_file = self.breakpoint_mapping.copy()
             mapping_to_write_to_file[fn] = list_breakpoints
 
-        with open(self._breakpoint_filename, 'w') as f:
+        with open_utf8(self._breakpoint_filename, 'w') as f:
             # TODO: A breakpoint update in another file will just override this again...
             #       we should probably keep track of two full sets of the state (current ROM / current RAM)
             json.dump(mapping_to_write_to_file, f)
@@ -87,7 +88,7 @@ class BreakpointManager:
             self.breakpoint_mapping[ssb.filename] = self.new_breakpoint_mapping[ssb.filename]
             del self.new_breakpoint_mapping[ssb.filename]
 
-            with open(self._breakpoint_filename, 'w') as f:
+            with open_utf8(self._breakpoint_filename, 'w') as f:
                 json.dump(self.breakpoint_mapping, f)
 
         ssb.unregister_reload_event_manager(self.wait_for_ssb_update)
@@ -102,7 +103,7 @@ class BreakpointManager:
         self.breakpoint_mapping[fn].append(op_off)
         for cb in self._callbacks_added:
             cb(fn, op_off)
-        with open(self._breakpoint_filename, 'w') as f:
+        with open_utf8(self._breakpoint_filename, 'w') as f:
             json.dump(self.breakpoint_mapping, f)
 
     def remove(self, fn, op_off):
@@ -116,7 +117,7 @@ class BreakpointManager:
         del self.breakpoint_mapping[fn][idx]
         for cb in self._callbacks_remvoed:
             cb(fn, op_off)
-        with open(self._breakpoint_filename, 'w') as f:
+        with open_utf8(self._breakpoint_filename, 'w') as f:
             json.dump(self.breakpoint_mapping, f)
 
     def has(self, fn: str,

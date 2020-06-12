@@ -21,6 +21,7 @@ from typing import TYPE_CHECKING, List, Tuple, Set
 
 from explorerscript.included_usage_map import IncludedUsageMap
 from skytemple_files.common.types.file_types import FileType
+from skytemple_files.common.util import open_utf8
 from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
@@ -127,7 +128,7 @@ class SsbFileManager:
         """
         logger.debug(f"{abs_exps_path}: Saving ExplorerScript macro")
         # Write ExplorerScript to file
-        with open(abs_exps_path, 'w') as f:
+        with open_utf8(abs_exps_path, 'w') as f:
             f.write(code)
 
         ready_to_reloads = []

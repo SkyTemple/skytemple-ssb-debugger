@@ -22,6 +22,7 @@ from typing import Optional, Tuple, List
 from desmume.controls import key_names
 from desmume.emulator import Language
 from skytemple_files.common.project_file_manager import ProjectFileManager
+from skytemple_files.common.util import open_utf8
 from skytemple_ssb_debugger.threadsafe import synchronized
 
 settings_lock = threading.Lock()
@@ -50,7 +51,7 @@ class DebuggerSettingsStore:
         self.config_file = os.path.join(self.config_dir, CONFIG_FILE_NAME)
         self.loaded_config = configparser.ConfigParser()
         if os.path.exists(self.config_file):
-            with open(self.config_file, 'r') as f:
+            with open_utf8(self.config_file, 'r') as f:
                 self.loaded_config.read_file(f)
 
     @synchronized(settings_lock)
@@ -160,5 +161,5 @@ class DebuggerSettingsStore:
         self._save()
 
     def _save(self):
-        with open(self.config_file, 'w') as f:
+        with open_utf8(self.config_file, 'w') as f:
             self.loaded_config.write(f)

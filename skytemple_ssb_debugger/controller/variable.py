@@ -25,6 +25,7 @@ import gi
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar, GameVariableType
+from skytemple_files.common.util import open_utf8
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, synchronized, \
@@ -301,7 +302,7 @@ class VariableController:
         if not os.path.exists(path):
             return
         try:
-            with open(path, 'r') as f:
+            with open_utf8(path, 'r') as f:
                 vars = json.load(f)
             for name, values in vars.items():
                 var_id = self.rom_data.script_data.game_variables__by_name[name].id
@@ -321,7 +322,7 @@ class VariableController:
     def save(self, index: int, config_dir: str):
         self.variables_changed_but_not_saved = False
         vars = {k.name: v for k, v in self._variable_cache.items()}
-        with open(os.path.join(config_dir, f'vars.{index}.json'), 'w') as f:
+        with open_utf8(os.path.join(config_dir, f'vars.{index}.json'), 'w') as f:
             json.dump(vars, f)
 
     def _queue_variable_write(self, var_id: int, offset: int, value: int):

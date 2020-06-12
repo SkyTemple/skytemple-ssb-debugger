@@ -25,6 +25,9 @@ from typing import Optional, Dict
 
 import cairo
 import gi
+
+from skytemple_files.common.util import open_utf8
+
 gi.require_version('GtkSource', '4')
 from gi.repository.GtkSource import StyleSchemeManager
 
@@ -799,7 +802,7 @@ class MainController:
         if response == Gtk.ResponseType.OK:
             abs_filename = row[0] + os.path.sep + filename
             os.makedirs(row[0], exist_ok=True)
-            with open(abs_filename, 'w') as f:
+            with open_utf8(abs_filename, 'w') as f:
                 f.write('')
             store.append(store.get_iter(treepath), [abs_filename, filename, 'exps_macro'])
 
@@ -1096,7 +1099,7 @@ class MainController:
                 self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
             )
 
-            with open(ground_engine_savestate_path, 'w') as f:
+            with open_utf8(ground_engine_savestate_path, 'w') as f:
                 json.dump(self.debugger.ground_engine_state.serialize(), f)
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.save_file(desmume_savestate_path))
         except BaseException as err:
@@ -1127,7 +1130,7 @@ class MainController:
                 self._stopped = False
                 self.emu_reset()
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.load_file(desmume_savestate_path))
-                with open(ground_engine_savestate_path, 'r') as f:
+                with open_utf8(ground_engine_savestate_path, 'r') as f:
                     self.debugger.ground_engine_state.deserialize(json.load(f))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
                 self.load_debugger_state()
