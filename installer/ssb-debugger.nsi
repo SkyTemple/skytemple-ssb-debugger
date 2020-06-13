@@ -29,7 +29,7 @@ RequestExecutionLevel admin
 Name "${PRODUCT_NAME} - ${PRODUCT_VERSION}"
 Icon "skytemple-ssb-debugger.ico"
 OutFile "skytemple-ssb-debugger-install.exe"
-InstallDir "$PROGRAMFILES\${PRODUCT_NAME}"
+InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
 ShowInstDetails show
 
 Section "install"

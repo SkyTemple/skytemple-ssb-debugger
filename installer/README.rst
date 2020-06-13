@@ -7,3 +7,4 @@ You need to place the following wheels in this directory (glob patterns, must on
 
 - ``python_igraph-*-cp38-cp38-mingw.whl``
 - ``py-desmume-*-cp38-cp38-mingw.whl``
+- ``skytemple_rust-*-cp38-cp38-mingw.whl``
