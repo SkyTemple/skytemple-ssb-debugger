@@ -28,7 +28,7 @@ import gi
 
 from skytemple_files.common.util import open_utf8
 
-gi.require_version('GtkSource', '4')
+gi.require_version('GtkSource', '3.0')
 from gi.repository.GtkSource import StyleSchemeManager
 
 from desmume.controls import Keys, keymask

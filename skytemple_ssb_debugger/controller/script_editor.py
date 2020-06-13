@@ -486,7 +486,7 @@ class ScriptEditorController:
             ms = []
             while i.get_offset() <= end.get_offset():
                 ms += buffer.get_source_marks_at_iter(i, 'breakpoint')
-                if not i.forward_char():
+                if not i.forward2_char():
                     break
             for m in ms:
                 self.remove_breakpoint(m)
@@ -511,7 +511,7 @@ class ScriptEditorController:
 
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(widget.get_text())
-        found, match_start, match_end = context.forward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
+        found, match_start, match_end = context.forward2(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
         if found:
             buffer.select_range(match_start, match_end)
 
@@ -525,7 +525,7 @@ class ScriptEditorController:
 
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(search.get_text())
-        found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:4]
+        found, match_start, match_end, wrap = context.backward2(buffer.get_iter_at_offset(buffer.props.cursor_position))[:4]
         if found:
             buffer.select_range(match_start, match_end)
             if buffer == self._ssb_script_view.get_buffer():
@@ -544,11 +544,11 @@ class ScriptEditorController:
         settings: GtkSource.SearchSettings = context.get_settings()
         settings.set_search_text(search.get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        found, match_start, match_end, wrap = context.forward(cursor)
+        found, match_start, match_end, wrap = context.forward2(cursor)
         if found:
             if match_start.get_offset() == cursor.get_offset():
                 # Repeat once, to really get down
-                found, match_start, match_end, wrap = context.forward(match_end)
+                found, match_start, match_end, wrap = context.forward2(match_end)
             if found:
                 buffer.select_range(match_start, match_end)
                 if buffer == self._ssb_script_view.get_buffer():
@@ -583,15 +583,15 @@ class ScriptEditorController:
 
         settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
+        search_down = not self.builder.get_object('sr_search_setting_search_backward2s').get_active()
         if search_down:
-            found, match_start, match_end, wrap = self._active_search_context.forward(cursor)
+            found, match_start, match_end, wrap = self._active_search_context.forward2(cursor)
         else:
-            found, match_start, match_end, wrap = self._active_search_context.backward(cursor)
+            found, match_start, match_end, wrap = self._active_search_context.backward2(cursor)
         if found:
             if search_down and match_start.get_offset() == cursor.get_offset():
                 # Repeat once, to really get down
-                found, match_start, match_end, wrap = self._active_search_context.forward(match_end)
+                found, match_start, match_end, wrap = self._active_search_context.forward2(match_end)
             buffer.select_range(match_start, match_end)
             if buffer == self._ssb_script_view.get_buffer():
                 self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
@@ -604,13 +604,13 @@ class ScriptEditorController:
 
         settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
+        search_down = not self.builder.get_object('sr_search_setting_search_backward2s').get_active()
         if search_down:
-            found, match_start, match_end, wrap = self._active_search_context.forward(cursor)
+            found, match_start, match_end, wrap = self._active_search_context.forward2(cursor)
         else:
-            found, match_start, match_end, wrap = self._active_search_context.backward(cursor)
+            found, match_start, match_end, wrap = self._active_search_context.backward2(cursor)
         if found:
-            # No running twice this time, because if we search forward we take the current pos.
+            # No running twice this time, because if we search forward2 we take the current pos.
             self._active_search_context.replace(match_start, match_end, self.builder.get_object('sr_replace_text').get_text(), -1)
 
     def on_sr_replace_all_clicked(self, btn: Gtk.Button, *args):
