@@ -65,11 +65,15 @@ class AbstractDebuggerControlContext(ABC):
 
     def get_project_debugger_dir(self) -> str:
         """Returns the debugger directory inside the project."""
-        return os.path.join(self.get_project_dir(), PROJECT_DIR_SUBDIR_NAME)
+        dir = os.path.join(self.get_project_dir(), PROJECT_DIR_SUBDIR_NAME)
+        os.makedirs(dir, exist_ok=True)
+        return dir
 
     def get_project_macro_dir(self) -> str:
         """Returns the Macros directory inside the project."""
-        return os.path.join(self.get_project_dir(), PROJECT_DIR_MACRO_NAME)
+        dir = os.path.join(self.get_project_dir(), PROJECT_DIR_MACRO_NAME)
+        os.makedirs(dir, exist_ok=True)
+        return dir
 
     @abstractmethod
     def load_script_files(self) -> ScriptFiles:

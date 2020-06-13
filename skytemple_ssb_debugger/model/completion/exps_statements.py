@@ -73,7 +73,7 @@ class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.Comp
         return [self._build_item(s) for s in ALL_STATEMENTS if s.startswith(cond)]
 
     def _build_item(self, string) -> GtkSource.CompletionItem:
-        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new()
+        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new2()
         item.set_text(string)
         item.set_label(string)
         return item
