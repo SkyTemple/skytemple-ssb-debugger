@@ -83,7 +83,7 @@ class AbstractScriptFileContext(ABC):
         load_exps: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[BaseException], None],
+        exps_exception_callback: Callable[[any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -91,7 +91,7 @@ class AbstractScriptFileContext(ABC):
 
     @abstractmethod
     def save(self, save_text: str, save_exps: bool,
-             error_callback: Callable[[BaseException], None],
+             error_callback: Callable[[any, BaseException], None],
              success_callback: Callable[[], None]):
         pass
 

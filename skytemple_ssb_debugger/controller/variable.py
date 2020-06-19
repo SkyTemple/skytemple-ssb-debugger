@@ -17,6 +17,7 @@
 import json
 import math
 import os
+import sys
 from functools import partial
 from threading import Lock
 from typing import Optional, List, Dict
@@ -26,6 +27,7 @@ import gi
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar, GameVariableType
 from skytemple_files.common.util import open_utf8
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, synchronized, \
@@ -77,10 +79,11 @@ class VariableController:
                  'RECYCLE_COUNT', 'TEAM_RANK_EVENT_LEVEL', 'PLAY_OLD_GAME', 'NOTE_MODIFY_FLAG'],
     }
 
-    def __init__(self, emu_thread: Optional[EmulatorThread], builder: Gtk.Builder):
+    def __init__(self, emu_thread: Optional[EmulatorThread], builder: Gtk.Builder, context: AbstractDebuggerControlContext):
         super().__init__()
         self.emu_thread = emu_thread
         self.builder = builder
+        self.context = context
         self.rom_data: Pmd2Data = None
         self.var_form_elements = None
         self._suppress_events = False
@@ -309,13 +312,11 @@ class VariableController:
                 for i, value in enumerate(values):
                     self._queue_variable_write(var_id, i, value)
         except BaseException as err:
-            md = Gtk.MessageDialog(None,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, str(err),
-                                   title="Unable to load variables!")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+            self.context.display_error(
+                sys.exc_info(),
+                str(err),
+                "Unable to load variables!"
+            )
             return
 
     @synchronized(variables_lock)

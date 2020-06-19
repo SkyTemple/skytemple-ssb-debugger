@@ -17,6 +17,7 @@
 import json
 import logging
 import os
+import sys
 import threading
 from functools import partial
 from typing import Callable, Optional, Dict, Tuple, TYPE_CHECKING
@@ -93,7 +94,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         load_exps: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[BaseException], None],
+        exps_exception_callback: Callable[[any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -125,7 +126,8 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                         pass
             except Exception as ex:
                 logger.error(f"Error on load.", exc_info=ex)
-                GLib.idle_add(partial(exps_exception_callback, ex))
+                exc_info = sys.exc_info()
+                GLib.idle_add(partial(exps_exception_callback, exc_info, ex))
             else:
                 GLib.idle_add(partial(
                     load_view_callback, exps_source, True, 'exps'
@@ -162,7 +164,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
-    def save(self, save_text: str, save_exps: bool, error_callback: Callable[[BaseException], None],
+    def save(self, save_text: str, save_exps: bool, error_callback: Callable[[any, BaseException], None],
              success_callback: Callable[[], None]):
         if not save_exps:
             return  # not supported.
@@ -176,7 +178,8 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 )
             except Exception as err:
                 logger.error(f"Error on save.", exc_info=err)
-                GLib.idle_add(partial(error_callback, err))
+                exc_info = sys.exc_info()
+                GLib.idle_add(partial(error_callback, exc_info, err))
                 return
             else:
                 GLib.idle_add(partial(self._after_save, ready_to_reload_list, included_exps_files_list, success_callback))

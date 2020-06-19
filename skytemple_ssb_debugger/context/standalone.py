@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import logging
 from typing import Optional, TYPE_CHECKING, Dict, List
 
 import gi
@@ -32,10 +33,11 @@ from skytemple_files.common.script_util import ScriptFiles, load_script_files, S
 from skytemple_files.common.types.file_types import FileType
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
+from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-    from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
+logger = logging.getLogger(__name__)
 
 
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
@@ -127,28 +129,32 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: List[SourceMapPositionMark],
                            pos_mark_to_edit: int) -> bool:
-        md = Gtk.MessageDialog(self._main_window,
-                               Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                               Gtk.ButtonsType.OK,
-                               f"Visual Position Mark editing is not supported in the standalone version of "
-                               f"SkyTemple Script Engine Debugger.\n"
-                               f"Please open the debugger through the SkyTemple main application "
-                               f"instead.",
-                               title="Action not supported")
-        md.set_position(Gtk.WindowPosition.CENTER)
-        md.run()
-        md.destroy()
+        self.display_error(
+            None,
+            f"Visual Position Mark editing is not supported in the standalone version of "
+            f"SkyTemple Script Engine Debugger.\n"
+            f"Please open the debugger through the SkyTemple main application "
+            f"instead."
+        )
         return False
 
     def _scene_editing_not_supported(self):
+        self.display_error(
+            None,
+            f"Scene editing is not supported in the standalone version of "
+            f"SkyTemple Script Engine Debugger.\n"
+            f"Please open the debugger through the SkyTemple main application "
+            f"instead.",
+            "Action not supported"
+        )
+
+    def display_error(self, exc_info, error_message, error_title='SkyTemple Script Engine Debugger - Error'):
+        logger.error(error_message, exc_info=exc_info)
         md = Gtk.MessageDialog(self._main_window,
                                Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
                                Gtk.ButtonsType.OK,
-                               f"Scene editing is not supported in the standalone version of "
-                               f"SkyTemple Script Engine Debugger.\n"
-                               f"Please open the debugger through the SkyTemple main application "
-                               f"instead.",
-                               title="Action not supported")
+                               error_message,
+                               title=error_title)
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()

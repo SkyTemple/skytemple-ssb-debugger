@@ -18,6 +18,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 import traceback
 import webbrowser
 from functools import partial
@@ -189,7 +190,7 @@ class MainController:
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
             self.builder, self, self.window, self._enable_explorerscript)
-        self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder)
+        self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder, self.context)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
@@ -302,18 +303,14 @@ class MainController:
             # Init joysticks
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.joy_init())
         except BaseException as ex:
-            logger.error(f"DeSmuME load error.", exc_info=ex)
-
             self.emu_thread = None
-            md = Gtk.MessageDialog(self.window,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, f"DeSmuME couldn't be loaded. "
-                                                       f"Debugging functionality will not be available:\n\n"
-                                                       f"{ex}",
-                                   title="Error loading the emulator!")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+            self.context.display_error(
+                sys.exc_info(),
+                f"DeSmuME couldn't be loaded. "
+                f"Debugging functionality will not be available:\n\n"
+                f"{ex}",
+                "Error loading the emulator!"
+            )
             return
 
     def on_main_window_delete_event(self, *args):
@@ -462,14 +459,10 @@ class MainController:
             try:
                 self.context.open_rom(fn)
             except BaseException as ex:
-                print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
-                md = Gtk.MessageDialog(self.window,
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, f"Unable to load: {fn}\n{ex}",
-                                       title="Error!")
-                md.set_position(Gtk.WindowPosition.CENTER)
-                md.run()
-                md.destroy()
+                self.context.display_error(
+                    sys.exc_info(),
+                    f"Unable to load: {fn}\n{ex}"
+                )
             self.load_rom()
 
     def on_menu_save_activate(self, menu_item: Gtk.MenuItem, *args):
@@ -1017,14 +1010,10 @@ class MainController:
             self.editor_notebook.init(self.ssb_fm, self.breakpoint_manager, rom_data)
             self.rom_was_loaded = True
         except BaseException as ex:
-            print(''.join(traceback.format_exception(etype=type(ex), value=ex, tb=ex.__traceback__)))
-            md = Gtk.MessageDialog(self.window,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, f"Unable to load: {self.context.get_rom_filename()}\n{ex}",
-                                   title="Error!")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+            self.context.display_error(
+                sys.exc_info(),
+                f"Unable to load: {self.context.get_rom_filename()}\n{ex}"
+            )
             self.ssb_fm = None
             self.breakpoint_manager = None
         else:
@@ -1106,13 +1095,11 @@ class MainController:
                 json.dump(self.debugger.ground_engine_state.serialize(), f)
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.save_file(desmume_savestate_path))
         except BaseException as err:
-            md = Gtk.MessageDialog(self.window,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, str(err),
-                                   title="Unable to save savestate!")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+            self.context.display_error(
+                sys.exc_info(),
+                str(err),
+                "Unable to save savestate!"
+            )
             return
 
     def loadstate(self, i: int):
@@ -1143,14 +1130,11 @@ class MainController:
                 else:
                     self._set_buttons_paused()
             except BaseException as ex:
-                logger.error(f"Savestate load error.", exc_info=ex)
-                md = Gtk.MessageDialog(self.window,
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, str(ex),
-                                       title="Unable to load savestate!")
-                md.set_position(Gtk.WindowPosition.CENTER)
-                md.run()
-                md.destroy()
+                self.context.display_error(
+                    sys.exc_info(),
+                    str(ex),
+                    "Unable to load savestate!"
+                )
                 return
 
     def set_touch_pos(self, x: int, y: int):
@@ -1197,13 +1181,10 @@ class MainController:
                 threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.open(self.context.get_rom_filename()))
                 self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
             except RuntimeError:
-                md = Gtk.MessageDialog(self.window,
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, f"Emulator failed to load: {self.context.get_rom_filename()}",
-                                       title="Error!")
-                md.set_position(Gtk.WindowPosition.CENTER)
-                md.run()
-                md.destroy()
+                self.context.display_error(
+                    sys.exc_info(),
+                    f"Emulator failed to load: {self.context.get_rom_filename()}"
+                )
 
     def emu_resume(self, state_type=BreakpointStateType.RESUME, step_manual_addr=None):
         """Resume the emulator. If the debugger is currently breaked, the state will transition to state_type."""

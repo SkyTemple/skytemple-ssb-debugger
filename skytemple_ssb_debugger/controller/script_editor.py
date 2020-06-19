@@ -252,24 +252,20 @@ class ScriptEditorController:
 
         self._saving_dialog.run()
 
-    def _save_done_error(self, err):
+    def _save_done_error(self, exc_info, err):
         """Gtk callback after the saving has been done, but an error occured."""
         if self._saving_dialog is not None:
             self._saving_dialog.hide()
             self._saving_dialog = None
-        logger.error(f"Save error.", exc_info=err)
         prefix = ''
         if isinstance(err, ParseError):
             prefix = 'Parse error: '
-        md = Gtk.MessageDialog(
-            None,
-            Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
+        self.parent.get_context().display_error(
+            exc_info,
             f"The script file {self.filename} could not be saved.\n"
             f"{prefix}{err}",
-            title="Warning!"
+            "Error saving the script."
         )
-        md.run()
-        md.destroy()
 
     def _save_done(self, modified_buffer: GtkSource.Buffer):
         """Gtk callback after the saving has been done."""
@@ -341,17 +337,14 @@ class ScriptEditorController:
                 # Force load the file
                 force_load()
 
-        def load__gtk__exps_exception(exception):
-            logger.error(f"Load error.", exc_info=exception)
-            md = Gtk.MessageDialog(self._main_window,
-                                   Gtk.DialogFlags.MODAL, Gtk.MessageType.ERROR,
-                                   Gtk.ButtonsType.OK, f"There was an error while loading the ExplorerScript "
-                                                       f"source code. The source will not be available.\n"
-                                                       f"Please close and reopen the tab.\n\n"
-                                                       f"{exception}")
-            md.set_position(Gtk.WindowPosition.CENTER)
-            md.run()
-            md.destroy()
+        def load__gtk__exps_exception(exc_info, exception):
+            self.parent.get_context().display_error(
+                exc_info,
+                f"There was an error while loading the ExplorerScript "
+                f"source code. The source will not be available.\n"
+                f"Please close and reopen the tab.\n\n"
+                f"{exception}"
+            )
 
         def load__gtk__ssbs_not_available():
             for child in ssbs_bx.get_children():

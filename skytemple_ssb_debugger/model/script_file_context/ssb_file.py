@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
+import sys
 import threading
 from functools import partial
 from typing import Callable, Optional, TYPE_CHECKING, Tuple
@@ -81,7 +82,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         load_exps: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[BaseException], None],
+        exps_exception_callback: Callable[[any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -93,7 +94,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 self._ssb_file.exps.force_decompile()
             except Exception as ex:
                 logger.error(f"Error on load.", exc_info=ex)
-                exps_exception_callback(ex)
+                exps_exception_callback(sys.exc_info(), ex)
             else:
                 load_view_callback(self._ssb_file.exps.text, True, 'exps')
 
@@ -104,7 +105,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 self._ssb_file.exps.load(force=True)
             except Exception as ex:
                 logger.error(f"Error on load.", exc_info=ex)
-                exps_exception_callback(ex)
+                exps_exception_callback(sys.exc_info(), ex)
             else:
                 load_view_callback(self._ssb_file.exps.text, True, 'exps')
 
@@ -126,7 +127,8 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                     GLib.idle_add(partial(exps_hash_changed_callback, gtk__chose_force_decompile, gtk__chose_force_load))
                 except Exception as ex:
                     logger.error(f"Error on load.", exc_info=ex)
-                    GLib.idle_add(partial(exps_exception_callback, ex))
+                    exc_info = sys.exc_info()
+                    GLib.idle_add(partial(exps_exception_callback, exc_info, ex))
                 else:
                     GLib.idle_add(partial(
                         load_view_callback, self._ssb_file.exps.text, True, 'exps'
@@ -159,7 +161,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         after_callback()
 
     def save(self, save_text: str, save_exps: bool,
-             error_callback: Callable[[BaseException], None],
+             error_callback: Callable[[any, BaseException], None],
              success_callback: Callable[[], None]):
 
         logger.debug(f"Saving SSB. From exps? {save_exps}")
@@ -177,7 +179,8 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                     )
             except Exception as err:
                 logger.error(f"Error on save.", exc_info=err)
-                GLib.idle_add(partial(error_callback, err))
+                exc_info = sys.exc_info()
+                GLib.idle_add(partial(error_callback, exc_info, err))
                 return
             else:
                 GLib.idle_add(partial(self._after_save, ready_to_reload, included_exps_files, success_callback))

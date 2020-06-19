@@ -132,3 +132,13 @@ class AbstractDebuggerControlContext(ABC):
         On error show dialog.
         On success returns True.
         """
+
+    @abstractmethod
+    def display_error(self, exc_info, error_message, error_title='SkyTemple Script Engine Debugger - Error'):
+        """
+        Display an error dialog for the user.
+        :param exc_info: Return value of sys.exc_info inside the 'except' block. May be None if no exception is being
+                         handled.
+        :param error_message: The message to display to the user.
+        :param error_title: The title of the dialog to display.
+        """
