@@ -486,7 +486,7 @@ class ScriptEditorController:
             ms = []
             while i.get_offset() <= end.get_offset():
                 ms += buffer.get_source_marks_at_iter(i, 'breakpoint')
-                if not i.forward2_char():
+                if not i.forward_char():
                     break
             for m in ms:
                 self.remove_breakpoint(m)
