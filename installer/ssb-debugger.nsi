@@ -1,5 +1,5 @@
 !define PRODUCT_NAME "SkyTemple Script Engine Debugger"
-!define PRODUCT_VERSION "0.0.2"
+!define PRODUCT_VERSION "0.0.4"
 
 !define DIST_DIR "dist\skytemple-ssb-debugger"
 !define APPEXE "skytemple-ssb-debugger.exe"
