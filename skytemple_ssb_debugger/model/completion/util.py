@@ -22,7 +22,7 @@ from gi.repository import GtkSource, Gtk
 from explorerscript.ssb_converting.ssb_special_ops import OPS_ALL_SPECIAL
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 
-SPECIAL_CHARS_COMPLETION_START = string.whitespace + r"""!"#%&'()*+,-./:;<=>?@[\]^_`{|}~"""
+SPECIAL_CHARS_COMPLETION_START = string.whitespace + r"""!"#%&'()*+,-./:;<=>?@[\]^`{|}~"""
 
 
 
