@@ -66,6 +66,7 @@ logger = logging.getLogger(__name__)
 
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
+COL_VISIBLE = 3
 
 
 class MainController:
@@ -721,7 +722,7 @@ class MainController:
     def on_ssb_file_search_search_changed(self, search: Gtk.SearchEntry):
         """Filter the main item view using the search field"""
         self._search_text = search.get_text()
-        self._ssb_item_filter.refilter()
+        self._filter__refresh_results()
 
     def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
@@ -829,7 +830,7 @@ class MainController:
         if not self._ssb_item_filter:
             self._ssb_item_filter = ssb_file_tree_store.filter_new()
             self.builder.get_object('ssb_file_tree').set_model(self._ssb_item_filter)
-            self._ssb_item_filter.set_visible_func(self._ssb_item_filter_visible_func)
+            self._ssb_item_filter.set_visible_column(COL_VISIBLE)
 
         self._set_sensitve('ssb_file_search', True)
 
@@ -838,30 +839,32 @@ class MainController:
         # EXPLORERSCRIPT MACROS
         #    -> Macros
         macros_dir_name = self.context.get_project_macro_dir()
-        macros_tree_nodes = {macros_dir_name: ssb_file_tree_store.append(None, [macros_dir_name, 'Macros', 'exps_macro_dir'])}
+        macros_tree_nodes = {macros_dir_name: ssb_file_tree_store.append(
+            None, [macros_dir_name, 'Macros', 'exps_macro_dir', True]
+        )}
         for root, dnames, fnames in os.walk(macros_dir_name):
             root_node = macros_tree_nodes[root]
             for dirname in dnames:
                 macros_tree_nodes[root + os.path.sep + dirname] = ssb_file_tree_store.append(
-                    root_node, [root + os.path.sep + dirname, dirname, 'exps_macro_dir']
+                    root_node, [root + os.path.sep + dirname, dirname, 'exps_macro_dir', True]
                 )
             for filename in fnames:
                 if len(filename) > 4 and filename[-5:] == EXPLORERSCRIPT_EXT:
-                    ssb_file_tree_store.append(root_node, [root + os.path.sep + filename, filename, 'exps_macro'])
+                    ssb_file_tree_store.append(root_node, [root + os.path.sep + filename, filename, 'exps_macro', True])
 
         # SSB SCRIPT FILES
         #    -> Common [common]
-        common_root = ssb_file_tree_store.append(None, ['', 'Common', 'common_dir'])
+        common_root = ssb_file_tree_store.append(None, ['', 'Common', 'common_dir', True])
         #       -> Master Script (unionall) [ssb]
         #       -> (others) [ssb]
         for name in script_files['common']:
-            ssb_file_tree_store.append(common_root, ['COMMON/' + name, name, 'ssb'])
+            ssb_file_tree_store.append(common_root, ['COMMON/' + name, name, 'ssb', True])
 
         for i, map_obj in enumerate(script_files['maps'].values()):
             #    -> (Map Name) [map]
-            map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root'])
+            map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root', True])
 
-            enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Enter (sse)', 'map_sse'])
+            enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Enter (sse)', 'map_sse', True])
             self._tree_branches[f"{map_obj['name']}_enter"] = enter_root
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
@@ -869,33 +872,33 @@ class MainController:
                     ssb_name = f"{map_obj['name']}/{ssb}"
                     self._scene_types[ssb_name] = 'sse'
                     self._scene_names[ssb_name] = f"{map_obj['name']}/enter.sse"
-                    ssb_file_tree_store.append(enter_root, [ssb_name, ssb, 'ssb'])
+                    ssb_file_tree_store.append(enter_root, [ssb_name, ssb, 'ssb', True])
 
             #       -> Acting Scripts [lsd]
-            acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa'])
+            acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa', True])
             self._tree_branches[f"{map_obj['name']}_acting"] = acting_root
             for _, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
                 ssb_name = f"{map_obj['name']}/{ssb}"
                 self._scene_types[ssb_name] = 'ssa'
                 self._scene_names[ssb_name] = ssb_name
-                ssb_file_tree_store.append(acting_root, [ssb_name, ssb, 'ssb'])
+                ssb_file_tree_store.append(acting_root, [ssb_name, ssb, 'ssb', True])
 
             #       -> Sub Scripts [sub]
-            sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Sub (sss)', 'map_sss'])
+            sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Sub (sss)', 'map_sss', True])
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
                 sss_name = f"{map_obj['name']}/{sss}"
                 self._scene_types[sss_name] = 'sss'
                 self._scene_names[sss_name] = sss_name
-                sub_entry = ssb_file_tree_store.append(sub_root, [sss_name, sss, 'map_sss_entry'])
+                sub_entry = ssb_file_tree_store.append(sub_root, [sss_name, sss, 'map_sss_entry', True])
                 self._tree_branches[sss_name.replace('/', '_')] = sub_entry
                 for ssb in ssbs:
                     #             -> Script X [ssb]
                     ssb_name = f"{map_obj['name']}/{ssb}"
                     self._scene_types[ssb_name] = 'sss'
                     self._scene_names[ssb_name] = sss_name
-                    ssb_file_tree_store.append(sub_entry, [ssb_name, ssb, 'ssb'])
+                    ssb_file_tree_store.append(sub_entry, [ssb_name, ssb, 'ssb', True])
 
     # VARIABLES VIEW
 
@@ -1274,11 +1277,8 @@ class MainController:
         self._scene_types[ssb_path] = scene_type
         self._scene_names[ssb_path] = f'{mapname}/{scene_name}'
         ssb_file_tree_store.append(self._tree_branches[branch_name], [
-            ssb_path, ssb_path.split('/')[-1], 'ssb'
+            ssb_path, ssb_path.split('/')[-1], 'ssb', True
         ])
-
-        if self._ssb_item_filter is not None:
-            self._ssb_item_filter.refilter()
 
     def on_script_removed(self, ssb_path):
         """Handle a SSB file removal."""
@@ -1374,30 +1374,58 @@ class MainController:
         if self.renderer:
             self.renderer.set_boost(state)
 
+    # TODO: CODE DUPLICATION BETWEEN SKYTEMPLE AND SSB DEBUGGER -- If we ever make a common package, this must go into it!
+    def _filter__refresh_results(self):
+        """Filter the main item view"""
+        item_store = self.builder.get_object('ssb_file_tree_store')
+        if self._search_text == "":
+            item_store.foreach(self._filter__reset_row, True)
+        else:
+            self.builder.get_object('ssb_file_tree').collapse_all()
+            item_store.foreach(self._filter__reset_row, False)
+            item_store.foreach(self._filter__show_matches)
+            self._ssb_item_filter.foreach(self._filter__expand_all_visible)
 
-    def _ssb_item_filter_visible_func(self, model, iter, data):
-        return self._recursive_filter_func(self._search_text, model, iter)
+    def _filter__reset_row(self, model, path, iter, make_visible):
+        """Change the visibility of the given row"""
+        model[iter][COL_VISIBLE] = make_visible
 
-    def _recursive_filter_func(self, search, model, iter):
-        # TODO: This is super slow, there's definitely a better way.
-        if search is None:
-            return True
-        i_match = search.lower() in model[iter][1].lower()
-        if i_match:
-            return True
-        # See if parent matches
-        parent = model[iter].parent
-        while parent:
-            if search.lower() in parent[1].lower():
-                return True
-            parent = parent.parent
-        # See if child matches
-        for child in model[iter].iterchildren():
-            child_match = self._recursive_filter_func(search, child.model, child.iter)
-            if child_match:
-                self.builder.get_object('ssb_file_tree').expand_row(child.parent.path, False)
-                return True
-        return False
+    def _filter__make_path_visible(self, model, iter):
+        """Make a row and its ancestors visible"""
+        while iter:
+            model[iter][COL_VISIBLE] = True
+            iter = model.iter_parent(iter)
+
+    def _filter__make_subtree_visible(self, model, iter):
+        """Make descendants of a row visible"""
+        for i in range(model.iter_n_children(iter)):
+            subtree = model.iter_nth_child(iter, i)
+            if model[subtree][COL_VISIBLE]:
+                # Subtree already visible
+                continue
+            model[subtree][COL_VISIBLE] = True
+            self._filter__make_subtree_visible(model, subtree)
+
+    def _filter__expand_all_visible(self, model: Gtk.TreeStore, path, iter):
+        """
+        This is super annoying. Because of the two different "views" on the model,
+        we can't do this in show_matches, because we have to use the filter model here!
+        """
+        search_query = self._search_text.lower()
+        text = model[iter][1].lower()
+        ssb_file_tree = self.builder.get_object('ssb_file_tree')
+        if search_query in text:
+            ssb_file_tree.expand_to_path(path)
+
+    def _filter__show_matches(self, model: Gtk.TreeStore, path, iter):
+        search_query = self._search_text.lower()
+        text = model[iter][1].lower()
+        if search_query in text:
+            # Propagate visibility change up
+            self._filter__make_path_visible(model, iter)
+            # Propagate visibility change down
+            self._filter__make_subtree_visible(model, iter)
+    # END CODE DUPLICATION
 
     def _set_sensitve(self, name, state):
         w = self.builder.get_object(name)
