@@ -46,7 +46,7 @@ from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookCont
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
 from skytemple_ssb_debugger.controller.local_variable import LocalVariableController
 from skytemple_ssb_debugger.controller.variable import VariableController
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
+from skytemple_ssb_debugger.emulator_thread import EmulatorThread, supports_joystick
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
@@ -552,6 +552,12 @@ class MainController:
             self.settings.set_emulator_keyboard_cfg(self._keyboard_cfg)
 
     def on_menu_emulator_joystick_controls_activate(self, button: Gtk.CheckMenuItem, *args):
+        if not supports_joystick():
+            self.context.display_error(
+                None,
+                "Joysticks are not supported on macOS. Sorry!",
+            )
+            return
         self._joystick_cfg = JoystickControlsDialogController(self.window).run(
             self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())

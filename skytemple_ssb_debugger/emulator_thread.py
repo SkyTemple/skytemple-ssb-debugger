@@ -166,8 +166,9 @@ class EmulatorThread(Thread):
                 configured_joystick if configured_joystick is not None else default_joystick
             )
 
-            for i, jskey in enumerate(self.__class__._jscfg):
-                self.emu.input.joy_set_key(i, jskey)
+            if supports_joystick():
+                for i, jskey in enumerate(self.__class__._jscfg):
+                    self.emu.input.joy_set_key(i, jskey)
 
     def get_kbcfg(self):
         return self.__class__._kbcfg
@@ -182,7 +183,7 @@ class EmulatorThread(Thread):
         self.__class__._jscfg = value
         
     def joy_init(self):
-        if not self.__class__._joy_was_init:
+        if supports_joystick() and not self.__class__._joy_was_init:
             self.emu.input.joy_init()
             self.__class__._joy_was_init = True
 
@@ -202,7 +203,7 @@ class EmulatorThread(Thread):
                     self._fps = self._fps_frame_count
                     self._fps_frame_count = 0
 
-            self.emu.cycle()
+            self.emu.cycle(supports_joystick())
 
             self._ticks_cur_frame = self.emu.get_ticks()
 
@@ -261,3 +262,8 @@ class EmulatorThread(Thread):
     @synchronized(boost_lock)
     def set_boost(self, state):
         self._boost = state
+
+
+def supports_joystick():
+    """Joystick doesn't work under macOS"""
+    return not sys.platform.startswith('darwin')

@@ -9,7 +9,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='skytemple-ssb-debugger',
-    version='0.0.4',
+    version='0.0.4.post1',
     packages=find_packages(),
     description='Script Engine Debugger for Pokémon Mystery Dungeon Explorers of Sky (EU/US)',
     long_description=long_description,
@@ -20,7 +20,7 @@ setup(
         'skytemple-files >= 0.0.4',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
-        'py-desmume >= 0.0.2',
+        'py-desmume >= 0.0.3',
         'explorerscript >= 0.0.4',
         'nest-asyncio == 1.2.3; python_version<"3.7"',
         'nest-asyncio >= 1.3.0; python_version>="3.7"'
