@@ -621,7 +621,7 @@ class MainController:
 
     # MENU HELP
     def on_menu_help_exps_docs_activate(self, btn: Gtk.MenuItem, *args):
-        webbrowser.open_new_tab("https://github.com/SkyTemple/ExplorerScript/blob/master/docs/language_spec.rst")
+        webbrowser.open_new_tab("https://explorerscript.readthedocs.io/language_spec.html")
 
     def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
         self.builder.get_object("about_dialog").run()
