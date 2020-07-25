@@ -29,11 +29,16 @@ SkyTemple Script Engine Debugger
     :target: https://discord.gg/4e3X36f
     :alt: Discord
 
-Debugger and code editor for the Script Engine of Pokémon Mystery Dungeon Explorers of Sky.
-
-A proper README will follow later.
+Debugger and code editor for the Script Engine of Pokémon Mystery Dungeon Explorers of Sky. Now
+with a subsystem that also allows basic dungeon debugging.
 
 To run, you need GTK3. Please keep in mind that some
 stuff may be pretty broken right now, so make sure to
 keep backups of ROMs!
 
+For end-users I recommend using SkyTemple_ instead. The debugger is integrated into SkyTemple.
+
+For developers: The setup of SkyTemple Script Engine Debugger is almost the same as for SkyTemple,
+just use the package ``skytemple-ssb-debugger`` / this repository instead.
+
+.. _SkyTemple: https://github.com/SkyTemple/skytemple

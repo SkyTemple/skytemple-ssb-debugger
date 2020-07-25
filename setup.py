@@ -21,7 +21,7 @@ setup(
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
         'py-desmume >= 0.0.3',
-        'explorerscript >= 0.0.4',
+        'explorerscript >= 0.0.5',
         'nest-asyncio == 1.2.3; python_version<"3.7"',
         'nest-asyncio >= 1.3.0; python_version>="3.7"'
     ],
