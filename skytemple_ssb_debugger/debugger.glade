@@ -7,6 +7,7 @@
     <property name="can_focus">True</property>
     <property name="scrollable">True</property>
     <property name="enable_popup">True</property>
+    <signal name="switch-page" handler="on_code_editor_notebook_switch_page" swapped="no"/>
   </object>
   <object class="GtkTreeStore" id="ground_state_entities_store">
     <columns>
@@ -130,6 +131,7 @@
     <signal name="destroy" handler="on_main_window_destroy" swapped="no"/>
     <signal name="key-press-event" handler="on_main_window_key_press_event" swapped="no"/>
     <signal name="key-release-event" handler="on_main_window_key_release_event" swapped="no"/>
+    <signal name="window-state-event" handler="on_main_window_state_event" swapped="no"/>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>

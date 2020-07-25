@@ -53,6 +53,14 @@ class AbstractDebuggerControlContext(ABC):
         """Handles the quit of the debugger."""
 
     @abstractmethod
+    def on_focus(self):
+        """Event handler for the debugger gaining focus. May be triggered even if still in focus."""
+
+    @abstractmethod
+    def on_blur(self):
+        """Event handler for the debugger losing focus. May be triggered even if already had no focus."""
+
+    @abstractmethod
     def open_rom(self, filename: str):
         """
         Opens a ROM project.
@@ -102,6 +110,10 @@ class AbstractDebuggerControlContext(ABC):
     @abstractmethod
     def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
         """Returns the SSB with the given filename from the ROM."""
+
+    @abstractmethod
+    def on_script_edit(self, filename):
+        """Event handler for when the debugger starts editing the specified script"""
 
     @abstractmethod
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):

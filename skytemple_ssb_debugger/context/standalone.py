@@ -64,6 +64,12 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             emu_instance.end()
         EmulatorThread.destroy_lib()
 
+    def on_focus(self):
+        pass
+
+    def on_blur(self):
+        pass
+
     def open_rom(self, filename: str):
         self._rom = NintendoDSRom.fromFile(filename)
         self._rom_filename = filename
@@ -109,6 +115,9 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             )
             self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
         return self._open_files[filename]
+
+    def on_script_edit(self, filename):
+        pass
 
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
         self._check_loaded()

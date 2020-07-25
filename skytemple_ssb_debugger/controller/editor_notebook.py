@@ -103,6 +103,7 @@ class EditorNotebookController:
                     )
                 current_page = self._notebook.get_current_page()
                 root = editor_controller.get_root_object()
+                self._open_editors[registered_fname] = editor_controller
                 pnum = self._notebook.insert_page(
                     root, tab_label_close_button(
                         registered_fname, self.close_tab
@@ -111,7 +112,6 @@ class EditorNotebookController:
                 self._notebook.child_set_property(root, 'menu-label', registered_fname)
                 self._notebook.set_tab_reorderable(root, True)
                 self._notebook.set_current_page(pnum)
-                self._open_editors[registered_fname] = editor_controller
 
     def close_all_tabs(self):
         """Close all tabs. If any of the tabs was not closed, False is returned."""
@@ -295,6 +295,16 @@ class EditorNotebookController:
 
     def get_context(self) -> AbstractDebuggerControlContext:
         return self.parent.context
+
+    def on_page_changed(self, page_widget):
+        """Trigger the context event for script editing"""
+        current_open = None
+        for c in self._open_editors.values():
+            if c.get_root_object() == page_widget:
+                current_open = c
+                break
+        if current_open is not None:
+            self.get_context().on_script_edit(current_open.filename)
 
     def _show_are_you_sure(self, filename):
         dialog: Gtk.MessageDialog = Gtk.MessageDialog(

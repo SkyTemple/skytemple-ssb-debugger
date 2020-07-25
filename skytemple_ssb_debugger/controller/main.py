@@ -341,6 +341,13 @@ class MainController:
     def gtk_widget_hide(self, w: Gtk.Widget, *args):
         w.hide()
 
+    def on_main_window_state_event(self, w: Gtk.Window, evt: Gdk.EventWindowState):
+        if evt.changed_mask & Gdk.WindowState.FOCUSED:
+            if evt.new_window_state & Gdk.WindowState.FOCUSED:
+                self.context.on_focus()
+            else:
+                self.context.on_blur()
+
     # EMULATOR
     def on_draw_aspect_frame_size_allocate(self, widget: Gtk.AspectFrame, *args):
         scale = widget.get_child().get_allocated_width() / SCREEN_WIDTH
@@ -898,6 +905,10 @@ class MainController:
                     self._scene_types[ssb_name] = 'sss'
                     self._scene_names[ssb_name] = sss_name
                     ssb_file_tree_store.append(sub_entry, [ssb_name, ssb, 'ssb', True])
+
+    # CODE EDITOR NOTEBOOK
+    def on_code_editor_notebook_switch_page(self, wdg, page, *args):
+        self.editor_notebook.on_page_changed(page)
 
     # VARIABLES VIEW
 
