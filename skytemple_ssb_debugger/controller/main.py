@@ -56,6 +56,7 @@ from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, \
     generate_emulator_proxy
+from skytemple_ssb_debugger.dungeon.controller.dungeon_state_controller import DungeonStateController
 
 gi.require_version('Gtk', '3.0')
 
@@ -193,6 +194,7 @@ class MainController:
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder, self.context)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
+        self.dungeon_state_controller = DungeonStateController(self.context, self.emu_thread, self.builder)
 
         # Load more initial settings
         self.on_debug_log_cntrl_ops_toggled(builder.get_object('debug_log_cntrl_ops'))
@@ -224,6 +226,9 @@ class MainController:
         window_position = self.settings.get_window_position()
         if window_position is not None:
             self.window.move(*window_position)
+
+        self.context.open_rom('/home/marco/dev/skytemple/skytemple/4261 - Pokemon Mystery Dungeon Explorers of Sky (U)(Xenophobia).nds')
+        self.load_rom()
 
         builder.connect_signals(self)
         self.window.present()
@@ -995,6 +1000,10 @@ class MainController:
                 if entry_type == GE_FILE_STORE_SCRIPT and path and path != '':
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + path)
 
+    # DUNGEON DEBUGGER SIGNAL HANDLERS
+    def on_dungeon_state_utils_stair_bomb_clicked(self, *args):
+        pass  # todo
+
     # More functions
     def uninit_project(self):
         if not self.editor_notebook.close_all_tabs():
@@ -1002,6 +1011,8 @@ class MainController:
         self.variable_controller.uninit()
         if self.debugger:
             self.debugger.disable()
+        if self.dungeon_state_controller:
+            self.dungeon_state_controller.disable()
         self.rom_was_loaded = False
 
     def load_rom(self):
@@ -1021,6 +1032,8 @@ class MainController:
             if self.debugger:
                 self.debugger.enable(rom_data, self.ssb_fm, self.breakpoint_manager,
                                      self.on_ground_engine_start)
+            if self.dungeon_state_controller:
+                self.dungeon_state_controller.enable(rom_data)
             self.init_file_tree()
             self.variable_controller.init(rom_data)
             self.local_variable_controller.init(rom_data)

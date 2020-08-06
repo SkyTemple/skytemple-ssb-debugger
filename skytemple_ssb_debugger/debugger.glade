@@ -1027,7 +1027,6 @@ not running.</property>
                                     <child>
                                       <object class="GtkScrolledWindow" id="dungeon_state_small_map_sw">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="shadow_type">in</property>
                                         <child>
@@ -1035,8 +1034,11 @@ not running.</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="margin">6</property>
+                                            <property name="hscroll_policy">natural</property>
+                                            <property name="vscroll_policy">natural</property>
                                             <property name="selection_mode">browse</property>
                                             <property name="columns">56</property>
+                                            <property name="item_width">8</property>
                                             <property name="row_spacing">0</property>
                                             <property name="column_spacing">0</property>
                                             <property name="item_padding">2</property>
@@ -1057,7 +1059,6 @@ not running.</property>
                                     <child>
                                       <object class="GtkScrolledWindow" id="dungeon_state_full_map_sw">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="shadow_type">in</property>
                                         <child>
@@ -1065,8 +1066,11 @@ not running.</property>
                                             <property name="visible">True</property>
                                             <property name="can_focus">True</property>
                                             <property name="margin">6</property>
+                                            <property name="hscroll_policy">natural</property>
+                                            <property name="vscroll_policy">natural</property>
                                             <property name="selection_mode">browse</property>
                                             <property name="columns">56</property>
+                                            <property name="item_width">24</property>
                                             <property name="row_spacing">0</property>
                                             <property name="column_spacing">0</property>
                                             <property name="item_padding">2</property>
@@ -1091,7 +1095,6 @@ not running.</property>
                                     <child>
                                       <object class="GtkScrolledWindow" id="dungeon_state_bag_sw">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="shadow_type">in</property>
                                         <child>
@@ -1158,7 +1161,6 @@ You can then edit it below under "Item / Trap".</property>
                                     <child>
                                       <object class="GtkScrolledWindow" id="dungeon_state_utils_sw">
                                         <property name="visible">True</property>
-                                        <property name="sensitive">False</property>
                                         <property name="can_focus">True</property>
                                         <property name="shadow_type">in</property>
                                         <child>
@@ -1232,7 +1234,6 @@ You can then edit it below under "Item / Trap".</property>
                                             <child>
                                               <object class="GtkScrolledWindow" id="dungeon_state_terrain_sw">
                                                 <property name="visible">True</property>
-                                                <property name="sensitive">False</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="shadow_type">in</property>
                                                 <child>
@@ -1445,7 +1446,6 @@ You can then edit it below under "Item / Trap".</property>
                                             <child>
                                               <object class="GtkScrolledWindow" id="dungeon_state_monster_sw">
                                                 <property name="visible">True</property>
-                                                <property name="sensitive">False</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="shadow_type">in</property>
                                                 <child>
@@ -2079,7 +2079,6 @@ You can then edit it below under "Item / Trap".</property>
                                             <child>
                                               <object class="GtkScrolledWindow" id="dungeon_state_floor_sw">
                                                 <property name="visible">True</property>
-                                                <property name="sensitive">False</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="shadow_type">in</property>
                                                 <child>

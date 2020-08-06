@@ -14,7 +14,32 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from enum import Enum
 
 
-class DungeonFloorData:
-    pass  # todo
+class PixbufProviderTerrainType(Enum):
+    IMPASSABLE_WALL = -1
+    WALL = 0
+    FLOOR = 1
+    WATER_LAVA = 2
+    VOID = 3
+    JUNCTION = 4
+    KECLEON_SHOP = 5
+    MONSTER_HOUSE = 6
+
+
+class PixbufProviderFloorType(Enum):
+    NONE = -1
+    WONDER_TILE = 0
+    OTHER_TRAP = 1
+    ITEM = 2
+    STAIRS = 3
+    HIDDEN_STAIRS = 4
+
+
+class PixbufProviderMonsterType(Enum):
+    NONE = -1
+    ENEMY = 0
+    ALLY = 1
+    ALLY_ENEMY = 2
+    TEAM_LEADER = 3

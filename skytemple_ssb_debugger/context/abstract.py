@@ -22,6 +22,9 @@ from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles
+from skytemple_files.container.bin_pack.model import BinPack
+from skytemple_files.container.dungeon_bin.model import DungeonBinPack
+from skytemple_files.data.md.model import Md
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -154,3 +157,22 @@ class AbstractDebuggerControlContext(ABC):
         :param error_message: The message to display to the user.
         :param error_title: The title of the dialog to display.
         """
+
+    @abstractmethod
+    def get_dungeon_bin(self) -> DungeonBinPack:
+        """
+        Returns the DUNGEON/dungeon.bin file as a DungeonBinPack model.
+        """
+        pass
+
+    def get_monster_bin(self) -> BinPack:
+        """
+        Returns the MONSTER/monster.bin file as a BinPack model.
+        """
+        pass
+
+    def get_monster_md(self) -> Md:
+        """
+        Returns the BALANCE/monster.md file as a Md model.
+        """
+        pass

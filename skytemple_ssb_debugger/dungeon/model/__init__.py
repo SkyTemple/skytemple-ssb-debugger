@@ -14,4 +14,16 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import cairo
 
+
+# TODO: Duplicated from main SkyTemple UI, might want to refactor this.
+def pil_to_cairo_surface(im, format=cairo.FORMAT_ARGB32) -> cairo.Surface:
+    """
+    :param im: Pillow Image
+    :param format: Pixel format for output surface
+    """
+    assert format in (cairo.FORMAT_RGB24, cairo.FORMAT_ARGB32), "Unsupported pixel format: %s" % format
+    arr = bytearray(im.tobytes('raw', 'BGRa'))
+    surface = cairo.ImageSurface.create_for_data(arr, format, im.width, im.height)
+    return surface

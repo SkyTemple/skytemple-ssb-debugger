@@ -20,6 +20,9 @@ from typing import Optional, TYPE_CHECKING, Dict, List
 import gi
 
 from explorerscript.source_map import SourceMapPositionMark
+from skytemple_files.container.bin_pack.model import BinPack
+from skytemple_files.container.dungeon_bin.model import DungeonBinPack
+from skytemple_files.data.md.model import Md
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu
 
@@ -167,3 +170,12 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
+
+    def get_dungeon_bin(self) -> DungeonBinPack:
+        return FileType.DUNGEON_BIN.deserialize(self._rom.getFileByName('DUNGEON/dungeon.bin'), self._static_data)
+
+    def get_monster_bin(self) -> BinPack:
+        return FileType.BIN_PACK.deserialize(self._rom.getFileByName('MONSTER/monster.bin'))
+
+    def get_monster_md(self) -> Md:
+        return FileType.MD.deserialize(self._rom.getFileByName('BALANCE/monster.md'))
