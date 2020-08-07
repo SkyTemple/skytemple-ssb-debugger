@@ -40,13 +40,24 @@ class EntityExtTrap:
     @trap_id.setter
     @wrap_threadsafe_emu()
     def trap_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
-    def active(self) -> bool:
-        return bool(read_uintle(self.cached, 0x01, 1))
+    def is_enemy_trap(self) -> bool:
+        val = read_uintle(self.cached, 1)
+        return bool(val & 1)
 
-    @active.setter
+    @is_enemy_trap.setter
     @wrap_threadsafe_emu()
-    def active(self, value: bool):
-        pass  # todo
+    def is_enemy_trap(self, value: bool):
+        raise NotImplementedError()  # todo
+
+    @property
+    def do_not_trigger_for_enemies(self) -> bool:
+        val = read_uintle(self.cached, 1)
+        return bool(val >> 1 & 1)
+
+    @do_not_trigger_for_enemies.setter
+    @wrap_threadsafe_emu()
+    def do_not_trigger_for_enemies(self, value: bool):
+        raise NotImplementedError()  # todo

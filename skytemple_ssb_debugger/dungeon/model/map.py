@@ -38,7 +38,9 @@ class DungeonMap:
                 yield self.get(x, y)
 
     def get(self, x: int, y: int) -> DungeonField:
-        i = y * MAP_WIDTH + x % MAP_WIDTH
+        return self.get_by_index(y * MAP_WIDTH + x % MAP_WIDTH)
+
+    def get_by_index(self, i: int) -> DungeonField:
         cache_start = i * FIELD_BYTELEN
         return DungeonField(
             self.emu_thread, self.begin_mapdata + i * FIELD_BYTELEN,

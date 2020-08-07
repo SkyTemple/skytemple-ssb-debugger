@@ -40,27 +40,27 @@ class EntityExtMonster:
     @md_index.setter
     @wrap_threadsafe_emu()
     def md_index(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
-    def md_index2(self) -> int:
+    def md_index_shown(self) -> int:
         return read_uintle(self.cached, 0x04, 2)
 
-    @md_index2.setter
+    @md_index_shown.setter
     @wrap_threadsafe_emu()
-    def md_index2(self, value: int):
-        pass  # todo
+    def md_index_shown(self, value: int):
+        raise NotImplementedError()  # todo
 
     @property
-    def enemy_flag(self) -> int:
-        # 0 for non-enemy, 1 for real enemies,
+    def not_part_of_the_team_flag(self) -> int:
+        # 0 for team member, 1 for real enemies,
         # when nonzero, name turns cyan and the gender is displayed by the name
         return read_uintle(self.cached, 0x06, 1)
 
-    @enemy_flag.setter
+    @not_part_of_the_team_flag.setter
     @wrap_threadsafe_emu()
-    def enemy_flag(self, value: int):
-        pass  # todo
+    def not_part_of_the_team_flag(self, value: int):
+        raise NotImplementedError()  # todo
 
     @property
     def teamleader_flag(self) -> bool:
@@ -70,7 +70,7 @@ class EntityExtMonster:
     @teamleader_flag.setter
     @wrap_threadsafe_emu()
     def teamleader_flag(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def ally_flag(self) -> bool:
@@ -80,7 +80,7 @@ class EntityExtMonster:
     @ally_flag.setter
     @wrap_threadsafe_emu()
     def ally_flag(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def kecleon_flag(self) -> bool:
@@ -90,7 +90,7 @@ class EntityExtMonster:
     @kecleon_flag.setter
     @wrap_threadsafe_emu()
     def kecleon_flag(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
 #     print("    Level:", emu.memory.unsigned.read_byte(epnt + 0x0A))
 
@@ -101,7 +101,7 @@ class EntityExtMonster:
     @level.setter
     @wrap_threadsafe_emu()
     def level(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def name_type(self) -> int:
@@ -110,7 +110,7 @@ class EntityExtMonster:
     @name_type.setter
     @wrap_threadsafe_emu()
     def name_type(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def iq(self) -> int:
@@ -119,7 +119,7 @@ class EntityExtMonster:
     @iq.setter
     @wrap_threadsafe_emu()
     def iq(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
     
     @property
     def hp(self) -> int:
@@ -128,7 +128,7 @@ class EntityExtMonster:
     @hp.setter
     @wrap_threadsafe_emu()
     def hp(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def max_hp(self) -> int:
@@ -137,7 +137,7 @@ class EntityExtMonster:
     @max_hp.setter
     @wrap_threadsafe_emu()
     def max_hp(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def max_hp_boost(self) -> int:
@@ -146,7 +146,7 @@ class EntityExtMonster:
     @max_hp_boost.setter
     @wrap_threadsafe_emu()
     def max_hp_boost(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
     
     @property
     def attack(self) -> int:
@@ -155,7 +155,7 @@ class EntityExtMonster:
     @attack.setter
     @wrap_threadsafe_emu()
     def attack(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
     
     @property
     def special_attack(self) -> int:
@@ -164,7 +164,7 @@ class EntityExtMonster:
     @special_attack.setter
     @wrap_threadsafe_emu()
     def special_attack(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
     
     @property
     def defense(self) -> int:
@@ -173,7 +173,7 @@ class EntityExtMonster:
     @defense.setter
     @wrap_threadsafe_emu()
     def defense(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
     
     @property
     def special_defense(self) -> int:
@@ -182,7 +182,7 @@ class EntityExtMonster:
     @special_defense.setter
     @wrap_threadsafe_emu()
     def special_defense(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def experience_points(self) -> int:
@@ -191,7 +191,7 @@ class EntityExtMonster:
     @experience_points.setter
     @wrap_threadsafe_emu()
     def experience_points(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
 #     TODO: 0x24 - 0x43: Stat boosts
 
@@ -202,7 +202,7 @@ class EntityExtMonster:
     @direction_id.setter
     @wrap_threadsafe_emu()
     def direction_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def type1_id(self) -> int:
@@ -211,7 +211,7 @@ class EntityExtMonster:
     @type1_id.setter
     @wrap_threadsafe_emu()
     def type1_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def type2_id(self) -> int:
@@ -220,7 +220,7 @@ class EntityExtMonster:
     @type2_id.setter
     @wrap_threadsafe_emu()
     def type2_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def ability1_id(self) -> int:
@@ -229,7 +229,7 @@ class EntityExtMonster:
     @ability1_id.setter
     @wrap_threadsafe_emu()
     def ability1_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def ability2_id(self) -> int:
@@ -238,7 +238,7 @@ class EntityExtMonster:
     @ability2_id.setter
     @wrap_threadsafe_emu()
     def ability2_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
 #     TODO: print("    Holding item?:", emu.memory.signed.read_byte(epnt + 0x62))
 #     TODO: print("    Holding item2?:", emu.memory.signed.read_byte(epnt + 0x63))

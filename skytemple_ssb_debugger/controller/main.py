@@ -1384,6 +1384,8 @@ class MainController:
             self.variable_controller.set_boost(state)
         if self.renderer:
             self.renderer.set_boost(state)
+        if self.dungeon_state_controller:
+            self.dungeon_state_controller.set_boost(state)
 
     # TODO: CODE DUPLICATION BETWEEN SKYTEMPLE AND SSB DEBUGGER -- If we ever make a common package, this must go into it!
     def _filter__refresh_results(self):

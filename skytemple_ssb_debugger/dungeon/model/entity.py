@@ -33,6 +33,8 @@ class DungeonEntityType(Enum):
     MONSTER = 1
     TRAP = 2
     ITEM = 3
+    UNK4 = 4
+    HIDDEN_STAIRS = 5
 
 
 class DungeonEntity(Generic[T]):
@@ -52,7 +54,7 @@ class DungeonEntity(Generic[T]):
     @entity_type.setter
     @wrap_threadsafe_emu()
     def entity_type(self, value: DungeonEntityType):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def x_pos(self) -> int:
@@ -61,7 +63,7 @@ class DungeonEntity(Generic[T]):
     @x_pos.setter
     @wrap_threadsafe_emu()
     def x_pos(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def y_pos(self) -> int:
@@ -70,7 +72,7 @@ class DungeonEntity(Generic[T]):
     @y_pos.setter
     @wrap_threadsafe_emu()
     def y_pos(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def visible(self) -> bool:
@@ -79,7 +81,7 @@ class DungeonEntity(Generic[T]):
     @visible.setter
     @wrap_threadsafe_emu()
     def visible(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     def load_extended_data(self) -> Optional[T]:
         # TODO: Caching?
@@ -91,3 +93,8 @@ class DungeonEntity(Generic[T]):
         if self.entity_type == DungeonEntityType.TRAP:
             return EntityExtTrap(self.emu_thread, start_pnt)
         return None
+
+    def __eq__(self, other):
+        if not isinstance(other, DungeonEntity):
+            return False
+        return self.begin == other.begin

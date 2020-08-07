@@ -41,7 +41,7 @@ class EntityExtItem:
     @exists.setter
     @wrap_threadsafe_emu()
     def exists(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def in_a_shop(self) -> bool:
@@ -51,7 +51,7 @@ class EntityExtItem:
     @in_a_shop.setter
     @wrap_threadsafe_emu()
     def in_a_shop(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def sticky(self) -> bool:
@@ -61,7 +61,7 @@ class EntityExtItem:
     @sticky.setter
     @wrap_threadsafe_emu()
     def sticky(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def is_set(self) -> bool:
@@ -71,7 +71,7 @@ class EntityExtItem:
     @is_set.setter
     @wrap_threadsafe_emu()
     def is_set(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def held_by_idx(self) -> int:
@@ -80,7 +80,7 @@ class EntityExtItem:
     @held_by_idx.setter
     @wrap_threadsafe_emu()
     def held_by_idx(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def amount(self) -> int:
@@ -89,7 +89,7 @@ class EntityExtItem:
     @amount.setter
     @wrap_threadsafe_emu()
     def amount(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def item_id(self) -> int:
@@ -98,4 +98,4 @@ class EntityExtItem:
     @item_id.setter
     @wrap_threadsafe_emu()
     def item_id(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo

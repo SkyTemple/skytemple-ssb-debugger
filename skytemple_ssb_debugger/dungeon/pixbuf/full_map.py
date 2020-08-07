@@ -37,8 +37,6 @@ class FullMapPixbufProvider:
         self.chunks = chunks
         self.monster_bin = monster_bin
         self.monster_md = monster_md
-        # Dict -> texture_index : Surface
-        self.cache: Dict[int, cairo.Surface] = {}
         # Dict -> sprite id: Wan
         self.sprite_cache = {}
 
@@ -50,15 +48,11 @@ class FullMapPixbufProvider:
             entity_on_floor: Optional[DungeonEntity],
             monster: Optional[DungeonEntity]
     ):
-        # TODO: Fix caching
-        if True or texture_index not in self.cache:
-            self.cache[texture_index] = cairo.ImageSurface(cairo.FORMAT_RGB24, DIM_CHUNK, DIM_CHUNK)
-            # Insert floor tile
-            ctx = cairo.Context(self.cache[texture_index])
-            ctx.set_source_surface(self.chunks, 0, -texture_index * DIM_CHUNK)
-            ctx.paint()
-        surface = self.cache[texture_index]
-        ctx = cairo.Context(self.cache[texture_index])
+        surface = cairo.ImageSurface(cairo.FORMAT_RGB24, DIM_CHUNK, DIM_CHUNK)
+        # Insert floor tile
+        ctx = cairo.Context(surface)
+        ctx.set_source_surface(self.chunks, 0, -texture_index * DIM_CHUNK)
+        ctx.paint()
 
         # Floor entity
         if floor_type == PixbufProviderFloorType.ITEM:

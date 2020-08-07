@@ -17,7 +17,8 @@
 from enum import Enum
 from typing import Optional, Union
 
-from skytemple_files.common.util import read_uintle
+from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptDirection
+from skytemple_files.common.util import read_uintle, read_sintle
 from skytemple_ssb_debugger.dungeon.model.entity import DungeonEntity
 from skytemple_ssb_debugger.dungeon.model.entity_ext.monster import EntityExtMonster
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
@@ -33,17 +34,22 @@ class DungeonFieldTerrainType(Enum):
     VOID = 3
 
 
-class DungeonFieldStairType(Enum):
-    NONE = 0
-    STAIRS = 2
-    WARP_ZONE = 3
-
-
 class DungeonFieldVisibility(Enum):
     NOT_VISITED = 0
     REVEALED = 1
     VISITED_UNREVEALED = 2
     VISITED = 3
+
+
+class DungeonFieldMovement(Enum):
+    def __init__(self, allowed: int):
+        self.allowed = allowed
+
+    def is_allowed(self, dir: Pmd2ScriptDirection) -> bool:
+        return bool(self.allowed >> dir.id & 1)
+
+    def set_allowed(self, dir: Pmd2ScriptDirection, val: bool):
+        raise NotImplementedError()  # todo
 
 
 class DungeonField:
@@ -64,7 +70,7 @@ class DungeonField:
     @terrain_type.setter
     @wrap_threadsafe_emu()
     def terrain_type(self, value: DungeonFieldTerrainType):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def is_natural_junction(self) -> bool:
@@ -74,7 +80,7 @@ class DungeonField:
     @is_natural_junction.setter
     @wrap_threadsafe_emu()
     def is_natural_junction(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def is_impassable_wall(self) -> bool:
@@ -84,7 +90,7 @@ class DungeonField:
     @is_impassable_wall.setter
     @wrap_threadsafe_emu()
     def is_impassable_wall(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def is_in_kecleon_shop(self) -> bool:
@@ -94,7 +100,7 @@ class DungeonField:
     @is_in_kecleon_shop.setter
     @wrap_threadsafe_emu()
     def is_in_kecleon_shop(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def is_in_monster_house(self) -> bool:
@@ -104,16 +110,47 @@ class DungeonField:
     @is_in_monster_house.setter
     @wrap_threadsafe_emu()
     def is_in_monster_house(self, value: bool):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
-    def stair_type(self) -> DungeonFieldStairType:
-        return DungeonFieldStairType(read_uintle(self.cached_tiledata, 1))
-    
-    @stair_type.setter
+    def cannot_be_broken_by_absolute_mover(self) -> bool:
+        val1 = read_uintle(self.cached_tiledata, 1)
+        return bool(val1 & 1)
+
+    @cannot_be_broken_by_absolute_mover.setter
     @wrap_threadsafe_emu()
-    def stair_type(self, value: DungeonFieldStairType):
-        pass  # todo
+    def cannot_be_broken_by_absolute_mover(self, value: bool):
+        raise NotImplementedError()  # todo
+
+    @property
+    def is_stairs(self) -> bool:
+        val1 = read_uintle(self.cached_tiledata, 1)
+        return bool(val1 >> 1 & 1)
+    
+    @is_stairs.setter
+    @wrap_threadsafe_emu()
+    def is_stairs(self, value: bool):
+        raise NotImplementedError()  # todo
+
+    @property
+    def is_key_door(self) -> bool:
+        val1 = read_uintle(self.cached_tiledata, 1)
+        return bool(val1 >> 3 & 1)
+
+    @is_key_door.setter
+    @wrap_threadsafe_emu()
+    def is_key_door(self, value: bool):
+        raise NotImplementedError()  # todo
+
+    @property
+    def is_key_door_open(self) -> bool:
+        val1 = read_uintle(self.cached_tiledata, 1)
+        return bool(val1 >> 4 & 1)
+
+    @is_key_door_open.setter
+    @wrap_threadsafe_emu()
+    def is_key_door_open(self, value: bool):
+        raise NotImplementedError()  # todo
 
     @property
     def visibility(self) -> DungeonFieldVisibility:
@@ -122,7 +159,7 @@ class DungeonField:
     @visibility.setter
     @wrap_threadsafe_emu()
     def visibility(self, value: DungeonFieldVisibility):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def texture_index(self) -> int:
@@ -131,16 +168,53 @@ class DungeonField:
     @texture_index.setter
     @wrap_threadsafe_emu()
     def texture_index(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def room_index(self) -> int:
-        return read_uintle(self.cached_tiledata, 7)
+        # Hallways have -1, Crossroads -2
+        return read_sintle(self.cached_tiledata, 7)
     
     @room_index.setter
     @wrap_threadsafe_emu()
     def room_index(self, value: int):
-        pass  # todo
+        raise NotImplementedError()  # todo
+
+    @property
+    def movement_normal(self) -> DungeonFieldMovement:
+        return DungeonFieldMovement(read_uintle(self.cached_tiledata, 0x8))
+    
+    @movement_normal.setter
+    @wrap_threadsafe_emu()
+    def movement_normal(self, value: DungeonFieldMovement):
+        raise NotImplementedError()  # todo
+
+    @property
+    def movement_water_lava(self) -> DungeonFieldMovement:
+        return DungeonFieldMovement(read_uintle(self.cached_tiledata, 0x9))
+    
+    @movement_water_lava.setter
+    @wrap_threadsafe_emu()
+    def movement_water_lava(self, value: DungeonFieldMovement):
+        raise NotImplementedError()  # todo
+
+    @property
+    def movement_void(self) -> DungeonFieldMovement:
+        return DungeonFieldMovement(read_uintle(self.cached_tiledata, 0xA))
+
+    @movement_void.setter
+    @wrap_threadsafe_emu()
+    def movement_void(self, value: DungeonFieldMovement):
+        raise NotImplementedError()  # todo
+
+    @property
+    def movement_wall(self) -> DungeonFieldMovement:
+        return DungeonFieldMovement(read_uintle(self.cached_tiledata, 0xB))
+
+    @movement_wall.setter
+    @wrap_threadsafe_emu()
+    def movement_wall(self, value: DungeonFieldMovement):
+        raise NotImplementedError()  # todo
 
     @property
     def monster_on_tile(self) -> Optional[DungeonEntity[EntityExtMonster]]:
@@ -152,7 +226,7 @@ class DungeonField:
     @monster_on_tile.setter
     @wrap_threadsafe_emu()
     def monster_on_tile(self, value: Optional[DungeonEntity[EntityExtMonster]]):
-        pass  # todo
+        raise NotImplementedError()  # todo
 
     @property
     def entity_on_floor(self) -> Optional[DungeonEntity]:
@@ -164,4 +238,4 @@ class DungeonField:
     @entity_on_floor.setter
     @wrap_threadsafe_emu()
     def entity_on_floor(self, value: Optional[DungeonEntity]):
-        pass  # todo
+        raise NotImplementedError()  # todo
