@@ -74,12 +74,12 @@
   <object class="GtkImage" id="img_play2">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="icon_name">media-playback-start</property>
+    <property name="icon_name">media-playback-start-symbolic</property>
   </object>
   <object class="GtkImage" id="img_stop">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="icon_name">media-playback-stop</property>
+    <property name="icon_name">media-playback-stop-symbolic</property>
   </object>
   <object class="GtkListStore" id="local_variables_store">
     <columns>
@@ -842,7 +842,7 @@
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">5</property>
-                            <property name="icon_name">system-run-symbolic</property>
+                            <property name="icon_name">skytemple-e-script-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -986,7 +986,7 @@ not running.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">5</property>
-                            <property name="icon_name">applications-engineering-symbolic</property>
+                            <property name="icon_name">skytemple-e-ground-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1274,7 +1274,7 @@ This forces a reload.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">5</property>
-                            <property name="icon_name">view-pin-symbolic</property>
+                            <property name="icon_name">skytemple-e-variable-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1427,7 +1427,7 @@ not halting.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">5</property>
-                            <property name="icon_name">mark-location-symbolic</property>
+                            <property name="icon_name">skytemple-e-local-variable-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1675,7 +1675,7 @@ via the File menu.</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
                                                         <property name="tooltip_text" translatable="yes">Pause the emulator.</property>
-                                                        <property name="icon_name">media-playback-pause</property>
+                                                        <property name="icon_name">media-playback-pause-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1697,7 +1697,7 @@ via the File menu.</property>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">view-refresh</property>
+                                                        <property name="icon_name">view-refresh-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>

@@ -92,18 +92,18 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         elif isinstance(const.value, Pmd2ScriptRoutine):
             item.set_icon_name(ICON_GLOBAL_SCRIPT)
         elif isinstance(const.value, Pmd2ScriptFaceName):
-            item.set_icon_name('face-smile-symbolic')
+            item.set_icon_name('skytemple-e-portrait-symbolic')
         elif isinstance(const.value, Pmd2ScriptFacePositionMode):
-            item.set_icon_name('object-flip-horizontal')
+            item.set_icon_name('skytemple-e-position-symbolic')
         elif isinstance(const.value, Pmd2ScriptGameVar):
-            item.set_icon_name('view-pin-symbolic')
+            item.set_icon_name('skytemple-e-variable-symbolic')
         elif isinstance(const.value, Pmd2ScriptLevel):
-            item.set_icon_name('image-x-generic-symbolic')
+            item.set_icon_name('skytemple-e-scene-symbolic')
         elif isinstance(const.value, Pmd2ScriptMenu):
-            item.set_icon_name('open-menu-symbolic')
+            item.set_icon_name('skytemple-e-menu-symbolic')
         elif isinstance(const.value, Pmd2ScriptSpecial):
-            item.set_icon_name('starred-symbolic')
+            item.set_icon_name('skytemple-e-special-symbolic')
         elif isinstance(const.value, Pmd2ScriptDirection):
-            item.set_icon_name('media-playlist-consecutive-symbolic')
+            item.set_icon_name('skytemple-move-symbolic')
         
         return item

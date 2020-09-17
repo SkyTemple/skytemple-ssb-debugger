@@ -17,9 +17,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
 
-ICON_ACTOR = 'user-available-symbolic'
-ICON_OBJECT = 'package-x-generic-symbolic'
-ICON_PERFORMER = 'input-gaming-symbolic'
-ICON_GLOBAL_SCRIPT = 'system-run-symbolic'
-ICON_EVENTS = 'dialog-information-symbolic'
-ICON_POSITION_MARKER = 'find-location-symbolic'
+ICON_ACTOR = 'skytemple-e-actor-symbolic'
+ICON_OBJECT = 'skytemple-e-object-symbolic'
+ICON_PERFORMER = 'skytemple-e-performer-symbolic'
+ICON_GLOBAL_SCRIPT = 'skytemple-e-script-symbolic'
+ICON_EVENTS = 'skytemple-e-event-symbolic'
+ICON_POSITION_MARKER = 'skytemple-e-position-symbolic'

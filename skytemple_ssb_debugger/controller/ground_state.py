@@ -182,7 +182,7 @@ class GroundStateController:
                 self._files__tree_store.clear()
                 if ssb[0]:
                     self._files__tree_store.append(None, [
-                        'text-x-generic-symbolic', self.short_fname(ssb[0].file_name), GE_FILE_STORE_SCRIPT, '0 (Global)'
+                        'skytemple-e-script-symbolic', self.short_fname(ssb[0].file_name), GE_FILE_STORE_SCRIPT, '0 (Global)'
                     ])
                 else:
                     self._files__tree_store.append(None, [
@@ -202,7 +202,7 @@ class GroundStateController:
                     if ssx[i]:
                         # Slot is filled
                         ssx_root = self._files__tree_store.append(None, [
-                            'image-x-generic-symbolic', self.short_fname(ssx[i].file_name), type_str, hanger_str
+                            'skytemple-e-scene-symbolic', self.short_fname(ssx[i].file_name), type_str, hanger_str
                         ])
                     else:
                         # Slot is not filled
@@ -213,12 +213,12 @@ class GroundStateController:
                     if ssb[i]:
                         # SSB Slot for this is filled
                         self._files__tree_store.append(ssx_root, [
-                            'text-x-generic-symbolic', self.short_fname(ssb[i].file_name), GE_FILE_STORE_SCRIPT, hanger_str
+                            'skytemple-e-script-symbolic', self.short_fname(ssb[i].file_name), GE_FILE_STORE_SCRIPT, hanger_str
                         ])
                     if ssb[i + TALK_HANGER_OFFSET]:
                         # SSB Talk slot for this is filled
                         self._files__tree_store.append(ssx_root, [
-                            'text-x-generic-symbolic', self.short_fname(ssb[i+TALK_HANGER_OFFSET].file_name), GE_FILE_STORE_SCRIPT, f'{i + TALK_HANGER_OFFSET} (Talk)'
+                            'skytemple-e-script-symbolic', self.short_fname(ssb[i+TALK_HANGER_OFFSET].file_name), GE_FILE_STORE_SCRIPT, f'{i + TALK_HANGER_OFFSET} (Talk)'
                         ])
 
                 # Entities store
