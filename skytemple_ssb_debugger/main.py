@@ -21,6 +21,7 @@ import sys
 
 import gi
 
+from skytemple_icons import icons
 from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
 from skytemple_ssb_debugger.controller.main import MainController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
@@ -38,6 +39,7 @@ def main():
             _windows_load_theme()
 
         itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
+        itheme.append_search_path(os.path.abspath(icons()))
         itheme.append_search_path(os.path.abspath(os.path.join(get_debugger_data_dir(), "icons")))
         itheme.rescan_if_needed()
 
