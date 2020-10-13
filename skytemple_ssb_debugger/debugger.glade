@@ -74,12 +74,12 @@
   <object class="GtkImage" id="img_play2">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="icon_name">media-playback-start-symbolic</property>
+    <property name="icon_name">skytemple-media-playback-start-symbolic</property>
   </object>
   <object class="GtkImage" id="img_stop">
     <property name="visible">True</property>
     <property name="can_focus">False</property>
-    <property name="icon_name">media-playback-stop-symbolic</property>
+    <property name="icon_name">skytemple-media-playback-stop-symbolic</property>
   </object>
   <object class="GtkListStore" id="local_variables_store">
     <columns>
@@ -1653,7 +1653,7 @@ via the File menu.</property>
                                                       <object class="GtkImage" id="img_play">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">media-playback-start-symbolic</property>
+                                                        <property name="icon_name">skytemple-media-playback-start-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1675,7 +1675,7 @@ via the File menu.</property>
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
                                                         <property name="tooltip_text" translatable="yes">Pause the emulator.</property>
-                                                        <property name="icon_name">media-playback-pause-symbolic</property>
+                                                        <property name="icon_name">skytemple-media-playback-pause-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1697,7 +1697,7 @@ via the File menu.</property>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">view-refresh-symbolic</property>
+                                                        <property name="icon_name">skytemple-view-refresh-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1719,7 +1719,7 @@ via the File menu.</property>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
                                                         <property name="can_focus">False</property>
-                                                        <property name="icon_name">audio-volume-high-symbolic</property>
+                                                        <property name="icon_name">skytemple-audio-volume-high-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -2066,7 +2066,7 @@ via the File menu.</property>
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
                                     <property name="can_focus">False</property>
-                                    <property name="icon_name">go-bottom-symbolic</property>
+                                    <property name="icon_name">skytemple-go-bottom-symbolic</property>
                                   </object>
                                 </child>
                               </object>
