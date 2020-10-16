@@ -186,7 +186,7 @@ class GroundStateController:
                     ])
                 else:
                     self._files__tree_store.append(None, [
-                        'action-unavailable-symbolic', '<Empty>', '', '0 (Global)'
+                        'skytemple-action-unavailable-symbolic', '<Empty>', '', '0 (Global)'
                     ])
                 for i in range(1, 4):
                     # Build the three main hanger slots
@@ -207,7 +207,7 @@ class GroundStateController:
                     else:
                         # Slot is not filled
                         ssx_root = self._files__tree_store.append(None, [
-                            'action-unavailable-symbolic', '<Empty>', '', hanger_str
+                            'skytemple-action-unavailable-symbolic', '<Empty>', '', hanger_str
                         ])
 
                     if ssb[i]:
@@ -232,7 +232,7 @@ class GroundStateController:
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
                     self.get_short_sname(ssb, breaked, global_script.script_struct.hanger_ssb), None, '',
-                    'media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
+                    'skytemple-media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
                 ])
                 actors_node = self._entities__tree_store.append(None, [
                     'Actors', '', '', '', None, '', '', ICON_ACTOR, '', '', -1
@@ -247,7 +247,7 @@ class GroundStateController:
                     self._entities__tree_store.append(actors_node, [
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
                         self.get_short_sname(ssb, breaked, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
-                        'media-playback-pause-symbolic' if breaked else '', '',
+                        'skytemple-media-playback-pause-symbolic' if breaked else '', '',
                         f'{actor.x_map}', f'{actor.y_map}', SsbRoutineType.ACTOR.value
                     ])
                 objects_node = self._entities__tree_store.append(None, [
@@ -266,7 +266,7 @@ class GroundStateController:
                     self._entities__tree_store.append(objects_node, [
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
                         self.get_short_sname(ssb, breaked, object.script_struct.hanger_ssb), None, kind_name,
-                        'media-playback-pause-symbolic' if breaked else '', '',
+                        'skytemple-media-playback-pause-symbolic' if breaked else '', '',
                         f'{object.x_map}', f'{object.y_map}', SsbRoutineType.OBJECT.value
                     ])
                 performers_node = self._entities__tree_store.append(None, [
@@ -282,7 +282,7 @@ class GroundStateController:
                     self._entities__tree_store.append(performers_node, [
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
                         self.get_short_sname(ssb, breaked, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
-                        'media-playback-pause-symbolic' if breaked else '', '',
+                        'skytemple-media-playback-pause-symbolic' if breaked else '', '',
                         f'{performer.x_map}', f'{performer.y_map}', SsbRoutineType.PERFORMER.value
                     ])
                 events_node = self._entities__tree_store.append(None, [

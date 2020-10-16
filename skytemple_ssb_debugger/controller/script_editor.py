@@ -790,9 +790,9 @@ class ScriptEditorController:
         hbox: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 0)
         search: Gtk.SearchEntry = Gtk.SearchEntry.new()
         search.set_size_request(260, -1)
-        up_button: Gtk.Button = Gtk.Button.new_from_icon_name('go-up-symbolic', Gtk.IconSize.BUTTON)
+        up_button: Gtk.Button = Gtk.Button.new_from_icon_name('skytemple-go-up-symbolic', Gtk.IconSize.BUTTON)
         up_button.set_can_focus(False)
-        down_button: Gtk.Button = Gtk.Button.new_from_icon_name('go-down-symbolic', Gtk.IconSize.BUTTON)
+        down_button: Gtk.Button = Gtk.Button.new_from_icon_name('skytemple-go-down-symbolic', Gtk.IconSize.BUTTON)
         down_button.set_can_focus(False)
 
         search.connect('search-changed', self.on_search_entry_search_changed)
