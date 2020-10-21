@@ -92,7 +92,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         elif isinstance(const.value, Pmd2ScriptRoutine):
             item.set_icon_name(ICON_GLOBAL_SCRIPT)
         elif isinstance(const.value, Pmd2ScriptFaceName):
-            item.set_icon_name('skytemple-e-portrait-symbolic')
+            item.set_icon_name('skytemple-e-sprite-symbolic')
         elif isinstance(const.value, Pmd2ScriptFacePositionMode):
             item.set_icon_name('skytemple-e-position-symbolic')
         elif isinstance(const.value, Pmd2ScriptGameVar):
