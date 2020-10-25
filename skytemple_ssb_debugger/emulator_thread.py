@@ -112,11 +112,7 @@ class EmulatorThread(Thread):
     def run(self):
         self._thread_instance = current_thread()
         self._display_buffer = self.emu.display_buffer_as_rgbx()
-        if sys.platform == "win32":
-            # Force the selector event loop, the other one doesn't work with nest_asyncio
-            self.loop = asyncio.SelectorEventLoop()
-        else:
-            self.loop = asyncio.new_event_loop()
+        self.loop = asyncio.new_event_loop()
         nest_asyncio.apply(self.loop)
         asyncio.set_event_loop(self.loop)
         start_lock.release()

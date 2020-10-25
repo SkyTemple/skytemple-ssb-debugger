@@ -22,8 +22,7 @@ setup(
         'pycairo >= 1.16.0',
         'py-desmume >= 0.0.3',
         'explorerscript >= 0.0.6',
-        'nest-asyncio == 1.2.3; python_version<"3.7"',
-        'nest-asyncio >= 1.3.0; python_version>="3.7"'
+        'nest-asyncio >= 1.4.1'
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
