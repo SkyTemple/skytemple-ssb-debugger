@@ -15,13 +15,14 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
+from threading import Lock
 from typing import Optional, TYPE_CHECKING, Dict, List
 
 import gi
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu
+from skytemple_ssb_debugger.threadsafe import threadsafe_emu, synchronized_now
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
@@ -38,6 +39,7 @@ from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 logger = logging.getLogger(__name__)
+file_load_lock = Lock()
 
 
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
@@ -105,6 +107,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         self._check_loaded()
         return self._project_fm
 
+    @synchronized_now(file_load_lock)
     def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
         self._check_loaded()
         if filename not in self._open_files:
@@ -122,6 +125,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def on_script_edit(self, filename):
         pass
 
+    @synchronized_now(file_load_lock)
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
         self._check_loaded()
         self._rom.setFileByName(
