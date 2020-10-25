@@ -37,6 +37,22 @@
           </packing>
         </child>
         <child>
+          <object class="GtkToolButton" id="code_editor_cntrls_resume">
+            <property name="visible">True</property>
+            <property name="sensitive">False</property>
+            <property name="can_focus">False</property>
+            <property name="tooltip_text" translatable="yes">Resume.</property>
+            <property name="label" translatable="yes">Resume</property>
+            <property name="use_underline">True</property>
+            <property name="icon_name">skytemple-media-playback-start-symbolic</property>
+            <signal name="clicked" handler="on_code_editor_cntrls_resume_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="homogeneous">True</property>
+          </packing>
+        </child>
+        <child>
           <object class="GtkToolButton" id="code_editor_cntrls_step_over">
             <property name="visible">True</property>
             <property name="sensitive">False</property>
