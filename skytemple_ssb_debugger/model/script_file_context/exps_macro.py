@@ -91,7 +91,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
 
     def load(
         self,
-        load_exps: bool,
+        load_exps: bool, load_ssbs: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[any, BaseException], None],

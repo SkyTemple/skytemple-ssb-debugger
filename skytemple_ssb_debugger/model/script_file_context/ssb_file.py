@@ -79,7 +79,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
     def load(
         self,
-        load_exps: bool,
+        load_exps: bool, load_ssbs: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[any, BaseException], None],
@@ -111,11 +111,12 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
         def load_thread():
             # SSBS Load
-            logger.debug(f"Loading SSBScript.")
-            self._ssb_file.ssbs.load()
-            GLib.idle_add(partial(
-                load_view_callback, self._ssb_file.ssbs.text, False, 'ssbs'
-            ))
+            if load_ssbs:
+                logger.debug(f"Loading SSBScript.")
+                self._ssb_file.ssbs.load()
+                GLib.idle_add(partial(
+                    load_view_callback, self._ssb_file.ssbs.text, False, 'ssbs'
+                ))
 
             # ExplorerScript Load
             if load_exps:

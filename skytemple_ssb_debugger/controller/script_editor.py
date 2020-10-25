@@ -49,7 +49,8 @@ EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 class ScriptEditorController:
     def __init__(
             self, parent: 'EditorNotebookController', main_window: Gtk.Window, file_context: AbstractScriptFileContext,
-            rom_data: Pmd2Data, modified_handler, mapname: Optional[str], enable_explorerscript=True
+            rom_data: Pmd2Data, modified_handler, mapname: Optional[str],
+            enable_explorerscript=True, hide_ssb_script=False
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         self.builder = Gtk.Builder()
@@ -72,6 +73,12 @@ class ScriptEditorController:
         # If False, the other way around.
         self._explorerscript_active = enable_explorerscript
         self._waiting_for_reload = False
+
+        # If True, the SSBScript view is hidden (including it's ta
+        self._hide_ssb_script = hide_ssb_script
+        if self._hide_ssb_script:
+            notebook: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
+            notebook.set_show_tabs(False)
 
         self._ssb_script_view: GtkSource.View = None
         self._explorerscript_view: GtkSource.View = None
@@ -361,6 +368,7 @@ class ScriptEditorController:
                 self._after_views_loaded()
 
         self.file_context.load(load_exps=exps_bx is not None,
+                               load_ssbs=not self._hide_ssb_script,
                                load_view_callback=load__gtk__process_loaded,
                                after_callback=load_gtk__after,
                                exps_exception_callback=load__gtk__exps_exception,

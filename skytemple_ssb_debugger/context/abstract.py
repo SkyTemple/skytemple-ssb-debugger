@@ -61,6 +61,10 @@ class AbstractDebuggerControlContext(ABC):
         """Event handler for the debugger losing focus. May be triggered even if already had no focus."""
 
     @abstractmethod
+    def show_ssb_script_editor(self) -> bool:
+        """Whether or not the tab for SSBScript editing should be shown in the editor."""
+
+    @abstractmethod
     def open_rom(self, filename: str):
         """
         Opens a ROM project.

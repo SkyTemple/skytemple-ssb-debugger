@@ -90,7 +90,8 @@ class EditorNotebookController:
             else:
                 editor_controller = ScriptEditorController(
                     self, self._main_window, file_context,
-                    self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript
+                    self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript,
+                    not self.get_context().show_ssb_script_editor()
                 )
                 for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
                     editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)
