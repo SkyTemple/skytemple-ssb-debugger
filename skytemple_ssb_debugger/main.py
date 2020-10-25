@@ -15,12 +15,6 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-TODO:
-- Running scripts
-- Creating new ssb files [-> only via SkyTemple]
-- Psy's list patch [SkyTemple]
-"""
 import logging
 import os
 import sys
