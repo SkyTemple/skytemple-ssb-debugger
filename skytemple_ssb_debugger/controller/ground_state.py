@@ -134,34 +134,48 @@ class GroundStateController:
                 if code_editor:
                     # Sync the code editor execution lines
                     files = {}
-                    if global_script.script_struct.hanger_ssb > -1:
-                        # TODO: Crash here on reset.
-                        if ssb[global_script.script_struct.hanger_ssb].file_name not in files:
-                            files[ssb[global_script.script_struct.hanger_ssb].file_name] = []
-                        files[ssb[global_script.script_struct.hanger_ssb].file_name].append((
-                            SsbRoutineType.GENERIC, 0, global_script.script_struct.current_opcode_addr_relative
-                        ))
+                    try:
+                        if global_script.script_struct.hanger_ssb > -1 and ssb[global_script.script_struct.hanger_ssb] is not None:
+                            if ssb[global_script.script_struct.hanger_ssb].file_name not in files:
+                                files[ssb[global_script.script_struct.hanger_ssb].file_name] = []
+                            files[ssb[global_script.script_struct.hanger_ssb].file_name].append((
+                                SsbRoutineType.GENERIC, 0, global_script.script_struct.current_opcode_addr_relative
+                            ))
+                    except IndexError:
+                        pass
                     for i, actor in enumerate(actors):
-                        if actor is not None and actor.script_struct.hanger_ssb > -1:
-                            if ssb[actor.script_struct.hanger_ssb].file_name not in files:
-                                files[ssb[actor.script_struct.hanger_ssb].file_name] = []
-                            files[ssb[actor.script_struct.hanger_ssb].file_name].append((
-                                SsbRoutineType.ACTOR, i, actor.script_struct.current_opcode_addr_relative
-                            ))
+                        try:
+                            if actor is not None and actor.script_struct.hanger_ssb > -1:
+                                if ssb[actor.script_struct.hanger_ssb]:
+                                    if ssb[actor.script_struct.hanger_ssb].file_name not in files:
+                                        files[ssb[actor.script_struct.hanger_ssb].file_name] = []
+                                    files[ssb[actor.script_struct.hanger_ssb].file_name].append((
+                                        SsbRoutineType.ACTOR, i, actor.script_struct.current_opcode_addr_relative
+                                    ))
+                        except IndexError:
+                            pass
                     for i, object in enumerate(objects):
-                        if object is not None and object.script_struct.hanger_ssb > -1:
-                            if ssb[object.script_struct.hanger_ssb].file_name not in files:
-                                files[ssb[object.script_struct.hanger_ssb].file_name] = []
-                            files[ssb[object.script_struct.hanger_ssb].file_name].append((
-                                SsbRoutineType.OBJECT, i, object.script_struct.current_opcode_addr_relative
-                            ))
+                        try:
+                            if object is not None and object.script_struct.hanger_ssb > -1:
+                                if ssb[object.script_struct.hanger_ssb]:
+                                    if ssb[object.script_struct.hanger_ssb].file_name not in files:
+                                        files[ssb[object.script_struct.hanger_ssb].file_name] = []
+                                    files[ssb[object.script_struct.hanger_ssb].file_name].append((
+                                        SsbRoutineType.OBJECT, i, object.script_struct.current_opcode_addr_relative
+                                    ))
+                        except IndexError:
+                            pass
                     for i, performer in enumerate(performers):
-                        if performer is not None and performer.script_struct.hanger_ssb > -1:
-                            if ssb[performer.script_struct.hanger_ssb].file_name not in files:
-                                files[ssb[performer.script_struct.hanger_ssb].file_name] = []
-                            files[ssb[performer.script_struct.hanger_ssb].file_name].append((
-                                SsbRoutineType.PERFORMER, i, performer.script_struct.current_opcode_addr_relative
-                            ))
+                        try:
+                            if performer is not None and performer.script_struct.hanger_ssb > -1:
+                                if ssb[performer.script_struct.hanger_ssb]:
+                                    if ssb[performer.script_struct.hanger_ssb].file_name not in files:
+                                        files[ssb[performer.script_struct.hanger_ssb].file_name] = []
+                                    files[ssb[performer.script_struct.hanger_ssb].file_name].append((
+                                        SsbRoutineType.PERFORMER, i, performer.script_struct.current_opcode_addr_relative
+                                    ))
+                        except IndexError:
+                            pass
                     code_editor.insert_hanger_halt_lines(files)
 
                 # File tree store
@@ -210,8 +224,11 @@ class GroundStateController:
                 # Entities store
                 self._entities__tree_store.clear()
                 breaked = False
-                if global_script.script_struct.hanger_ssb > -1:
-                    breaked = ssb[global_script.script_struct.hanger_ssb].breaked and global_script.script_struct == breaked_for
+                try:
+                    if global_script.script_struct.hanger_ssb > -1 and ssb[global_script.script_struct.hanger_ssb] is not None:
+                        breaked = ssb[global_script.script_struct.hanger_ssb].breaked and global_script.script_struct == breaked_for
+                except (IndexError, AttributeError):
+                    pass
                 self._entities__tree_store.append(None, [
                     '<Global>', '0', '',
                     self.get_short_sname(ssb, breaked, global_script.script_struct.hanger_ssb), None, '',
@@ -222,8 +239,11 @@ class GroundStateController:
                 ])
                 for actor in actors:
                     breaked = False
-                    if actor.script_struct.hanger_ssb > -1:
-                        breaked = ssb[actor.script_struct.hanger_ssb].breaked and actor.script_struct == breaked_for
+                    try:
+                        if actor.script_struct.hanger_ssb > -1:
+                            breaked = ssb[actor.script_struct.hanger_ssb].breaked and actor.script_struct == breaked_for
+                    except (IndexError, AttributeError):
+                        pass
                     self._entities__tree_store.append(actors_node, [
                         f'{actor.id}', f'{actor.hanger}', f'{actor.sector}',
                         self.get_short_sname(ssb, breaked, actor.script_struct.hanger_ssb), None, f'{actor.kind.name}',
@@ -238,8 +258,11 @@ class GroundStateController:
                     if kind_name == 'NULL':
                         kind_name = f'{object.kind.name} ({object.kind.id})'
                     breaked = False
-                    if object.script_struct.hanger_ssb > -1:
-                        breaked = ssb[object.script_struct.hanger_ssb].breaked and object.script_struct == breaked_for
+                    try:
+                        if object.script_struct.hanger_ssb > -1:
+                            breaked = ssb[object.script_struct.hanger_ssb].breaked and object.script_struct == breaked_for
+                    except (IndexError, AttributeError):
+                        pass
                     self._entities__tree_store.append(objects_node, [
                         f'{object.id}', f'{object.hanger}', f'{object.sector}',
                         self.get_short_sname(ssb, breaked, object.script_struct.hanger_ssb), None, kind_name,
@@ -251,8 +274,11 @@ class GroundStateController:
                 ])
                 for performer in performers:
                     breaked = False
-                    if performer.script_struct.hanger_ssb > -1:
-                        breaked = ssb[performer.script_struct.hanger_ssb].breaked and performer.script_struct == breaked_for
+                    try:
+                        if performer.script_struct.hanger_ssb > -1:
+                            breaked = ssb[performer.script_struct.hanger_ssb].breaked and performer.script_struct == breaked_for
+                    except (IndexError, AttributeError):
+                        pass
                     self._entities__tree_store.append(performers_node, [
                         f'{performer.id}', f'{performer.hanger}', f'{performer.sector}',
                         self.get_short_sname(ssb, breaked, performer.script_struct.hanger_ssb), None, f'{performer.kind}',
