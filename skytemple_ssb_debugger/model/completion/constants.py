@@ -98,7 +98,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         elif isinstance(const.value, Pmd2ScriptGameVar):
             item.set_icon_name('skytemple-e-variable-symbolic')
         elif isinstance(const.value, Pmd2ScriptLevel):
-            item.set_icon_name('skytemple-e-scene-symbolic')
+            item.set_icon_name('skytemple-e-ground-symbolic')
         elif isinstance(const.value, Pmd2ScriptMenu):
             item.set_icon_name('skytemple-e-menu-symbolic')
         elif isinstance(const.value, Pmd2ScriptSpecial):

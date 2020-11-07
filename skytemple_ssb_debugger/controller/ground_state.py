@@ -202,7 +202,7 @@ class GroundStateController:
                     if ssx[i]:
                         # Slot is filled
                         ssx_root = self._files__tree_store.append(None, [
-                            'skytemple-e-scene-symbolic', self.short_fname(ssx[i].file_name), type_str, hanger_str
+                            'skytemple-e-ground-symbolic', self.short_fname(ssx[i].file_name), type_str, hanger_str
                         ])
                     else:
                         # Slot is not filled
