@@ -2247,6 +2247,7 @@ via the File menu.</property>
 Marco "Parakoopa" Köpcke http://github.com/parakoopa
 
 Contributors:
+irdkwia https://github.com/irdkwia
 marius851000 (via skytemple-rust) http://github.com/marius851000
 Aikku93 (via tileqaunt) http://github.com/aikku93
 
@@ -2256,7 +2257,7 @@ psy_commando http://github.com/psyCommando
 Researchers:
 End45 http://github.com/End45
 MegaMinerd
-evandixon
+evandixon https://github.com/evandixon
 Nerketur
 UsernameFodder http://reddit.com/u/UsernameFodder</property>
     <property name="translator_credits" translatable="yes" comments="TRANSLATORS: Replace this string with your names, one name per line.">translator-credits</property>
