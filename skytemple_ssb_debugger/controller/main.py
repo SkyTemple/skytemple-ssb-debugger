@@ -799,7 +799,7 @@ class MainController:
         if response == Gtk.ResponseType.OK:
             abs_dirname = row[0] + os.path.sep + dirname
             os.makedirs(abs_dirname, exist_ok=True)
-            store.append(store.get_iter(treepath), [abs_dirname, dirname, 'exps_macro_dir'])
+            store.append(store.get_iter(treepath), [abs_dirname, dirname, 'exps_macro_dir', True])
 
     def on_ssb_file_tree__menu_create_macro_file(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
         row = store[treepath]
@@ -811,7 +811,7 @@ class MainController:
             os.makedirs(row[0], exist_ok=True)
             with open_utf8(abs_filename, 'w') as f:
                 f.write('')
-            store.append(store.get_iter(treepath), [abs_filename, filename, 'exps_macro'])
+            store.append(store.get_iter(treepath), [abs_filename, filename, 'exps_macro', True])
 
     def on_ssb_file_tree__menu_delete_dir(self, model: Gtk.TreeModel, treepath: Gtk.TreePath, *args):
         row = model[treepath]

@@ -341,7 +341,12 @@ class EditorNotebookController:
 
 
 def tab_label_close_button(filename, close_callback):
-    label: Gtk.Label = Gtk.Label.new(filename.split('/')[-1][:-4])
+    lbl = filename.split('/')[-1]
+    if lbl[-4:] == '.ssb':
+        lbl = lbl[:-4]
+    else:
+        lbl = lbl[:-5]
+    label: Gtk.Label = Gtk.Label.new(lbl)
     label.set_ellipsize(Pango.EllipsizeMode.START)
     label.props.halign = Gtk.Align.CENTER
     label.set_tooltip_text(filename)
