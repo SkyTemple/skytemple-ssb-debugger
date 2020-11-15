@@ -515,6 +515,10 @@ class ScriptEditorController:
         found, match_start, match_end = context.forward2(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
         if found:
             buffer.select_range(match_start, match_end)
+            if buffer == self._ssb_script_view.get_buffer():
+                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            else:
+                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_search_up_button_clicked(self, widget: Gtk.Button, search: Gtk.SearchEntry):
         view = self._explorerscript_view
