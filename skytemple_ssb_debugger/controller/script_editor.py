@@ -924,10 +924,10 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
         self.set_size(12 * 3)
         self.set_padding(5, 3)
         icon_theme: Gtk.IconTheme = Gtk.IconTheme.get_for_screen(self.view.get_screen())
-        self._icon_actor = icon_theme.load_icon(ICON_ACTOR, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_object = icon_theme.load_icon(ICON_OBJECT, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_performer = icon_theme.load_icon(ICON_PERFORMER, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_global_script = icon_theme.load_icon(ICON_GLOBAL_SCRIPT, 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_actor = icon_theme.load_icon(ICON_ACTOR[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_object = icon_theme.load_icon(ICON_OBJECT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_performer = icon_theme.load_icon(ICON_PERFORMER[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_global_script = icon_theme.load_icon(ICON_GLOBAL_SCRIPT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
 
     def do_query_data(self, start: Gtk.TextIter, end: Gtk.TextIter, state: GtkSource.GutterRendererState):
         view: GtkSource.View = self.get_view()
