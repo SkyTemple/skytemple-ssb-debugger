@@ -20,13 +20,12 @@ import os
 import sys
 
 import gi
+gi.require_version('Gtk', '3.0')
 
 from skytemple_icons import icons
 from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
 from skytemple_ssb_debugger.controller.main import MainController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-
-gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, GLib
 from gi.repository.Gtk import Window
