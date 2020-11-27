@@ -1961,7 +1961,7 @@ via the File menu.</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="receives_default">False</property>
                                                 <property name="halign">start</property>
-                                                <property name="active">True</property>
+                                                <property name="active">False</property>
                                                 <property name="draw_indicator">True</property>
                                                 <signal name="toggled" handler="on_debug_settings_overlay_toggled" swapped="no"/>
                                               </object>
