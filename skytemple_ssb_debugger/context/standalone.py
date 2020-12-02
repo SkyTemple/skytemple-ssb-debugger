@@ -16,11 +16,13 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 from threading import Lock
-from typing import Optional, TYPE_CHECKING, Dict, List
+from typing import Optional, TYPE_CHECKING, Dict, List, Iterable
 
 import gi
 
+from explorerscript.pygments.expslexer import KEYWORDS
 from explorerscript.source_map import SourceMapPositionMark
+from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, synchronized_now
 
@@ -174,3 +176,12 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
+
+    def get_special_words(self) -> Iterable[str]:
+        """
+        Just returns the script operations and constants,
+        more data is only supported by the main SkyTemple application
+        """
+        yield from self._static_data.script_data.op_codes__by_name.keys()
+        yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
+        yield from KEYWORDS

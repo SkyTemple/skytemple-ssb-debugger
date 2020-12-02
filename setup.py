@@ -23,7 +23,8 @@ setup(
         'pycairo >= 1.16.0',
         'py-desmume >= 0.0.3',
         'explorerscript >= 0.0.7',
-        'nest-asyncio >= 1.4.1'
+        'nest-asyncio >= 1.4.1',
+        'pygtkspellcheck >= 4.0'
     ],
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

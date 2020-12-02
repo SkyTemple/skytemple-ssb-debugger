@@ -15,6 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import locale
 import logging
 import os
 import re
@@ -23,6 +24,7 @@ from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
+from gtkspellcheck import SpellChecker
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
@@ -780,6 +782,13 @@ class ScriptEditorController:
 
         sw.add(view)
         ovl.add(sw)
+
+        # SPELL CHECK
+        spellchecker = SpellChecker(view, 'en_US')
+        # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
+        for word in self.parent.get_context().get_special_words():
+            for part in word.split('_'):
+                spellchecker.add_to_dictionary(part)
 
         # SEARCH
         rvlr: Gtk.Revealer = Gtk.Revealer.new()
