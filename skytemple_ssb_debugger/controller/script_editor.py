@@ -786,9 +786,10 @@ class ScriptEditorController:
         # SPELL CHECK
         spellchecker = SpellChecker(view, 'en_US')
         # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
-        for word in self.parent.get_context().get_special_words():
-            for part in word.split('_'):
-                spellchecker.add_to_dictionary(part)
+        # TODO THIS IS SUPER SLOW UNDER WINDOWS.
+        #for word in self.parent.get_context().get_special_words():
+        #    for part in word.split('_'):
+        #        spellchecker.add_to_dictionary(part)
 
         # SEARCH
         rvlr: Gtk.Revealer = Gtk.Revealer.new()

@@ -20,7 +20,6 @@ from typing import Optional, TYPE_CHECKING, Dict, List, Iterable
 
 import gi
 
-from explorerscript.pygments.expslexer import KEYWORDS
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
@@ -35,7 +34,7 @@ from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR
 from skytemple_files.common.types.file_types import FileType
 from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
-from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext, EXPS_KEYWORDS
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
@@ -184,4 +183,4 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         """
         yield from self._static_data.script_data.op_codes__by_name.keys()
         yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
-        yield from KEYWORDS
+        yield from EXPS_KEYWORDS
