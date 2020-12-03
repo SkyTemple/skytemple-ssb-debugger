@@ -641,7 +641,14 @@ class MainController:
         webbrowser.open_new_tab(TEXTBOX_TOOL_URL)
 
     def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
-        self.builder.get_object("about_dialog").run()
+        from skytemple_ssb_debugger.main import get_debugger_version
+        about: Gtk.AboutDialog = self.builder.get_object("about_dialog")
+        header_bar: Optional[Gtk.HeaderBar] = about.get_header_bar()
+        if header_bar is not None:
+            # Cool bug??? And it only works on the left as well, wtf?
+            header_bar.set_decoration_layout('close')
+        about.set_version(get_debugger_version())
+        about.run()
 
     # EMULATOR CONTROLS
     def on_emulator_controls_playstop_clicked(self, button: Gtk.Button):

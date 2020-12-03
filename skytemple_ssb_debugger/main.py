@@ -20,6 +20,8 @@ import os
 import sys
 
 import gi
+import pkg_resources
+
 gi.require_version('Gtk', '3.0')
 
 from skytemple_icons import icons
@@ -72,6 +74,13 @@ def get_debugger_package_dir():
 
 def get_debugger_data_dir():
     return os.path.join(get_debugger_package_dir(), "data")
+
+
+def get_debugger_version():
+    try:
+        return pkg_resources.get_distribution("skytemple_ssb_debugger").version
+    except pkg_resources.DistributionNotFound:
+        return 'unknown'
 
 
 def _windows_load_theme():
