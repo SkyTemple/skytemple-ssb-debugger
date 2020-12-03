@@ -707,6 +707,15 @@
                       </object>
                     </child>
                     <child>
+                      <object class="GtkMenuItem" id="menu_help_textbox_tool">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Textbox Preview Tool</property>
+                        <property name="use-underline">True</property>
+                        <signal name="activate" handler="on_menu_help_textbox_tool_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>

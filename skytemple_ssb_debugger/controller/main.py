@@ -51,7 +51,7 @@ from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileSta
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
-from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore
+from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore, TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, \
@@ -636,6 +636,9 @@ class MainController:
     # MENU HELP
     def on_menu_help_exps_docs_activate(self, btn: Gtk.MenuItem, *args):
         webbrowser.open_new_tab("https://explorerscript.readthedocs.io/en/latest/language_spec.html")
+
+    def on_menu_help_textbox_tool_activate(self, btn: Gtk.MenuItem, *args):
+        webbrowser.open_new_tab(TEXTBOX_TOOL_URL)
 
     def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
         self.builder.get_object("about_dialog").run()

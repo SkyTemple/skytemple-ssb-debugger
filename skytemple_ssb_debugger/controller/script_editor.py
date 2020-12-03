@@ -19,6 +19,7 @@ import locale
 import logging
 import os
 import re
+import webbrowser
 from functools import partial
 from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
@@ -37,6 +38,7 @@ from skytemple_ssb_debugger.model.completion.util import filter_special_exps_opc
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
 from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUtil
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
+from skytemple_ssb_debugger.model.settings import TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.pixbuf.icons import *
 
 if TYPE_CHECKING:
@@ -657,6 +659,9 @@ class ScriptEditorController:
 
     def on_code_editor_cntrls_goto_scene_clicked(self,  *args):
         self.file_context.goto_scene(self.parent.get_context())
+
+    def on_code_editor_cntrls_open_textbox_tool_clicked(self, value):
+        webbrowser.open_new_tab(TEXTBOX_TOOL_URL)
 
     def toggle_breaks_disabled(self, value):
         self.builder.get_object('code_editor_cntrls_breaks').set_active(value)

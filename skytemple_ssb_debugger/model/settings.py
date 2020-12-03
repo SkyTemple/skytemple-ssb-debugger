@@ -44,6 +44,8 @@ KEY_WINDOW_SIZE_Y = 'height'
 KEY_WINDOW_POS_X = 'pos_x'
 KEY_WINDOW_POS_Y = 'pos_y'
 
+TEXTBOX_TOOL_URL = 'https://textbox.skytemple.org'
+
 
 class DebuggerSettingsStore:
     def __init__(self):
