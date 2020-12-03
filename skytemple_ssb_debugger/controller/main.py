@@ -110,6 +110,8 @@ class MainController:
         # mapname_{enter,acting,{sss_name_with_extension}}
         self._tree_branches: Dict[str, Gtk.TreeIter] = {}
 
+        self.builder.get_object('menu_spellcheck_enabled').set_active(self.settings.get_spellcheck_enabled())
+
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
         self.selected_style_scheme_id = self.settings.get_style_scheme()
@@ -520,6 +522,11 @@ class MainController:
             self.selected_style_scheme_id = scheme_id
             self.editor_notebook.switch_style_scheme(self.style_scheme_manager.get_scheme(scheme_id))
             self.settings.set_style_scheme(scheme_id)
+
+    def on_menu_spellcheck_enabled_toggled(self, btn: Gtk.CheckMenuItem, *args):
+        if hasattr(self, 'editor_notebook'):  # skip during __init__
+            self.editor_notebook.toggle_spellchecker(btn.get_active())
+            self.settings.set_spellcheck_enabled(btn.get_active())
 
     # MENU DEBUGGER
     def on_menu_debugger_disable_breaks_toggled(self, btn: Gtk.CheckMenuItem, *args):

@@ -4,6 +4,6 @@ skytemple-icons==0.1.0
 pygobject==3.36.0
 pycairo==1.18.2
 py-desmume==0.0.3
-ndspy==3.0.0
 explorerscript==0.0.7
 nest-asyncio==1.4.1
+pygtkspellcheck==4.0.6

@@ -15,6 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import locale
 import logging
 import os
 import re
@@ -23,6 +24,7 @@ from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
+from gtkspellcheck import SpellChecker
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
@@ -82,6 +84,8 @@ class ScriptEditorController:
 
         self._ssb_script_view: GtkSource.View = None
         self._explorerscript_view: GtkSource.View = None
+        self._ssb_script_spellcheck: SpellChecker = None
+        self._explorerscript_spellcheck: SpellChecker = None
         self._ssb_script_revealer: Gtk.Revealer = None
         self._explorerscript_revealer: Gtk.Revealer = None
         self._ssb_script_search: Gtk.SearchEntry = None
@@ -94,6 +98,7 @@ class ScriptEditorController:
         self._foucs_opcode_after_load = None
         self._on_break_pulled_after_load = None
         self._hanger_halt_lines_after_load = None
+        self._spellchecker_loaded = False
 
         self._loaded_search_window: Optional[Gtk.Dialog] = None
         self._active_search_context: Optional[GtkSource.SearchContext] = None
@@ -308,6 +313,9 @@ class ScriptEditorController:
         if exps_bx:
             (exps_ovl, self._explorerscript_view, self._explorerscript_revealer,
              self._explorerscript_search, self._explorerscript_search_context) = self._create_editor()
+
+        # SPELL CHECK
+        self.toggle_spellchecker(self.parent.parent.settings.get_spellcheck_enabled())
 
         self._load_ssbs_completion()
         if exps_bx:
@@ -652,6 +660,30 @@ class ScriptEditorController:
 
     def toggle_breaks_disabled(self, value):
         self.builder.get_object('code_editor_cntrls_breaks').set_active(value)
+
+    def toggle_spellchecker(self, value):
+        if self._spellchecker_loaded:
+            if value:
+                if self._ssb_script_spellcheck:
+                    self._ssb_script_spellcheck.enable()
+                if self._explorerscript_spellcheck:
+                    self._explorerscript_spellcheck.enable()
+            else:
+                if self._ssb_script_spellcheck:
+                    self._ssb_script_spellcheck.disable()
+                if self._explorerscript_spellcheck:
+                    self._explorerscript_spellcheck.disable()
+        elif value:
+            self._spellchecker_loaded = True
+            if self._ssb_script_view:
+                self._ssb_script_spellcheck = SpellChecker(self._ssb_script_view, 'en_US')
+            if self._explorerscript_view:
+                self._explorerscript_spellcheck = SpellChecker(self._explorerscript_view, 'en_US')
+            # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
+            # TODO THIS IS SUPER SLOW UNDER WINDOWS.
+            #for word in self.parent.get_context().get_special_words():
+            #    for part in word.split('_'):
+            #        spellchecker.add_to_dictionary(part)
 
     # Menu actions
     def menu__cut(self):

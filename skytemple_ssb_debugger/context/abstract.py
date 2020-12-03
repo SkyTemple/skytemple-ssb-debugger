@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List
+from typing import TYPE_CHECKING, Optional, List, Iterable
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -29,6 +29,58 @@ if TYPE_CHECKING:
 
 PROJECT_DIR_SUBDIR_NAME = 'debugger'
 PROJECT_DIR_MACRO_NAME = 'Macros'
+
+# todo: refactor
+EXPS_KEYWORDS = (
+    "import",
+    "coro",
+    "def",
+    "macro",
+    "for_actor",
+    "for_object",
+    "for_performer",
+    "alias",
+    "previous",
+    "not",
+    "if",
+    "elseif",
+    "else",
+    "forever",
+    "with",
+    "switch",
+    "debug",
+    "edit",
+    "variation",
+    "random",
+    "sector",
+    "menu2",
+    "menu",
+    "case",
+    "default",
+    "clear",
+    "reset",
+    "init",
+    "scn",
+    "dungeon_result",
+    "adventure_log",
+    "continue",
+    "break",
+    "break_loop",
+    "return",
+    "end",
+    "hold",
+    "jump",
+    "while",
+    "for",
+    # Weak keywords
+    "TRUE",
+    "FALSE",
+    "actor",
+    "object",
+    "performer",
+    "value",
+    "dungeon_mode",
+)
 
 
 class AbstractDebuggerControlContext(ABC):
@@ -157,4 +209,10 @@ class AbstractDebuggerControlContext(ABC):
                          handled.
         :param error_message: The message to display to the user.
         :param error_title: The title of the dialog to display.
+        """
+
+    @abstractmethod
+    def get_special_words(self) -> Iterable[str]:
+        """
+        Returns a list of special words which should be ignored by spellchecking.
         """
