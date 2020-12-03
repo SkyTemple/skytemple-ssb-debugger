@@ -294,6 +294,10 @@ class EditorNotebookController:
         for editor in self._open_editors.values():
             editor.switch_style_scheme(scheme)
 
+    def toggle_spellchecker(self, value):
+        for editor in self._open_editors.values():
+            editor.toggle_spellchecker(value)
+
     def get_context(self) -> AbstractDebuggerControlContext:
         return self.parent.context
 

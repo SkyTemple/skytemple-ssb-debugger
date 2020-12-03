@@ -37,6 +37,7 @@ SECT_JOYKEYS = 'JOYKEYS'
 KEY_STYLE_SCHEME = 'style_scheme'
 KEY_ASSISTANT_SHOWN = 'assistant_shown'
 KEY_EMULATOR_LANG = 'emulator_language'
+KEY_SPELLCHECK = 'spellcheck_enabled'
 
 KEY_WINDOW_SIZE_X = 'width'
 KEY_WINDOW_SIZE_Y = 'height'
@@ -158,6 +159,20 @@ class DebuggerSettingsStore:
         if SECT_GENERAL not in self.loaded_config:
             self.loaded_config[SECT_GENERAL] = {}
         self.loaded_config[SECT_GENERAL][KEY_EMULATOR_LANG] = str(lang.value)
+        self._save()
+
+    @synchronized(settings_lock)
+    def get_spellcheck_enabled(self) -> bool:
+        if SECT_GENERAL in self.loaded_config:
+            if KEY_SPELLCHECK in self.loaded_config[SECT_GENERAL]:
+                return int(self.loaded_config[SECT_GENERAL][KEY_SPELLCHECK]) > 0
+        return True
+
+    @synchronized(settings_lock)
+    def set_spellcheck_enabled(self, value: bool):
+        if SECT_GENERAL not in self.loaded_config:
+            self.loaded_config[SECT_GENERAL] = {}
+        self.loaded_config[SECT_GENERAL][KEY_SPELLCHECK] = str(int(value))
         self._save()
 
     def _save(self):

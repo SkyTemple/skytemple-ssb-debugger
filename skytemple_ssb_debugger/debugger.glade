@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.36.0 -->
+<!-- Generated with glade 3.38.1 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkNotebook" id="code_editor_notebook">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
+    <property name="can-focus">True</property>
     <property name="scrollable">True</property>
-    <property name="enable_popup">True</property>
+    <property name="enable-popup">True</property>
     <signal name="switch-page" handler="on_code_editor_notebook_switch_page" swapped="no"/>
   </object>
   <object class="GtkTreeStore" id="ground_state_entities_store">
@@ -37,11 +37,11 @@
   </object>
   <object class="GtkTreeView" id="ground_state_entities_tree">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
+    <property name="can-focus">True</property>
     <property name="model">ground_state_entities_store</property>
-    <property name="rules_hint">True</property>
-    <property name="search_column">1</property>
-    <property name="enable_tree_lines">True</property>
+    <property name="rules-hint">True</property>
+    <property name="search-column">1</property>
+    <property name="enable-tree-lines">True</property>
     <signal name="button-press-event" handler="on_ground_state_entities_tree_button_press_event" swapped="no"/>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
@@ -61,11 +61,11 @@
   </object>
   <object class="GtkTreeView" id="ground_state_files_tree">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
+    <property name="can-focus">True</property>
     <property name="model">ground_state_files_tree_store</property>
-    <property name="rules_hint">True</property>
-    <property name="search_column">1</property>
-    <property name="enable_tree_lines">True</property>
+    <property name="rules-hint">True</property>
+    <property name="search-column">1</property>
+    <property name="enable-tree-lines">True</property>
     <signal name="button-press-event" handler="on_ground_state_files_tree_button_press_event" swapped="no"/>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
@@ -73,13 +73,13 @@
   </object>
   <object class="GtkImage" id="img_play2">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">skytemple-media-playback-start-symbolic</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">skytemple-media-playback-start-symbolic</property>
   </object>
   <object class="GtkImage" id="img_stop">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">skytemple-media-playback-stop-symbolic</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">skytemple-media-playback-stop-symbolic</property>
   </object>
   <object class="GtkListStore" id="local_variables_store">
     <columns>
@@ -91,7 +91,7 @@
   </object>
   <object class="GtkTreeView" id="local_variables_list">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
+    <property name="can-focus">True</property>
     <property name="model">local_variables_store</property>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
@@ -107,7 +107,7 @@
   </object>
   <object class="GtkTreeView" id="macro_variables_list">
     <property name="visible">True</property>
-    <property name="can_focus">True</property>
+    <property name="can-focus">True</property>
     <property name="model">macro_variables_store</property>
     <child internal-child="selection">
       <object class="GtkTreeSelection"/>
@@ -115,17 +115,17 @@
   </object>
   <object class="GtkImage" id="menu_open_image">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">document-open</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">document-open</property>
   </object>
   <object class="GtkImage" id="menu_save_image">
     <property name="visible">True</property>
-    <property name="can_focus">False</property>
-    <property name="icon_name">document-save</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">document-save</property>
   </object>
   <object class="GtkWindow" id="main_window">
-    <property name="can_focus">False</property>
-    <property name="icon_name">skytemple-debugger</property>
+    <property name="can-focus">False</property>
+    <property name="icon-name">skytemple-debugger</property>
     <signal name="configure-event" handler="on_main_window_configure_event" swapped="no"/>
     <signal name="delete-event" handler="on_main_window_delete_event" swapped="no"/>
     <signal name="destroy" handler="on_main_window_destroy" swapped="no"/>
@@ -135,29 +135,29 @@
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkMenuBar">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_File</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu" id="menu_file">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_open">
                         <property name="label" translatable="yes">Open ROM</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="image">menu_open_image</property>
-                        <property name="use_stock">False</property>
+                        <property name="use-stock">False</property>
                         <signal name="activate" handler="on_menu_open_activate" swapped="no"/>
                         <accelerator key="o" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -165,16 +165,16 @@
                     <child>
                       <object class="GtkSeparatorMenuItem" id="menu_open_sep">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_save">
                         <property name="label" translatable="yes">Save Script</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="image">menu_save_image</property>
-                        <property name="use_stock">False</property>
+                        <property name="use-stock">False</property>
                         <signal name="activate" handler="on_menu_save_activate" swapped="no"/>
                         <accelerator key="s" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -182,9 +182,9 @@
                     <child>
                       <object class="GtkMenuItem" id="menu_close">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Close Script</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_close_activate" swapped="no"/>
                         <accelerator key="w" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -192,13 +192,13 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_save_all">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Save All</property>
                         <signal name="activate" handler="on_menu_save_all_activate" swapped="no"/>
                         <accelerator key="s" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
@@ -207,16 +207,16 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_quit">
                         <property name="label">gtk-quit</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_quit_activate" swapped="no"/>
                       </object>
                     </child>
@@ -227,20 +227,20 @@
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_Edit</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_edit_cut">
                         <property name="label">gtk-cut</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_cut_activate" swapped="no"/>
                       </object>
                     </child>
@@ -248,9 +248,9 @@
                       <object class="GtkImageMenuItem" id="menu_edit_copy">
                         <property name="label">gtk-copy</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_copy_activate" swapped="no"/>
                       </object>
                     </child>
@@ -258,25 +258,25 @@
                       <object class="GtkImageMenuItem" id="menu_edit_paste">
                         <property name="label">gtk-paste</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_paste_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_edit_undo">
                         <property name="label">gtk-undo</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_undo_activate" swapped="no"/>
                         <accelerator key="z" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -285,9 +285,9 @@
                       <object class="GtkImageMenuItem" id="menu_edit_redo">
                         <property name="label">gtk-redo</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_redo_activate" swapped="no"/>
                         <accelerator key="z" signal="activate" modifiers="GDK_SHIFT_MASK | GDK_CONTROL_MASK"/>
                       </object>
@@ -295,16 +295,16 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_edit_search">
                         <property name="label">gtk-find</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_search_activate" swapped="no"/>
                         <accelerator key="f" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -313,9 +313,9 @@
                       <object class="GtkImageMenuItem" id="menu_edit_replace">
                         <property name="label">gtk-find-and-replace</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_edit_replace_activate" swapped="no"/>
                         <accelerator key="h" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -327,19 +327,28 @@
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_View</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkMenuItem" id="menu_view_schemes">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Color Schemes</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkCheckMenuItem" id="menu_spellcheck_enabled">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Enable Spellcheck</property>
+                        <property name="use-underline">True</property>
+                        <signal name="toggled" handler="on_menu_spellcheck_enabled_toggled" swapped="no"/>
                       </object>
                     </child>
                   </object>
@@ -349,34 +358,34 @@
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_Debugger</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkCheckMenuItem" id="menu_debugger_disable_breaks">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Disable Breakpoints</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="toggled" handler="on_menu_debugger_disable_breaks_toggled" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_debugger_step_over">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Step Over</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_debugger_step_over_activate" swapped="no"/>
                         <accelerator key="F8" signal="activate"/>
                       </object>
@@ -384,9 +393,9 @@
                     <child>
                       <object class="GtkMenuItem" id="menu_debugger_step_into">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Step Into</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_debugger_step_into_activate" swapped="no"/>
                         <accelerator key="F7" signal="activate"/>
                       </object>
@@ -394,9 +403,9 @@
                     <child>
                       <object class="GtkMenuItem" id="menu_debugger_step_out">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Step Out</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_debugger_step_out_activate" swapped="no"/>
                         <accelerator key="F8" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                       </object>
@@ -404,15 +413,15 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_debugger_step_next">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Step Next</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_debugger_step_next_activate" swapped="no"/>
                         <accelerator key="F7" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                       </object>
@@ -424,19 +433,19 @@
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_Emulator</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkMenuItem" id="menu_emulator_execute">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Run / Pause</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_emulator_execute_activate" swapped="no"/>
                         <accelerator key="F5" signal="activate"/>
                       </object>
@@ -444,9 +453,9 @@
                     <child>
                       <object class="GtkMenuItem" id="menu_emulator_reset">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Reset</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_emulator_reset_activate" swapped="no"/>
                         <accelerator key="F5" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                       </object>
@@ -454,55 +463,55 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_emulator_keyboard_controls">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Keyboard controls...</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_emulator_keyboard_controls_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem" id="menu_emulator_joystick_controls">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Joystick controls...</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_emulator_joystick_controls_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Language</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <child type="submenu">
                           <object class="GtkMenu">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_jp">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">Japanese</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="use-underline">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_jp_toggled" swapped="no"/>
                               </object>
                             </child>
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_en">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">English</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <property name="active">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <property name="group">menu_emulator_language_jp</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_en_toggled" swapped="no"/>
                               </object>
@@ -510,10 +519,10 @@
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_fr">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">French</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="use-underline">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <property name="group">menu_emulator_language_jp</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_fr_toggled" swapped="no"/>
                               </object>
@@ -521,10 +530,10 @@
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_de">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">German</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="use-underline">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <property name="group">menu_emulator_language_jp</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_de_toggled" swapped="no"/>
                               </object>
@@ -532,10 +541,10 @@
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_it">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">Italian</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="use-underline">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <property name="group">menu_emulator_language_jp</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_it_toggled" swapped="no"/>
                               </object>
@@ -543,10 +552,10 @@
                             <child>
                               <object class="GtkRadioMenuItem" id="menu_emulator_language_es">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">Spanish</property>
-                                <property name="use_underline">True</property>
-                                <property name="draw_as_radio">True</property>
+                                <property name="use-underline">True</property>
+                                <property name="draw-as-radio">True</property>
                                 <property name="group">menu_emulator_language_jp</property>
                                 <signal name="toggled" handler="on_menu_emulator_language_es_toggled" swapped="no"/>
                               </object>
@@ -558,25 +567,25 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Save State</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <child type="submenu">
                           <object class="GtkMenu">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_savestate1">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 1</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_savestate1_activate" swapped="no"/>
                                 <accelerator key="F1" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                               </object>
@@ -584,9 +593,9 @@
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_savestate2">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 2</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_savestate2_activate" swapped="no"/>
                                 <accelerator key="F2" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                               </object>
@@ -594,9 +603,9 @@
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_savestate3">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 3</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_savestate3_activate" swapped="no"/>
                                 <accelerator key="F3" signal="activate" modifiers="GDK_SHIFT_MASK"/>
                               </object>
@@ -608,19 +617,19 @@
                     <child>
                       <object class="GtkMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Load State</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <child type="submenu">
                           <object class="GtkMenu">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_loadstate1">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 1</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_loadstate1_activate" swapped="no"/>
                                 <accelerator key="F1" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                               </object>
@@ -628,9 +637,9 @@
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_loadstate2">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 2</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_loadstate2_activate" swapped="no"/>
                                 <accelerator key="F2" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                               </object>
@@ -638,9 +647,9 @@
                             <child>
                               <object class="GtkMenuItem" id="menu_emulator_loadstate3">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">State 3</property>
-                                <property name="use_underline">True</property>
+                                <property name="use-underline">True</property>
                                 <signal name="activate" handler="on_menu_emulator_loadstate3_activate" swapped="no"/>
                                 <accelerator key="F3" signal="activate" modifiers="GDK_CONTROL_MASK"/>
                               </object>
@@ -652,15 +661,15 @@
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkCheckMenuItem" id="menu_emulator_volume">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Enable Audio</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <property name="active">True</property>
                         <signal name="toggled" handler="on_menu_emulator_volume_toggled" swapped="no"/>
                       </object>
@@ -668,9 +677,9 @@
                     <child>
                       <object class="GtkMenuItem" id="menu_emulator_screenshot">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">Screenshot...</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_emulator_screenshot_activate" swapped="no"/>
                       </object>
                     </child>
@@ -681,35 +690,35 @@
             <child>
               <object class="GtkMenuItem">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">_Help</property>
-                <property name="use_underline">True</property>
+                <property name="use-underline">True</property>
                 <child type="submenu">
                   <object class="GtkMenu">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkMenuItem" id="menu_help_exps_docs">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="label" translatable="yes">ExplorerScript documentation</property>
-                        <property name="use_underline">True</property>
+                        <property name="use-underline">True</property>
                         <signal name="activate" handler="on_menu_help_exps_docs_activate" swapped="no"/>
                       </object>
                     </child>
                     <child>
                       <object class="GtkSeparatorMenuItem">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                       </object>
                     </child>
                     <child>
                       <object class="GtkImageMenuItem" id="menu_help_about">
                         <property name="label">gtk-about</property>
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="use_underline">True</property>
-                        <property name="use_stock">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="use-underline">True</property>
+                        <property name="use-stock">True</property>
                         <signal name="activate" handler="on_menu_help_about_activate" swapped="no"/>
                       </object>
                     </child>
@@ -727,46 +736,46 @@
         <child>
           <object class="GtkPaned">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
+            <property name="can-focus">True</property>
             <property name="orientation">vertical</property>
-            <property name="wide_handle">True</property>
+            <property name="wide-handle">True</property>
             <child>
               <object class="GtkPaned">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can-focus">True</property>
                 <child>
                   <object class="GtkNotebook" id="utility_notebook">
                     <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="tab_pos">left</property>
+                    <property name="can-focus">True</property>
+                    <property name="tab-pos">left</property>
                     <child>
                       <object class="GtkFrame" id="frame_scripts">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="margin_right">5</property>
-                        <property name="margin_bottom">5</property>
-                        <property name="label_xalign">0</property>
-                        <property name="shadow_type">none</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-left">5</property>
+                        <property name="margin-right">5</property>
+                        <property name="margin-bottom">5</property>
+                        <property name="label-xalign">0</property>
+                        <property name="shadow-type">none</property>
                         <child>
                           <object class="GtkAlignment">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
                             <child>
                               <object class="GtkBox">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="orientation">vertical</property>
                                 <child>
                                   <object class="GtkSearchEntry" id="ssb_file_search">
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="margin_bottom">5</property>
-                                    <property name="primary_icon_name">skytemple-edit-find-symbolic</property>
-                                    <property name="primary_icon_activatable">False</property>
-                                    <property name="primary_icon_sensitive">False</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="margin-bottom">5</property>
+                                    <property name="primary-icon-name">skytemple-edit-find-symbolic</property>
+                                    <property name="primary-icon-activatable">False</property>
+                                    <property name="primary-icon-sensitive">False</property>
                                     <signal name="search-changed" handler="on_ssb_file_search_search_changed" swapped="no"/>
                                   </object>
                                   <packing>
@@ -778,17 +787,17 @@
                                 <child>
                                   <object class="GtkScrolledWindow">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="hscrollbar_policy">never</property>
-                                    <property name="shadow_type">in</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="hscrollbar-policy">never</property>
+                                    <property name="shadow-type">in</property>
                                     <child>
                                       <object class="GtkTreeView" id="ssb_file_tree">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">True</property>
-                                        <property name="headers_visible">False</property>
-                                        <property name="rules_hint">True</property>
-                                        <property name="search_column">1</property>
-                                        <property name="enable_tree_lines">True</property>
+                                        <property name="can-focus">True</property>
+                                        <property name="headers-visible">False</property>
+                                        <property name="rules-hint">True</property>
+                                        <property name="search-column">1</property>
+                                        <property name="enable-tree-lines">True</property>
                                         <signal name="button-press-event" handler="on_ssb_file_tree_button_press_event" swapped="no"/>
                                         <child internal-child="selection">
                                           <object class="GtkTreeSelection"/>
@@ -809,8 +818,8 @@
                         <child type="label">
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
                             <property name="label" translatable="yes">Script Browser</property>
                           </object>
                         </child>
@@ -819,15 +828,15 @@
                     <child type="tab">
                       <object class="GtkBox" id="tab_scripts">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">5</property>
-                        <property name="margin_bottom">5</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-top">5</property>
+                        <property name="margin-bottom">5</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">5</property>
                         <child>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Scripts</property>
                             <property name="angle">90</property>
                           </object>
@@ -840,9 +849,9 @@
                         <child>
                           <object class="GtkImage">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="icon_name">skytemple-e-script-symbolic</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-bottom">5</property>
+                            <property name="icon-name">skytemple-e-script-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -852,41 +861,41 @@
                         </child>
                       </object>
                       <packing>
-                        <property name="tab_fill">False</property>
+                        <property name="tab-fill">False</property>
                       </packing>
                     </child>
                     <child>
                       <object class="GtkFrame" id="frame_ground_state">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="margin_right">5</property>
-                        <property name="margin_bottom">5</property>
-                        <property name="label_xalign">0</property>
-                        <property name="shadow_type">none</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-left">5</property>
+                        <property name="margin-right">5</property>
+                        <property name="margin-bottom">5</property>
+                        <property name="label-xalign">0</property>
+                        <property name="shadow-type">none</property>
                         <child>
                           <object class="GtkAlignment">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
                             <child>
                               <object class="GtkNotebook">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
+                                <property name="can-focus">True</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="ground_state_files_tree_sw">
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="shadow_type">in</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="shadow-type">in</property>
                                     <child>
                                       <object class="GtkViewport" id="ground_state_files_tree_engine_not_loaded">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="main_label1">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="label" translatable="yes">Ground Engine
 not running.</property>
                                             <property name="justify">center</property>
@@ -899,27 +908,27 @@ not running.</property>
                                 <child type="tab">
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">Active Files</property>
                                   </object>
                                   <packing>
-                                    <property name="tab_fill">False</property>
+                                    <property name="tab-fill">False</property>
                                   </packing>
                                 </child>
                                 <child>
                                   <object class="GtkScrolledWindow" id="ground_state_entities_tree_sw">
                                     <property name="visible">True</property>
                                     <property name="sensitive">False</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="shadow_type">in</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="shadow-type">in</property>
                                     <child>
                                       <object class="GtkViewport" id="ground_state_entities_tree_engine_not_loaded">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="main_label2">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="label" translatable="yes">Ground Engine
 not running.</property>
                                             <property name="justify">center</property>
@@ -935,12 +944,12 @@ not running.</property>
                                 <child type="tab">
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <property name="label" translatable="yes">Entities</property>
                                   </object>
                                   <packing>
                                     <property name="position">1</property>
-                                    <property name="tab_fill">False</property>
+                                    <property name="tab-fill">False</property>
                                   </packing>
                                 </child>
                               </object>
@@ -950,8 +959,8 @@ not running.</property>
                         <child type="label">
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
                             <property name="label" translatable="yes">Ground Engine State</property>
                           </object>
                         </child>
@@ -963,15 +972,15 @@ not running.</property>
                     <child type="tab">
                       <object class="GtkBox" id="tab_ground_state">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">5</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-top">5</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">5</property>
-                        <property name="baseline_position">top</property>
+                        <property name="baseline-position">top</property>
                         <child>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Ground State</property>
                             <property name="angle">90</property>
                           </object>
@@ -984,9 +993,9 @@ not running.</property>
                         <child>
                           <object class="GtkImage">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="icon_name">skytemple-e-ground-symbolic</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-bottom">5</property>
+                            <property name="icon-name">skytemple-e-ground-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -997,36 +1006,36 @@ not running.</property>
                       </object>
                       <packing>
                         <property name="position">1</property>
-                        <property name="tab_fill">False</property>
+                        <property name="tab-fill">False</property>
                       </packing>
                     </child>
                     <child>
                       <object class="GtkFrame" id="frame_global_vars">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="margin_right">5</property>
-                        <property name="margin_bottom">5</property>
-                        <property name="label_xalign">0</property>
-                        <property name="shadow_type">none</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-left">5</property>
+                        <property name="margin-right">5</property>
+                        <property name="margin-bottom">5</property>
+                        <property name="label-xalign">0</property>
+                        <property name="shadow-type">none</property>
                         <child>
                           <object class="GtkAlignment">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
-                            <property name="left_padding">2</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
+                            <property name="left-padding">2</property>
                             <child>
                               <object class="GtkBox" id="variables_notebook_parent">
                                 <property name="visible">True</property>
                                 <property name="sensitive">False</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="orientation">vertical</property>
                                 <child>
                                   <object class="GtkNotebook" id="variables_notebook">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
+                                    <property name="can-focus">True</property>
                                     <property name="scrollable">True</property>
-                                    <property name="enable_popup">True</property>
+                                    <property name="enable-popup">True</property>
                                   </object>
                                   <packing>
                                     <property name="expand">True</property>
@@ -1037,19 +1046,19 @@ not running.</property>
                                 <child>
                                   <object class="GtkBox">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <property name="orientation">vertical</property>
                                     <property name="spacing">10</property>
                                     <child>
                                       <object class="GtkBox">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="margin_top">5</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="margin-top">5</property>
                                         <property name="orientation">vertical</property>
                                         <child>
                                           <object class="GtkLabel">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="halign">start</property>
                                             <property name="label" translatable="yes">Save</property>
                                           </object>
@@ -1062,15 +1071,15 @@ not running.</property>
                                         <child>
                                           <object class="GtkBox">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="margin_top">5</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="margin-top">5</property>
                                             <child>
                                               <object class="GtkButton" id="variables_save1">
                                                 <property name="label" translatable="yes">1</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_save1_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1084,8 +1093,8 @@ not running.</property>
                                                 <property name="label" translatable="yes">2</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_save2_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1099,8 +1108,8 @@ not running.</property>
                                                 <property name="label" translatable="yes">3</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_save3_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1126,13 +1135,13 @@ not running.</property>
                                     <child>
                                       <object class="GtkBox">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
-                                        <property name="margin_top">5</property>
+                                        <property name="can-focus">False</property>
+                                        <property name="margin-top">5</property>
                                         <property name="orientation">vertical</property>
                                         <child>
                                           <object class="GtkLabel">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="halign">start</property>
                                             <property name="label" translatable="yes">Load</property>
                                           </object>
@@ -1145,15 +1154,15 @@ not running.</property>
                                         <child>
                                           <object class="GtkBox">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="margin_top">5</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="margin-top">5</property>
                                             <child>
                                               <object class="GtkButton" id="variables_load1">
                                                 <property name="label" translatable="yes">1</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_load1_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1167,8 +1176,8 @@ not running.</property>
                                                 <property name="label" translatable="yes">2</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_load2_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1182,8 +1191,8 @@ not running.</property>
                                                 <property name="label" translatable="yes">3</property>
                                                 <property name="visible">True</property>
                                                 <property name="sensitive">False</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">True</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">True</property>
                                                 <signal name="clicked" handler="on_variables_load3_clicked" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1217,12 +1226,12 @@ not running.</property>
                                   <object class="GtkButton" id="variables_reload">
                                     <property name="label" translatable="yes">Reload current variables</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">True</property>
-                                    <property name="tooltip_text" translatable="yes">Sometimes the values get out
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">True</property>
+                                    <property name="tooltip-text" translatable="yes">Sometimes the values get out
 of sync with the game.
 This forces a reload.</property>
-                                    <property name="margin_top">5</property>
+                                    <property name="margin-top">5</property>
                                     <signal name="clicked" handler="on_variables_reload_clicked" swapped="no"/>
                                   </object>
                                   <packing>
@@ -1238,8 +1247,8 @@ This forces a reload.</property>
                         <child type="label">
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_top">5</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-top">5</property>
                             <property name="label" translatable="yes">Global Variables</property>
                           </object>
                         </child>
@@ -1251,15 +1260,15 @@ This forces a reload.</property>
                     <child type="tab">
                       <object class="GtkBox" id="tab_global_variables">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">5</property>
-                        <property name="margin_bottom">5</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-top">5</property>
+                        <property name="margin-bottom">5</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">5</property>
                         <child>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Global Variables</property>
                             <property name="angle">90</property>
                           </object>
@@ -1272,9 +1281,9 @@ This forces a reload.</property>
                         <child>
                           <object class="GtkImage">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="icon_name">skytemple-e-variable-symbolic</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-bottom">5</property>
+                            <property name="icon-name">skytemple-e-variable-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1285,41 +1294,41 @@ This forces a reload.</property>
                       </object>
                       <packing>
                         <property name="position">2</property>
-                        <property name="tab_fill">False</property>
+                        <property name="tab-fill">False</property>
                       </packing>
                     </child>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_left">5</property>
-                        <property name="margin_right">5</property>
-                        <property name="margin_bottom">5</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-left">5</property>
+                        <property name="margin-right">5</property>
+                        <property name="margin-bottom">5</property>
                         <property name="orientation">vertical</property>
                         <child>
                           <object class="GtkFrame" id="frame_local_variables">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label_xalign">0</property>
-                            <property name="shadow_type">none</property>
+                            <property name="can-focus">False</property>
+                            <property name="label-xalign">0</property>
+                            <property name="shadow-type">none</property>
                             <child>
                               <object class="GtkAlignment">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_top">5</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-top">5</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="local_variables_sw">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="shadow_type">in</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="shadow-type">in</property>
                                     <child>
                                       <object class="GtkViewport" id="local_vars_ges_not_loaded">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="main_label3">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="label" translatable="yes">Debugger is 
 not halting.</property>
                                             <property name="justify">center</property>
@@ -1334,8 +1343,8 @@ not halting.</property>
                             <child type="label">
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_top">5</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-top">5</property>
                                 <property name="label" translatable="yes">Local Variables</property>
                               </object>
                             </child>
@@ -1349,27 +1358,27 @@ not halting.</property>
                         <child>
                           <object class="GtkFrame" id="frame_macro_variables">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="label_xalign">0</property>
-                            <property name="shadow_type">none</property>
+                            <property name="can-focus">False</property>
+                            <property name="label-xalign">0</property>
+                            <property name="shadow-type">none</property>
                             <child>
                               <object class="GtkAlignment">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_top">5</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-top">5</property>
                                 <child>
                                   <object class="GtkScrolledWindow" id="macro_variables_sw">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="shadow_type">in</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="shadow-type">in</property>
                                     <child>
                                       <object class="GtkViewport" id="macro_vars_ges_not_loaded">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <child>
                                           <object class="GtkLabel" id="main_label4">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="label" translatable="yes">Debugger is 
 not halting.</property>
                                             <property name="justify">center</property>
@@ -1384,8 +1393,8 @@ not halting.</property>
                             <child type="label">
                               <object class="GtkLabel">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="margin_top">5</property>
+                                <property name="can-focus">False</property>
+                                <property name="margin-top">5</property>
                                 <property name="label" translatable="yes">Macro Variables</property>
                               </object>
                             </child>
@@ -1404,15 +1413,15 @@ not halting.</property>
                     <child type="tab">
                       <object class="GtkBox" id="tab_local_variables">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
-                        <property name="margin_top">5</property>
-                        <property name="margin_bottom">5</property>
+                        <property name="can-focus">False</property>
+                        <property name="margin-top">5</property>
+                        <property name="margin-bottom">5</property>
                         <property name="orientation">vertical</property>
                         <property name="spacing">5</property>
                         <child>
                           <object class="GtkLabel">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <property name="label" translatable="yes">Local Variables</property>
                             <property name="angle">90</property>
                           </object>
@@ -1425,9 +1434,9 @@ not halting.</property>
                         <child>
                           <object class="GtkImage">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
-                            <property name="margin_bottom">5</property>
-                            <property name="icon_name">skytemple-e-local-variable-symbolic</property>
+                            <property name="can-focus">False</property>
+                            <property name="margin-bottom">5</property>
+                            <property name="icon-name">skytemple-e-local-variable-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
@@ -1438,7 +1447,7 @@ not halting.</property>
                       </object>
                       <packing>
                         <property name="position">3</property>
-                        <property name="tab_fill">False</property>
+                        <property name="tab-fill">False</property>
                       </packing>
                     </child>
                   </object>
@@ -1450,20 +1459,20 @@ not halting.</property>
                 <child>
                   <object class="GtkStack">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <child>
                       <object class="GtkPaned">
                         <property name="visible">True</property>
-                        <property name="can_focus">True</property>
+                        <property name="can-focus">True</property>
                         <child>
                           <object class="GtkBox" id="code_editor_main">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkLabel" id="main_label">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="label" translatable="yes">Welcome to 
 SkyTemple
 Script Engine Debugger.
@@ -1481,17 +1490,17 @@ via the File menu.</property>
                             <child>
                               <object class="GtkInfoBar" id="info_bar">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="revealed">False</property>
                                 <child internal-child="action_area">
                                   <object class="GtkButtonBox">
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <property name="spacing">6</property>
-                                    <property name="layout_style">end</property>
+                                    <property name="layout-style">end</property>
                                     <child>
                                       <object class="GtkLabel">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                       </object>
                                       <packing>
                                         <property name="expand">True</property>
@@ -1508,12 +1517,12 @@ via the File menu.</property>
                                 </child>
                                 <child internal-child="content_area">
                                   <object class="GtkBox">
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <property name="spacing">16</property>
                                     <child>
                                       <object class="GtkLabel" id="info_bar_label">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <property name="label" translatable="yes">The Script Engine is currently not running.</property>
                                       </object>
                                       <packing>
@@ -1536,7 +1545,7 @@ via the File menu.</property>
                               <packing>
                                 <property name="expand">False</property>
                                 <property name="fill">True</property>
-                                <property name="pack_type">end</property>
+                                <property name="pack-type">end</property>
                                 <property name="position">1</property>
                               </packing>
                             </child>
@@ -1549,43 +1558,43 @@ via the File menu.</property>
                         <child>
                           <object class="GtkEventBox" id="right_event_box">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
+                            <property name="can-focus">True</property>
                             <signal name="button-press-event" handler="on_right_event_box_button_press_event" swapped="no"/>
                             <child>
                               <object class="GtkFrame" id="box_r4">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
-                                <property name="label_xalign">0</property>
-                                <property name="shadow_type">none</property>
+                                <property name="can-focus">False</property>
+                                <property name="label-xalign">0</property>
+                                <property name="shadow-type">none</property>
                                 <child>
                                   <object class="GtkAlignment">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
+                                    <property name="can-focus">False</property>
                                     <child>
                                       <object class="GtkBox">
                                         <property name="visible">True</property>
-                                        <property name="can_focus">False</property>
+                                        <property name="can-focus">False</property>
                                         <property name="orientation">vertical</property>
                                         <child>
                                           <object class="GtkAspectFrame" id="draw_aspect_frame">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="margin_top">5</property>
-                                            <property name="label_xalign">0</property>
-                                            <property name="shadow_type">none</property>
-                                            <property name="ratio">0.67000001668930053711</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="margin-top">5</property>
+                                            <property name="label-xalign">0</property>
+                                            <property name="shadow-type">none</property>
+                                            <property name="ratio">0.6700000166893005</property>
                                             <signal name="size-allocate" handler="on_draw_aspect_frame_size_allocate" swapped="no"/>
                                             <child>
                                               <object class="GtkBox">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
+                                                <property name="can-focus">False</property>
                                                 <property name="orientation">vertical</property>
                                                 <child>
                                                   <object class="GtkDrawingArea" id="draw_main">
-                                                    <property name="width_request">256</property>
-                                                    <property name="height_request">192</property>
+                                                    <property name="width-request">256</property>
+                                                    <property name="height-request">192</property>
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
+                                                    <property name="can-focus">True</property>
                                                     <property name="events">GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                                                     <signal name="button-press-event" handler="on_draw_main_button_press_event" swapped="no"/>
                                                     <signal name="button-release-event" handler="on_draw_main_button_release_event" swapped="no"/>
@@ -1601,10 +1610,10 @@ via the File menu.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkDrawingArea" id="draw_sub">
-                                                    <property name="width_request">256</property>
-                                                    <property name="height_request">192</property>
+                                                    <property name="width-request">256</property>
+                                                    <property name="height-request">192</property>
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">True</property>
+                                                    <property name="can-focus">True</property>
                                                     <property name="events">GDK_EXPOSURE_MASK | GDK_POINTER_MOTION_MASK | GDK_POINTER_MOTION_HINT_MASK | GDK_BUTTON1_MOTION_MASK | GDK_BUTTON_PRESS_MASK | GDK_BUTTON_RELEASE_MASK | GDK_STRUCTURE_MASK</property>
                                                     <signal name="button-press-event" handler="on_draw_sub_button_press_event" swapped="no"/>
                                                     <signal name="button-release-event" handler="on_draw_sub_button_release_event" swapped="no"/>
@@ -1630,30 +1639,30 @@ via the File menu.</property>
                                         <child>
                                           <object class="GtkBox">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
-                                            <property name="margin_left">5</property>
-                                            <property name="margin_right">5</property>
-                                            <property name="margin_top">5</property>
-                                            <property name="margin_bottom">5</property>
+                                            <property name="can-focus">False</property>
+                                            <property name="margin-left">5</property>
+                                            <property name="margin-right">5</property>
+                                            <property name="margin-top">5</property>
+                                            <property name="margin-bottom">5</property>
                                             <property name="orientation">vertical</property>
                                             <child>
                                               <object class="GtkBox">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
+                                                <property name="can-focus">False</property>
                                                 <child>
                                                   <object class="GtkButton" id="emulator_controls_playstop">
                                                     <property name="visible">True</property>
                                                     <property name="sensitive">False</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">True</property>
-                                                    <property name="tooltip_text" translatable="yes">Run the game from the start or stop the emulator.</property>
-                                                    <property name="always_show_image">True</property>
+                                                    <property name="can-focus">True</property>
+                                                    <property name="receives-default">True</property>
+                                                    <property name="tooltip-text" translatable="yes">Run the game from the start or stop the emulator.</property>
+                                                    <property name="always-show-image">True</property>
                                                     <signal name="clicked" handler="on_emulator_controls_playstop_clicked" swapped="no"/>
                                                     <child>
                                                       <object class="GtkImage" id="img_play">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="icon_name">skytemple-media-playback-start-symbolic</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="icon-name">skytemple-media-playback-start-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1667,15 +1676,15 @@ via the File menu.</property>
                                                   <object class="GtkButton" id="emulator_controls_pause">
                                                     <property name="visible">True</property>
                                                     <property name="sensitive">False</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">True</property>
+                                                    <property name="can-focus">True</property>
+                                                    <property name="receives-default">True</property>
                                                     <signal name="clicked" handler="on_emulator_controls_pause_clicked" swapped="no"/>
                                                     <child>
                                                       <object class="GtkImage" id="img_pause">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="tooltip_text" translatable="yes">Pause the emulator.</property>
-                                                        <property name="icon_name">skytemple-media-playback-pause-symbolic</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="tooltip-text" translatable="yes">Pause the emulator.</property>
+                                                        <property name="icon-name">skytemple-media-playback-pause-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1689,15 +1698,15 @@ via the File menu.</property>
                                                   <object class="GtkButton" id="emulator_controls_reset">
                                                     <property name="visible">True</property>
                                                     <property name="sensitive">False</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">True</property>
-                                                    <property name="tooltip_text" translatable="yes">Reset the emulator.</property>
+                                                    <property name="can-focus">True</property>
+                                                    <property name="receives-default">True</property>
+                                                    <property name="tooltip-text" translatable="yes">Reset the emulator.</property>
                                                     <signal name="clicked" handler="on_emulator_controls_reset_clicked" swapped="no"/>
                                                     <child>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="icon_name">skytemple-view-refresh-symbolic</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="icon-name">skytemple-view-refresh-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1711,15 +1720,15 @@ via the File menu.</property>
                                                   <object class="GtkToggleButton" id="emulator_controls_volume">
                                                     <property name="visible">True</property>
                                                     <property name="sensitive">False</property>
-                                                    <property name="can_focus">True</property>
-                                                    <property name="receives_default">True</property>
+                                                    <property name="can-focus">True</property>
+                                                    <property name="receives-default">True</property>
                                                     <property name="active">True</property>
                                                     <signal name="toggled" handler="on_emulator_controls_volume_toggled" swapped="no"/>
                                                     <child>
                                                       <object class="GtkImage">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
-                                                        <property name="icon_name">skytemple-audio-volume-high-symbolic</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="icon-name">skytemple-audio-volume-high-symbolic</property>
                                                       </object>
                                                     </child>
                                                   </object>
@@ -1739,29 +1748,29 @@ via the File menu.</property>
                                             <child>
                                               <object class="GtkFrame">
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">False</property>
-                                                <property name="label_xalign">0</property>
-                                                <property name="shadow_type">none</property>
+                                                <property name="can-focus">False</property>
+                                                <property name="label-xalign">0</property>
+                                                <property name="shadow-type">none</property>
                                                 <child>
                                                   <object class="GtkAlignment">
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
-                                                    <property name="left_padding">12</property>
+                                                    <property name="can-focus">False</property>
+                                                    <property name="left-padding">12</property>
                                                     <child>
                                                       <object class="GtkBox">
                                                         <property name="visible">True</property>
-                                                        <property name="can_focus">False</property>
+                                                        <property name="can-focus">False</property>
                                                         <property name="spacing">10</property>
                                                         <child>
                                                           <object class="GtkBox">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="margin_top">5</property>
+                                                            <property name="can-focus">False</property>
+                                                            <property name="margin-top">5</property>
                                                             <property name="orientation">vertical</property>
                                                             <child>
                                                             <object class="GtkLabel">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
+                                                            <property name="can-focus">False</property>
                                                             <property name="halign">start</property>
                                                             <property name="label" translatable="yes">Save</property>
                                                             </object>
@@ -1774,15 +1783,15 @@ via the File menu.</property>
                                                             <child>
                                                             <object class="GtkBox">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="margin_top">5</property>
+                                                            <property name="can-focus">False</property>
+                                                            <property name="margin-top">5</property>
                                                             <child>
                                                             <object class="GtkButton" id="emulator_controls_savestate1">
                                                             <property name="label" translatable="yes">1</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_savestate1_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1796,8 +1805,8 @@ via the File menu.</property>
                                                             <property name="label" translatable="yes">2</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_savestate2_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1811,8 +1820,8 @@ via the File menu.</property>
                                                             <property name="label" translatable="yes">3</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_savestate3_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1838,13 +1847,13 @@ via the File menu.</property>
                                                         <child>
                                                           <object class="GtkBox">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="margin_top">5</property>
+                                                            <property name="can-focus">False</property>
+                                                            <property name="margin-top">5</property>
                                                             <property name="orientation">vertical</property>
                                                             <child>
                                                             <object class="GtkLabel">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
+                                                            <property name="can-focus">False</property>
                                                             <property name="halign">start</property>
                                                             <property name="label" translatable="yes">Load</property>
                                                             </object>
@@ -1857,15 +1866,15 @@ via the File menu.</property>
                                                             <child>
                                                             <object class="GtkBox">
                                                             <property name="visible">True</property>
-                                                            <property name="can_focus">False</property>
-                                                            <property name="margin_top">5</property>
+                                                            <property name="can-focus">False</property>
+                                                            <property name="margin-top">5</property>
                                                             <child>
                                                             <object class="GtkButton" id="emulator_controls_loadstate1">
                                                             <property name="label" translatable="yes">1</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_loadstate1_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1879,8 +1888,8 @@ via the File menu.</property>
                                                             <property name="label" translatable="yes">2</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_loadstate2_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1894,8 +1903,8 @@ via the File menu.</property>
                                                             <property name="label" translatable="yes">3</property>
                                                             <property name="visible">True</property>
                                                             <property name="sensitive">False</property>
-                                                            <property name="can_focus">True</property>
-                                                            <property name="receives_default">True</property>
+                                                            <property name="can-focus">True</property>
+                                                            <property name="receives-default">True</property>
                                                             <signal name="clicked" handler="on_emulator_controls_loadstate3_clicked" swapped="no"/>
                                                             </object>
                                                             <packing>
@@ -1925,8 +1934,8 @@ via the File menu.</property>
                                                 <child type="label">
                                                   <object class="GtkLabel">
                                                     <property name="visible">True</property>
-                                                    <property name="can_focus">False</property>
-                                                    <property name="margin_top">5</property>
+                                                    <property name="can-focus">False</property>
+                                                    <property name="margin-top">5</property>
                                                     <property name="label" translatable="yes">Savestate</property>
                                                   </object>
                                                 </child>
@@ -1947,21 +1956,21 @@ via the File menu.</property>
                                         <child>
                                           <object class="GtkButtonBox">
                                             <property name="visible">True</property>
-                                            <property name="can_focus">False</property>
+                                            <property name="can-focus">False</property>
                                             <property name="halign">start</property>
-                                            <property name="margin_left">5</property>
-                                            <property name="margin_right">5</property>
-                                            <property name="margin_bottom">5</property>
+                                            <property name="margin-left">5</property>
+                                            <property name="margin-right">5</property>
+                                            <property name="margin-bottom">5</property>
                                             <property name="orientation">vertical</property>
-                                            <property name="layout_style">start</property>
+                                            <property name="layout-style">start</property>
                                             <child>
                                               <object class="GtkCheckButton" id="debug_settings_overlay">
                                                 <property name="label" translatable="yes">Draw Entity Debug Overlay</property>
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">False</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">False</property>
                                                 <property name="halign">start</property>
-                                                <property name="draw_indicator">True</property>
+                                                <property name="draw-indicator">True</property>
                                                 <signal name="toggled" handler="on_debug_settings_overlay_toggled" swapped="no"/>
                                               </object>
                                               <packing>
@@ -1974,12 +1983,12 @@ via the File menu.</property>
                                               <object class="GtkCheckButton" id="debug_settings_debug_mode">
                                                 <property name="label" translatable="yes">Enable Debugging Mode</property>
                                                 <property name="visible">True</property>
-                                                <property name="can_focus">True</property>
-                                                <property name="receives_default">False</property>
-                                                <property name="tooltip_text" translatable="yes">branch_Debug (if debug) commands will activate.</property>
+                                                <property name="can-focus">True</property>
+                                                <property name="receives-default">False</property>
+                                                <property name="tooltip-text" translatable="yes">branch_Debug (if debug) commands will activate.</property>
                                                 <property name="halign">start</property>
                                                 <property name="active">True</property>
-                                                <property name="draw_indicator">True</property>
+                                                <property name="draw-indicator">True</property>
                                                 <signal name="toggled" handler="on_debug_settings_debug_mode_toggled" swapped="no"/>
                                               </object>
                                               <packing>
@@ -2002,8 +2011,8 @@ via the File menu.</property>
                                 <child type="label">
                                   <object class="GtkLabel">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="margin_top">5</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="margin-top">5</property>
                                     <property name="label" translatable="yes">Emulator</property>
                                   </object>
                                 </child>
@@ -2036,36 +2045,36 @@ via the File menu.</property>
             <child>
               <object class="GtkFrame" id="frame_debug_log">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="label_xalign">0</property>
-                <property name="shadow_type">none</property>
+                <property name="can-focus">False</property>
+                <property name="label-xalign">0</property>
+                <property name="shadow-type">none</property>
                 <child>
                   <object class="GtkAlignment">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_top">5</property>
-                    <property name="left_padding">12</property>
+                    <property name="can-focus">False</property>
+                    <property name="margin-top">5</property>
+                    <property name="left-padding">12</property>
                     <child>
                       <object class="GtkBox">
                         <property name="visible">True</property>
-                        <property name="can_focus">False</property>
+                        <property name="can-focus">False</property>
                         <property name="orientation">vertical</property>
                         <child>
                           <object class="GtkBox">
                             <property name="visible">True</property>
-                            <property name="can_focus">False</property>
+                            <property name="can-focus">False</property>
                             <child>
                               <object class="GtkToggleButton" id="debug_log_scroll_to_bottom">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
                                 <property name="active">True</property>
                                 <signal name="toggled" handler="on_debug_log_scroll_to_bottom_toggled" swapped="no"/>
                                 <child>
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="icon_name">skytemple-go-bottom-symbolic</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="icon-name">skytemple-go-bottom-symbolic</property>
                                   </object>
                                 </child>
                               </object>
@@ -2078,14 +2087,14 @@ via the File menu.</property>
                             <child>
                               <object class="GtkButton" id="debug_log_clear">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="receives_default">True</property>
+                                <property name="can-focus">True</property>
+                                <property name="receives-default">True</property>
                                 <signal name="clicked" handler="on_debug_log_clear_clicked" swapped="no"/>
                                 <child>
                                   <object class="GtkImage">
                                     <property name="visible">True</property>
-                                    <property name="can_focus">False</property>
-                                    <property name="icon_name">skytemple-edit-delete-symbolic</property>
+                                    <property name="can-focus">False</property>
+                                    <property name="icon-name">skytemple-edit-delete-symbolic</property>
                                   </object>
                                 </child>
                               </object>
@@ -2098,16 +2107,16 @@ via the File menu.</property>
                             <child>
                               <object class="GtkButtonBox">
                                 <property name="visible">True</property>
-                                <property name="can_focus">False</property>
+                                <property name="can-focus">False</property>
                                 <property name="spacing">10</property>
-                                <property name="layout_style">start</property>
+                                <property name="layout-style">start</property>
                                 <child>
                                   <object class="GtkCheckButton" id="debug_log_cntrl_internal">
                                     <property name="label" translatable="yes">Game Internal</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="draw_indicator">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">False</property>
+                                    <property name="draw-indicator">True</property>
                                     <signal name="toggled" handler="on_debug_log_cntrl_internal_toggled" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2120,9 +2129,9 @@ via the File menu.</property>
                                   <object class="GtkCheckButton" id="debug_log_cntrl_ops">
                                     <property name="label" translatable="yes">OpCodes</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
-                                    <property name="draw_indicator">True</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">False</property>
+                                    <property name="draw-indicator">True</property>
                                     <signal name="toggled" handler="on_debug_log_cntrl_ops_toggled" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2135,10 +2144,10 @@ via the File menu.</property>
                                   <object class="GtkCheckButton" id="debug_log_cntrl_script">
                                     <property name="label" translatable="yes">Script Debug</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">False</property>
                                     <property name="active">True</property>
-                                    <property name="draw_indicator">True</property>
+                                    <property name="draw-indicator">True</property>
                                     <signal name="toggled" handler="on_debug_log_cntrl_script_toggled" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2151,10 +2160,10 @@ via the File menu.</property>
                                   <object class="GtkCheckButton" id="debug_log_cntrl_ground_state">
                                     <property name="label" translatable="yes">Engine Events</property>
                                     <property name="visible">True</property>
-                                    <property name="can_focus">True</property>
-                                    <property name="receives_default">False</property>
+                                    <property name="can-focus">True</property>
+                                    <property name="receives-default">False</property>
                                     <property name="active">True</property>
-                                    <property name="draw_indicator">True</property>
+                                    <property name="draw-indicator">True</property>
                                     <signal name="toggled" handler="on_debug_log_cntrl_ground_state_toggled" swapped="no"/>
                                   </object>
                                   <packing>
@@ -2180,16 +2189,16 @@ via the File menu.</property>
                         <child>
                           <object class="GtkScrolledWindow" id="debug_log_sw">
                             <property name="visible">True</property>
-                            <property name="can_focus">True</property>
-                            <property name="vscrollbar_policy">always</property>
-                            <property name="shadow_type">in</property>
+                            <property name="can-focus">True</property>
+                            <property name="vscrollbar-policy">always</property>
+                            <property name="shadow-type">in</property>
                             <child>
                               <object class="GtkTextView" id="debug_log_textview">
                                 <property name="visible">True</property>
-                                <property name="can_focus">True</property>
-                                <property name="margin_bottom">5</property>
-                                <property name="hscroll_policy">natural</property>
-                                <property name="vscroll_policy">natural</property>
+                                <property name="can-focus">True</property>
+                                <property name="margin-bottom">5</property>
+                                <property name="hscroll-policy">natural</property>
+                                <property name="vscroll-policy">natural</property>
                                 <property name="editable">False</property>
                               </object>
                             </child>
@@ -2207,8 +2216,8 @@ via the File menu.</property>
                 <child type="label">
                   <object class="GtkLabel">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
-                    <property name="margin_top">5</property>
+                    <property name="can-focus">False</property>
+                    <property name="margin-top">5</property>
                     <property name="label" translatable="yes">Debug Log</property>
                   </object>
                 </child>
@@ -2227,24 +2236,21 @@ via the File menu.</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="name">DeSmuME</property>
-    <property name="can_focus">False</property>
+    <property name="can-focus">False</property>
     <property name="modal">True</property>
-    <property name="type_hint">dialog</property>
-    <property name="transient_for">main_window</property>
-    <property name="attached_to">main_window</property>
-    <property name="program_name">SkyTemple Script Engine Debugger</property>
+    <property name="type-hint">dialog</property>
+    <property name="transient-for">main_window</property>
+    <property name="attached-to">main_window</property>
+    <property name="program-name">SkyTemple Script Engine Debugger</property>
     <property name="copyright" translatable="yes">Powered by DeSmuME, the Nintendo DS Emulator:
 Originally licensed under GPLv2. See https://github.com/TASVideos/desmume/blob/master/desmume/AUTHORS for a list of authors!
 Thanks for making this great emulator!</property>
     <property name="comments" translatable="yes">Interactive debugger for the script engine of Pokémon Mystery Dungeon Explorers of Sky (EU/US)</property>
     <property name="website">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
-    <property name="website_label" translatable="yes">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
+    <property name="website-label" translatable="yes">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
     <property name="authors">Project Lead:
 Marco "Parakoopa" Köpcke http://github.com/parakoopa
 
@@ -2292,16 +2298,16 @@ DrGlutamate
 ケLV https://clv.carrd.co
 Quilavabom
 MrStrouder</property>
-    <property name="translator_credits" translatable="yes" comments="TRANSLATORS: Replace this string with your names, one name per line.">translator-credits</property>
-    <property name="logo_icon_name">skytemple-debugger</property>
-    <property name="license_type">gpl-3-0</property>
+    <property name="translator-credits" translatable="yes" comments="TRANSLATORS: Replace this string with your names, one name per line.">translator-credits</property>
+    <property name="logo-icon-name">skytemple-debugger</property>
+    <property name="license-type">gpl-3-0</property>
     <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
     <child internal-child="vbox">
       <object class="GtkBox">
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox">
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <child>
               <placeholder/>
             </child>
@@ -2323,26 +2329,23 @@ MrStrouder</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkDialog" id="generic_input_dialog">
-    <property name="can_focus">False</property>
+    <property name="can-focus">False</property>
     <property name="modal">True</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="type_hint">dialog</property>
-    <property name="transient_for">main_window</property>
-    <property name="attached_to">main_window</property>
+    <property name="destroy-with-parent">True</property>
+    <property name="type-hint">dialog</property>
+    <property name="transient-for">main_window</property>
+    <property name="attached-to">main_window</property>
     <child internal-child="vbox">
       <object class="GtkBox">
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">2</property>
         <child internal-child="action_area">
           <object class="GtkButtonBox">
-            <property name="can_focus">False</property>
-            <property name="layout_style">end</property>
+            <property name="can-focus">False</property>
+            <property name="layout-style">end</property>
             <child>
               <placeholder/>
             </child>
@@ -2359,13 +2362,13 @@ MrStrouder</property>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <property name="spacing">5</property>
             <child>
               <object class="GtkLabel" id="generic_input_dialog_label">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="halign">start</property>
                 <property name="label" translatable="yes">label</property>
               </object>
@@ -2378,7 +2381,7 @@ MrStrouder</property>
             <child>
               <object class="GtkEntry" id="generic_input_dialog_entry">
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
+                <property name="can-focus">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -2396,19 +2399,15 @@ MrStrouder</property>
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
   </object>
   <object class="GtkAssistant" id="intro_dialog">
-    <property name="can_focus">False</property>
+    <property name="can-focus">False</property>
     <property name="modal">True</property>
-    <property name="destroy_with_parent">True</property>
-    <property name="skip_taskbar_hint">True</property>
-    <property name="skip_pager_hint">True</property>
-    <property name="transient_for">main_window</property>
-    <property name="attached_to">main_window</property>
-    <property name="use_header_bar">1</property>
+    <property name="destroy-with-parent">True</property>
+    <property name="skip-taskbar-hint">True</property>
+    <property name="skip-pager-hint">True</property>
+    <property name="transient-for">main_window</property>
+    <property name="attached-to">main_window</property>
     <signal name="apply" handler="on_intro_dialog_close" swapped="no"/>
     <signal name="cancel" handler="on_intro_dialog_close" swapped="no"/>
     <signal name="close" handler="on_intro_dialog_close" swapped="no"/>
@@ -2416,14 +2415,14 @@ MrStrouder</property>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="spacing">20</property>
         <child>
           <object class="GtkImage">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="pixel_size">127</property>
-            <property name="icon_name">skytemple-debugger</property>
+            <property name="can-focus">False</property>
+            <property name="pixel-size">127</property>
+            <property name="icon-name">skytemple-debugger</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -2434,7 +2433,7 @@ MrStrouder</property>
         <child>
           <object class="GtkLabel">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="halign">start</property>
             <property name="label" translatable="yes">&lt;span size="large"&gt;Welcome to SkyTemple Script Engine Debugger!&lt;/span&gt;
 
@@ -2451,7 +2450,7 @@ Please note the following:
 - A project directory was created next to the ROM. It contains
   the ExplorerScript source code files created by the debugger.
 - Please report any issues.</property>
-            <property name="use_markup">True</property>
+            <property name="use-markup">True</property>
           </object>
           <packing>
             <property name="expand">False</property>
@@ -2461,9 +2460,9 @@ Please note the following:
         </child>
       </object>
       <packing>
-        <property name="page_type">confirm</property>
+        <property name="page-type">confirm</property>
         <property name="complete">True</property>
-        <property name="has_padding">False</property>
+        <property name="has-padding">False</property>
       </packing>
     </child>
     <child>
@@ -2480,10 +2479,10 @@ Please note the following:
     </child>
     <child internal-child="action_area">
       <object class="GtkBox">
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
       </object>
       <packing>
-        <property name="has_padding">False</property>
+        <property name="has-padding">False</property>
       </packing>
     </child>
   </object>
