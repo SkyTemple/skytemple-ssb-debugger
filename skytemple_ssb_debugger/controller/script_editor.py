@@ -31,6 +31,7 @@ from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
+from skytemple_ssb_debugger.model.completion.calltips.string_event_emitter import StringEventEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
 from skytemple_ssb_debugger.model.completion.exps_statements import GtkSourceCompletionExplorerScriptStatements
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
@@ -870,6 +871,7 @@ class ScriptEditorController:
         completion.add_provider(GtkSourceCompletionSsbFunctions(self.rom_data.script_data.op_codes))
         CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes,
                        self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context(), is_ssbs=True)
+        StringEventEmitter(self._ssb_script_view, self.parent.get_context())
 
     def _load_explorerscript_completion(self):
         view = self._explorerscript_view
@@ -882,6 +884,7 @@ class ScriptEditorController:
         completion.add_provider(GtkSourceCompletionExplorerScriptStatements())
         CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes,
                        self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context())
+        StringEventEmitter(self._explorerscript_view, self.parent.get_context())
 
     def _update_view_editable_state(self):
         """Update which view is editable based on self._explorerscript_active"""

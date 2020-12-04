@@ -113,6 +113,14 @@ class AbstractDebuggerControlContext(ABC):
         """Event handler for the debugger losing focus. May be triggered even if already had no focus."""
 
     @abstractmethod
+    def on_selected_string_changed(self, string: str):
+        """
+        Called when the user selected* a new string in a script editor or the selected string was
+        modified.
+        *=cursor placed inside of string
+        """
+
+    @abstractmethod
     def show_ssb_script_editor(self) -> bool:
         """Whether or not the tab for SSBScript editing should be shown in the editor."""
 

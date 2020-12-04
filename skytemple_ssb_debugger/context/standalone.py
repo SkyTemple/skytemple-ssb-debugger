@@ -73,6 +73,9 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def on_blur(self):
         pass
 
+    def on_selected_string_changed(self, string: str):
+        pass
+
     def show_ssb_script_editor(self) -> bool:
         return True
 
