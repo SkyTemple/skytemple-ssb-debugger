@@ -650,6 +650,13 @@ class MainController:
     def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
         from skytemple_ssb_debugger.main import get_debugger_version
         about: Gtk.AboutDialog = self.builder.get_object("about_dialog")
+        about.connect("response", lambda d, r: d.hide())
+
+        def activate_link(l, uri, *args):
+            webbrowser.open_new_tab(uri)
+            return True
+
+        about.connect("activate-link", activate_link)
         header_bar: Optional[Gtk.HeaderBar] = about.get_header_bar()
         if header_bar is not None:
             # Cool bug??? And it only works on the left as well, wtf?
