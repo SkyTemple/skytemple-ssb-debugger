@@ -1,4 +1,0 @@
-_build_root
-*.whl
-*.exe
-!ssb-debugger.spec

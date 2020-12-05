@@ -1,2 +1,0 @@
-ndspy==3.0.0
-nest-asyncio==1.3.2

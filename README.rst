@@ -7,8 +7,8 @@ SkyTemple Script Engine Debugger
 
 .. |logo| image:: https://raw.githubusercontent.com/SkyTemple/skytemple-ssb-debugger/master/skytemple_ssb_debugger/data/icons/hicolor/256x256/apps/skytemple-debugger.png
 
-.. |build| image:: https://jenkins.riptide.parakoopa.de/buildStatus/icon?job=skytemple-ssb-debugger%2Fmaster
-    :target: https://jenkins.riptide.parakoopa.de/blue/organizations/jenkins/skytemple-ssb-debugger/activity
+.. |build| image:: https://img.shields.io/github/workflow/status/SkyTemple/skytemple-ssb-debugger/Build,%20test%20and%20publish
+    :target: https://pypi.org/project/skytemple-ssb-debugger/
     :alt: Build Status
 
 .. |pypi-version| image:: https://img.shields.io/pypi/v/skytemple-ssb-debugger
