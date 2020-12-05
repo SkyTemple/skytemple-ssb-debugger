@@ -1,3 +1,4 @@
+__version__ = '0.1.0rc1'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -9,7 +10,7 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name='skytemple-ssb-debugger',
-    version='0.1.0rc1',
+    version=__version__,
     packages=find_packages(),
     description='Script Engine Debugger for Pokémon Mystery Dungeon Explorers of Sky (EU/US)',
     long_description=long_description,
