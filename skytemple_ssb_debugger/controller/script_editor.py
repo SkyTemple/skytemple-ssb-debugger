@@ -668,28 +668,31 @@ class ScriptEditorController:
         self.builder.get_object('code_editor_cntrls_breaks').set_active(value)
 
     def toggle_spellchecker(self, value):
-        if self._spellchecker_loaded:
-            if value:
-                if self._ssb_script_spellcheck:
-                    self._ssb_script_spellcheck.enable()
-                if self._explorerscript_spellcheck:
-                    self._explorerscript_spellcheck.enable()
-            else:
-                if self._ssb_script_spellcheck:
-                    self._ssb_script_spellcheck.disable()
-                if self._explorerscript_spellcheck:
-                    self._explorerscript_spellcheck.disable()
-        elif value:
-            self._spellchecker_loaded = True
-            if self._ssb_script_view:
-                self._ssb_script_spellcheck = SpellChecker(self._ssb_script_view, 'en_US')
-            if self._explorerscript_view:
-                self._explorerscript_spellcheck = SpellChecker(self._explorerscript_view, 'en_US')
-            # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
-            # TODO THIS IS SUPER SLOW UNDER WINDOWS.
-            #for word in self.parent.get_context().get_special_words():
-            #    for part in word.split('_'):
-            #        spellchecker.add_to_dictionary(part)
+        try:
+            if self._spellchecker_loaded:
+                if value:
+                    if self._ssb_script_spellcheck:
+                        self._ssb_script_spellcheck.enable()
+                    if self._explorerscript_spellcheck:
+                        self._explorerscript_spellcheck.enable()
+                else:
+                    if self._ssb_script_spellcheck:
+                        self._ssb_script_spellcheck.disable()
+                    if self._explorerscript_spellcheck:
+                        self._explorerscript_spellcheck.disable()
+            elif value:
+                self._spellchecker_loaded = True
+                if self._ssb_script_view:
+                    self._ssb_script_spellcheck = SpellChecker(self._ssb_script_view, 'en_US')
+                if self._explorerscript_view:
+                    self._explorerscript_spellcheck = SpellChecker(self._explorerscript_view, 'en_US')
+                # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
+                # TODO THIS IS SUPER SLOW UNDER WINDOWS.
+                #for word in self.parent.get_context().get_special_words():
+                #    for part in word.split('_'):
+                #        spellchecker.add_to_dictionary(part)
+        except BaseException as ex:
+            logger.error("Failed toggling/loading spellchecker: ", exc_info=ex)
 
     # Menu actions
     def menu__cut(self):

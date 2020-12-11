@@ -168,7 +168,7 @@ class DebuggerSettingsStore:
         if SECT_GENERAL in self.loaded_config:
             if KEY_SPELLCHECK in self.loaded_config[SECT_GENERAL]:
                 return int(self.loaded_config[SECT_GENERAL][KEY_SPELLCHECK]) > 0
-        return True
+        return False
 
     @synchronized(settings_lock)
     def set_spellcheck_enabled(self, value: bool):
