@@ -1,4 +1,4 @@
-__version__ = '0.1.0rc2'
+__version__ = '1.0.0'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -18,7 +18,7 @@ setup(
     url='https://github.com/SkyTemple/skytemple-ssb-debugger',
     install_requires=[
         'ndspy >= 3.0.0',
-        'skytemple-files >= 0.1.0rc2',
+        'skytemple-files >= 1.0.0',
         'skytemple-icons >= 0.1.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
@@ -28,12 +28,13 @@ setup(
         'pygtkspellcheck >= 4.0'
     ],
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 4 - Beta',
         'Programming Language :: Python',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8'
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9'
     ],
     package_data={'skytemple_ssb_debugger': ['*.lang', '*.css', '*.glade', '**/*.glade', 'data/*/*/*/*/*']},
     entry_points='''
