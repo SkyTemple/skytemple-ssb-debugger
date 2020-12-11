@@ -191,19 +191,19 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         self._we_triggered_the_reload = True
         for loaded_ssb, ready_to_reload, included_exps_files in zipped:
             for exps_abs_path in included_exps_files:
-                logger.error(f"After save: Inform macro inclusion {exps_abs_path}.")
+                logger.debug(f"After save: Inform macro inclusion {exps_abs_path}.")
                 self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, loaded_ssb.filename)
-            logger.error(f"After save: Inform recompile ssb file {loaded_ssb.filename}.")
+            logger.debug(f"After save: Inform recompile ssb file {loaded_ssb.filename}.")
             self._editor_notebook_controller.on_ssb_changed_externally(loaded_ssb.filename, ready_to_reload)
         # Temporary text marks were not built by the callback in on_ssb_changed_externally
         self._we_triggered_the_reload = False
 
-        logger.error(f"After save: Success callback.")
+        logger.debug(f"After save: Success callback.")
         success_callback()
 
         for loaded_ssb, ready_to_reload, included_exps_files in zipped:
             if ready_to_reload:
-                logger.error(f"After save: MACRO - READY TO RELOAD NOW {loaded_ssb.filename}")
+                logger.debug(f"After save: MACRO - READY TO RELOAD NOW {loaded_ssb.filename}")
                 self._ssb_fm.force_reload(loaded_ssb.filename)
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):

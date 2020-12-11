@@ -191,10 +191,10 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def _after_save(self, ready_to_reload, included_exps_files, success_callback: Callable[[], None]):
         if included_exps_files is not None:
             for exps_abs_path in included_exps_files:
-                logger.error(f"After save: Inform inclusion of macro {exps_abs_path}.")
+                logger.debug(f"After save: Inform inclusion of macro {exps_abs_path}.")
                 self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, self._ssb_file.filename)
 
-        logger.error(f"After save: Build temporary text marks for opcodes...")
+        logger.debug(f"After save: Build temporary text marks for opcodes...")
         # Build temporary text marks for the new source map. We will replace
         # the real ones with those in on_ssb_reloaded
         if self._do_insert_opcode_text_mark:
@@ -216,15 +216,15 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                                     cin_line, cin_col, True, True
                                 )
 
-        logger.error(f"After save: Triggering callback...")
+        logger.debug(f"After save: Triggering callback...")
         success_callback()
         if ready_to_reload:
-            logger.error(f"After save: NOW READY TO RELOAD!")
+            logger.debug(f"After save: NOW READY TO RELOAD!")
             self._ssb_file.file_manager.force_reload(self._ssb_file.filename)
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
         if ssb_filename == self._ssb_file.filename:
-            logger.error(f"{ssb_filename} was changed externally, simulating save.")
+            logger.debug(f"{ssb_filename} was changed externally, simulating save.")
             self._after_save(ready_to_reload, [], lambda: None)
 
     def on_exps_macro_ssb_changed(self, exps_abs_path, ssb_filename):
