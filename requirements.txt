@@ -5,5 +5,5 @@ pygobject==3.36.0
 pycairo==1.18.2
 py-desmume==0.0.3
 explorerscript==0.0.7
-nest-asyncio==1.4.1
+nest-asyncio==1.4.3
 pygtkspellcheck==4.0.6
