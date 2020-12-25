@@ -45,6 +45,7 @@ from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
 from skytemple_ssb_debugger.controller.ground_state import GroundStateController, GE_FILE_STORE_SCRIPT
 from skytemple_ssb_debugger.controller.local_variable import LocalVariableController
+from skytemple_ssb_debugger.controller.global_state import GlobalStateController
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread, supports_joystick
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
@@ -71,6 +72,7 @@ COL_VISIBLE = 3
 
 
 class MainController:
+    
     def __init__(self, builder: Builder, window: Window, control_context: AbstractDebuggerControlContext):
         self.builder = builder
         self.window = window
@@ -200,6 +202,7 @@ class MainController:
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
             self.builder, self, self.window, self._enable_explorerscript)
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder, self.context)
+        self.global_state_controller: GlobalStateController = GlobalStateController(self.emu_thread, self.builder)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
         self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
 
@@ -941,6 +944,30 @@ class MainController:
     def on_code_editor_notebook_switch_page(self, wdg, page, *args):
         self.editor_notebook.on_page_changed(page)
 
+    # GLOBAL STATE VIEW
+
+    def on_global_state_reload_clicked(self, *args):
+        self.global_state_controller.sync()
+        
+    def on_global_state_alloc_dump_clicked(self, *args):
+        active_rows : List[Gtk.TreePath] = self.builder.get_object('global_state_alloc_treeview').get_selection().get_selected_rows()[1]
+        if len(active_rows)>=1:
+            data = self.global_state_controller.dump(active_rows[0].get_indices()[0])
+            dialog = Gtk.FileChooserNative.new(
+                "Save dumped block...",
+                self.window,
+                Gtk.FileChooserAction.SAVE,
+                '_Save', None
+            )
+
+            response = dialog.run()
+            fn = dialog.get_filename()
+            dialog.destroy()
+
+            if response == Gtk.ResponseType.ACCEPT:
+                with open(fn, 'wb') as f:
+                    f.write(data)
+
     # VARIABLES VIEW
 
     def on_variables_reload_clicked(self, *args):
@@ -1030,6 +1057,7 @@ class MainController:
     def uninit_project(self):
         if not self.editor_notebook.close_all_tabs():
             return
+        self.global_state_controller.uninit()
         self.variable_controller.uninit()
         if self.debugger:
             self.debugger.disable()
@@ -1053,6 +1081,7 @@ class MainController:
                 self.debugger.enable(rom_data, self.ssb_fm, self.breakpoint_manager,
                                      self.on_ground_engine_start)
             self.init_file_tree()
+            self.global_state_controller.init(rom_data)
             self.variable_controller.init(rom_data)
             self.local_variable_controller.init(rom_data)
             self.editor_notebook.init(self.ssb_fm, self.breakpoint_manager, rom_data)
