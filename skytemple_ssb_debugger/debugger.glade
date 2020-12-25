@@ -1681,7 +1681,7 @@ not halting.</property>
                             <property name="visible">True</property>
                             <property name="can_focus">False</property>
                             <property name="margin_bottom">5</property>
-                            <property name="icon_name">skytemple-e-local-variable-symbolic</property>
+                            <property name="icon_name">skytemple-e-rom-symbolic</property>
                           </object>
                           <packing>
                             <property name="expand">False</property>
