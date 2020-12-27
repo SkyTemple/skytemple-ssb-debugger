@@ -946,6 +946,13 @@ class MainController:
 
     # GLOBAL STATE VIEW
 
+    def on_spin_alloc_table_nb_value_changed(self, widget):
+        try:
+            val = int(widget.get_text())
+        except ValueError:
+            val = -1
+        self.global_state_controller.change_current_table(val)
+        
     def on_global_state_reload_clicked(self, *args):
         self.global_state_controller.sync()
         
