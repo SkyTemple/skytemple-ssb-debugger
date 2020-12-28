@@ -931,9 +931,9 @@ class ScriptEditorController:
             self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
             Gtk.ButtonsType.NONE,
-            f"The ExplorerScript source code does not match the compiled script that is present in the ROM?\n"
+            f"The ExplorerScript source code does not match the compiled script that is present in the ROM.\n"
             f"Do you want to keep your ExplorerScript source code, or reload (decompile) it from ROM?\n"
-            f"Warning: If you choose to reload, you will loose your file, including all comments in it.",
+            f"Warning: If you choose to reload, you will lose your file, including all comments in it.",
             title="ExplorerScript Inconsistency"
         )
         md.add_button('Reload from ROM', Gtk.ResponseType.YES)
