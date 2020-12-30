@@ -17,6 +17,7 @@
 import hashlib
 import logging
 import os
+from functools import partial
 from typing import TYPE_CHECKING, List, Tuple, Set
 
 from explorerscript.included_usage_map import IncludedUsageMap
@@ -224,11 +225,16 @@ class SsbFileManager:
         # - If the file is no longer loaded in Ground Engine: Regenerate text marks from source map.
         Returns whether a reload is possible.
         """
-        self.get(filename).ram_state_up_to_date = False
+        def set_ram_state(state):
+            self.get(filename).ram_state_up_to_date = state
+
         if not self.get(filename).opened_in_ground_engine:
-            self.get(filename).ram_state_up_to_date = True
+            threadsafe_now_or_gtk_nonblocking(partial(set_ram_state, True))
             logger.debug(f"{filename}: Can be reloaded")
             return True
+        else:
+            threadsafe_now_or_gtk_nonblocking(partial(set_ram_state, False))
+
         logger.debug(f"{filename}: Can NOT be reloaded")
         return False
 
