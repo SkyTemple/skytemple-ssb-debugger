@@ -105,5 +105,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
             item.set_icon_name('skytemple-e-special-symbolic')
         elif isinstance(const.value, Pmd2ScriptDirection):
             item.set_icon_name('skytemple-move-symbolic')
+        elif isinstance(const.value, Pmd2ScriptSpriteEffect):
+            item.set_icon_name('skytemple-e-event-symbolic')
         
         return item

@@ -212,6 +212,7 @@ class MainController:
         self.on_debug_log_cntrl_internal_toggled(builder.get_object('debug_log_cntrl_internal'))
         self.on_debug_log_cntrl_ground_state_toggled(builder.get_object('debug_log_cntrl_ground_state'))
         self.on_debug_settings_debug_mode_toggled(builder.get_object('debug_settings_debug_mode'))
+        self.on_debug_settings_debug_dungeon_skip_toggled(builder.get_object('debug_settings_debug_dungeon_skip'))
         self.on_debug_settings_overlay_toggled(builder.get_object('debug_settings_overlay'))
         self.on_emulator_controls_volume_toggled(builder.get_object('emulator_controls_volume'))
         self.on_debug_log_scroll_to_bottom_toggled(builder.get_object('debug_log_scroll_to_bottom'))
@@ -746,6 +747,10 @@ class MainController:
         if self.debugger:
             self.debugger.debug_mode(btn.get_active())
 
+    def on_debug_settings_debug_dungeon_skip_toggled(self, btn: Gtk.Widget):
+        if self.debugger:
+            self.debugger.debug_dungeon_skip(btn.get_active())
+
     def on_debug_settings_overlay_toggled(self, btn: Gtk.Widget):
         if self.debug_overlay:
             self.debug_overlay.toggle(btn.get_active())
@@ -761,7 +766,7 @@ class MainController:
 
     def on_ssb_file_search_search_changed(self, search: Gtk.SearchEntry):
         """Filter the main item view using the search field"""
-        self._search_text = search.get_text()
+        self._search_text = search.get_text().strip()
         self._filter__refresh_results()
 
     def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
