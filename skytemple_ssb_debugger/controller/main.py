@@ -761,7 +761,7 @@ class MainController:
 
     def on_ssb_file_search_search_changed(self, search: Gtk.SearchEntry):
         """Filter the main item view using the search field"""
-        self._search_text = search.get_text()
+        self._search_text = search.get_text().strip()
         self._filter__refresh_results()
 
     def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
