@@ -76,6 +76,9 @@ class DebuggerController:
         self._log_debug_print = False
         self._log_printfs = False
         self._debug_mode = False
+        # TODO: Move this to the dungeon debugger when implemented! And also all it's functionality and UI code!
+        self._debug_dungeon_skip = False
+        self._debug_dungeon_skip_pointer = None
         self._log_ground_engine_state = False
         self._boost = False
 
@@ -99,6 +102,7 @@ class DebuggerController:
         self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, partial(self.hook__log_printfs, 0))
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
+        self.register_write(arm9.pointers['DungeonData'].begin_absolute, self.hook__write__debug_dungeon_skip)
 
         self.ground_engine_state = GroundEngineState(
             self.emu_thread, self.rom_data, self.print_callback, inform_ground_engine_start_cb, ssb_file_manager
@@ -114,6 +118,7 @@ class DebuggerController:
         self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, None)
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, None)
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x15C8, None)
+        self.register_write(arm9.pointers['DungeonData'].begin_absolute, None)
         self.is_active = False
         self.rom_data = None
         self.ground_engine_state.remove_watches()
@@ -121,6 +126,9 @@ class DebuggerController:
 
     def register_exec(self, pnt, cb):
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(pnt, cb))
+
+    def register_write(self, pnt, cb):
+        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_write(pnt, cb))
 
     @synchronized(debugger_state_lock)
     def log_operations(self, value: bool):
@@ -143,6 +151,12 @@ class DebuggerController:
     @synchronized(debugger_state_lock)
     def debug_mode(self, value: bool):
         self._debug_mode = value
+
+    @synchronized(debugger_state_lock)
+    def debug_dungeon_skip(self, value: bool):
+        self._debug_dungeon_skip = value
+        if self.rom_data and (not self.ground_engine_state or not self.ground_engine_state.running):
+            threadsafe_emu(self.emu_thread, lambda: self._set_dungeon_debug_skip())
 
     # >>> ALL CALLBACKS BELOW ARE RUNNING IN THE EMULATOR THREAD <<<
 
@@ -352,6 +366,15 @@ class DebuggerController:
         if self._debug_mode:
             self.emu_thread.emu.memory.register_arm9.r0 = 1 if self.emu_thread.emu.memory.register_arm9.r0 == 0 else 0
 
+    @synchronized(debugger_state_lock)
+    def hook__write__debug_dungeon_skip(self, address, size):
+        if not self.ground_engine_state or not self.ground_engine_state.running:
+            self._set_dungeon_debug_skip()
+
+    def hook__read__debug_dungeon_skip(self, address, size):
+        if not self.ground_engine_state or not self.ground_engine_state.running:
+            self.emu_thread.emu.memory.write_byte(address, 1 if self._debug_dungeon_skip else 0)
+
     def print_callback(self, text: str):
         threadsafe_gtk_nonblocking(lambda: self._print_callback_fn(text))
 
@@ -368,6 +391,16 @@ class DebuggerController:
         else:
             len += 2 * current_opcode.params
         return current_opcode_addr_relative + len
+
+    def _set_dungeon_debug_skip(self):
+        pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.binaries['arm9.bin'].pointers['DungeonData'].begin_absolute)
+        if pointer != 0:
+            if self._debug_dungeon_skip_pointer is not None and self._debug_dungeon_skip_pointer != pointer:
+                self.emu_thread.emu.memory.register_read(self._debug_dungeon_skip_pointer + 6, None)
+                self.emu_thread.emu.memory.register_read(self._debug_dungeon_skip_pointer + 8, None)
+            self._debug_dungeon_skip_pointer = pointer
+            self.emu_thread.emu.memory.register_read(pointer + 6, self.hook__read__debug_dungeon_skip)
+            self.emu_thread.emu.memory.register_read(pointer + 8, self.hook__read__debug_dungeon_skip)
 
     @synchronized(debugger_state_lock)
     def set_boost(self, state):
