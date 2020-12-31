@@ -44,6 +44,7 @@ class MemAllocType(Enum):
     UNUSED = 0x00, 'Free'
     STATIC = 0x01, 'Static'
     BLOCK = 0x02, 'Block'
+    TEMPORARY = 0x03, 'Temporary'
     SUBTABLE = 0x04, 'Sub Table'
     
     def __new__(cls, *args, **kwargs):
