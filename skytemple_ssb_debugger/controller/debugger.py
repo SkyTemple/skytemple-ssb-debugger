@@ -372,8 +372,8 @@ class DebuggerController:
             self._set_dungeon_debug_skip()
 
     def hook__read__debug_dungeon_skip(self, address, size):
-        if not self.ground_engine_state or not self.ground_engine_state.running:
-            self.emu_thread.emu.memory.write_byte(address, 1 if self._debug_dungeon_skip else 0)
+        if self._debug_dungeon_skip and (not self.ground_engine_state or not self.ground_engine_state.running):
+            self.emu_thread.emu.memory.write_byte(address, 1)
 
     def print_callback(self, text: str):
         threadsafe_gtk_nonblocking(lambda: self._print_callback_fn(text))
@@ -395,6 +395,8 @@ class DebuggerController:
     def _set_dungeon_debug_skip(self):
         pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.binaries['arm9.bin'].pointers['DungeonData'].begin_absolute)
         if pointer != 0:
+            self.emu_thread.emu.memory.write_byte(pointer + 6, 1 if self._debug_dungeon_skip else 0)
+            self.emu_thread.emu.memory.write_byte(pointer + 8, 1 if self._debug_dungeon_skip else 0)
             if self._debug_dungeon_skip_pointer is not None and self._debug_dungeon_skip_pointer != pointer:
                 self.emu_thread.emu.memory.register_read(self._debug_dungeon_skip_pointer + 6, None)
                 self.emu_thread.emu.memory.register_read(self._debug_dungeon_skip_pointer + 8, None)
