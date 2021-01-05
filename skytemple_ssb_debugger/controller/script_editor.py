@@ -927,7 +927,7 @@ class ScriptEditorController:
         info_bar.show_all()
 
     def _show_ssbs_es_changed_warning(self):
-        md = Gtk.MessageDialog(
+        md = self.parent.parent.context.message_dialog_cls()(
             self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
             Gtk.ButtonsType.NONE,

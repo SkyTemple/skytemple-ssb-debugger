@@ -278,10 +278,10 @@ class VariableController:
                     if value < -2147483648 or value > 2147483647:
                         raise ValueError("This variable must have a value between: -2147483648 and 2147483647.")
             except ValueError as err:
-                md = Gtk.MessageDialog(self.builder.get_object('main_window'),
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, f"Invalid variable value:\n{err}\nThe value was not written to RAM.",
-                                       title="Error!")
+                md = self.context.message_dialog_cls()(self.builder.get_object('main_window'),
+                                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                                       Gtk.ButtonsType.OK, f"Invalid variable value:\n{err}\nThe value was not written to RAM.",
+                                                       title="Error!")
                 md.set_position(Gtk.WindowPosition.CENTER)
                 md.run()
                 md.destroy()

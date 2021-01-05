@@ -105,7 +105,8 @@ class DebuggerController:
         self.register_write(arm9.pointers['DungeonData'].begin_absolute, self.hook__write__debug_dungeon_skip)
 
         self.ground_engine_state = GroundEngineState(
-            self.emu_thread, self.rom_data, self.print_callback, inform_ground_engine_start_cb, ssb_file_manager
+            self.emu_thread, self.rom_data, self.print_callback, inform_ground_engine_start_cb, ssb_file_manager,
+            self.parent.context
         )
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
         self.ground_engine_state.watch()

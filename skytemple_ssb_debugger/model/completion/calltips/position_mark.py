@@ -79,7 +79,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
                 self.buffer.get_start_iter(), self.buffer.get_end_iter(), False
             )).read()
         except ParseError as err:
-            md = Gtk.MessageDialog(
+            md = self.context.message_dialog_cls()(
                 None,
                 Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
                 f"The script contains a syntax error, please fix it before editing the Position Mark.\n"

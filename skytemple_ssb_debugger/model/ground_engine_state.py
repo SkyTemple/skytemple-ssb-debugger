@@ -21,6 +21,7 @@ from typing import Optional, List, Tuple
 from gi.repository import Gtk, GLib
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
@@ -46,11 +47,12 @@ ground_engine_lock = Lock()
 
 class GroundEngineState:
     def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, print_callback, inform_ground_engine_start_cb,
-                 ssb_file_manager: SsbFileManager):
+                 ssb_file_manager: SsbFileManager, context: AbstractDebuggerControlContext):
         super().__init__()
         self.emu_thread = emu_thread
         self.rom_data = rom_data
         self.ssb_file_manager = ssb_file_manager
+        self.context = context
         self.logging_enabled = False
         self._boost = False
 
@@ -267,12 +269,12 @@ class GroundEngineState:
                 were_invalid.append(f.file_name)
         if len(were_invalid) > 0:
             n = '\n'
-            md = Gtk.MessageDialog(None,
-                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
-                                   Gtk.ButtonsType.OK,
-                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug "
-                                   f"these files, until they are reloaded:\n{n.join(were_invalid)}",
-                                   title="Warning!")
+            md = self.context.message_dialog_cls()(None,
+                                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
+                                                   Gtk.ButtonsType.OK,
+                                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug "
+                                                   f"these files, until they are reloaded:\n{n.join(were_invalid)}",
+                                                   title="Warning!")
             md.set_position(Gtk.WindowPosition.CENTER)
             # Some timing issues here.
             def run_and_destroy():

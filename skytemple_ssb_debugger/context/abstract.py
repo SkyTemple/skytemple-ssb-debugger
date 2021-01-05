@@ -16,7 +16,9 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List, Iterable
+from typing import TYPE_CHECKING, Optional, List, Iterable, Type
+
+from gi.repository import Gtk
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -224,3 +226,8 @@ class AbstractDebuggerControlContext(ABC):
         """
         Returns a list of special words which should be ignored by spellchecking.
         """
+
+    @staticmethod
+    @abstractmethod
+    def message_dialog_cls() -> Type[Gtk.MessageDialog]:
+        """Returns the class for use for MessageDialogs. Must extend Gtk.MessageDialog."""
