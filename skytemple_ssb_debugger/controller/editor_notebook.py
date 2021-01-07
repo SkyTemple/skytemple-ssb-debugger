@@ -312,7 +312,7 @@ class EditorNotebookController:
             self.get_context().on_script_edit(current_open.filename)
 
     def _show_are_you_sure(self, filename):
-        dialog: Gtk.MessageDialog = Gtk.MessageDialog(
+        dialog: Gtk.MessageDialog = self.parent.context.message_dialog_cls()(
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
@@ -328,7 +328,7 @@ class EditorNotebookController:
         return response
 
     def _show_warning_breaking(self):
-        md = Gtk.MessageDialog(
+        md = self.parent.context.message_dialog_cls()(
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,

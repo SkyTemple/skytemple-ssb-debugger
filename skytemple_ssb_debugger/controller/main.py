@@ -1530,7 +1530,7 @@ class MainController:
             self._suppress_event = False
 
     def _warn_about_unsaved_vars(self):
-        md = Gtk.MessageDialog(
+        md = self.context.message_dialog_cls()(
             self.window,
             Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
             Gtk.ButtonsType.OK_CANCEL,
@@ -1591,7 +1591,7 @@ class MainController:
             btn.add(self.builder.get_object('img_stop'))
 
     def _show_are_you_sure_delete(self, text):
-        dialog: Gtk.MessageDialog = Gtk.MessageDialog(
+        dialog: Gtk.MessageDialog = self.context.message_dialog_cls()(
             self.window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,

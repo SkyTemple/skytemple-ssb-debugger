@@ -170,11 +170,11 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def display_error(self, exc_info, error_message, error_title='SkyTemple Script Engine Debugger - Error'):
         logger.error(error_message, exc_info=exc_info)
-        md = Gtk.MessageDialog(self._main_window,
-                               Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                               Gtk.ButtonsType.OK,
-                               error_message,
-                               title=error_title)
+        md = self.message_dialog_cls()(self._main_window,
+                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                       Gtk.ButtonsType.OK,
+                                       error_message,
+                                       title=error_title)
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
@@ -187,3 +187,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         yield from self._static_data.script_data.op_codes__by_name.keys()
         yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
         yield from EXPS_KEYWORDS
+
+    @staticmethod
+    def message_dialog_cls():
+        return Gtk.MessageDialog
