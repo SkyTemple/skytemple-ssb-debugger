@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import configparser
+import logging
 import os
 import threading
 from typing import Optional, Tuple, List
@@ -45,6 +46,7 @@ KEY_WINDOW_POS_X = 'pos_x'
 KEY_WINDOW_POS_Y = 'pos_y'
 
 TEXTBOX_TOOL_URL = 'http://textbox.skytemple.org/?ws'
+logger = logging.getLogger(__name__)
 
 
 class DebuggerSettingsStore:
