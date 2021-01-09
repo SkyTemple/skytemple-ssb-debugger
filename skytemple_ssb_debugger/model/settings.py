@@ -54,8 +54,11 @@ class DebuggerSettingsStore:
         self.config_file = os.path.join(self.config_dir, CONFIG_FILE_NAME)
         self.loaded_config = configparser.ConfigParser()
         if os.path.exists(self.config_file):
-            with open_utf8(self.config_file, 'r') as f:
-                self.loaded_config.read_file(f)
+            try:
+                with open_utf8(self.config_file, 'r') as f:
+                    self.loaded_config.read_file(f)
+            except BaseException as err:
+                logger.error("Error reading config, falling back to default.", exc_info=err)
 
     @synchronized(settings_lock)
     def get_style_scheme(self) -> Optional[str]:
