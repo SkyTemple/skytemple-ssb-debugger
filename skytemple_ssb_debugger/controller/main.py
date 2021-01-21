@@ -786,7 +786,7 @@ class MainController:
                     tree.expand_row(model.get_path(treeiter), False)
         elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY:
             # Right click!
-            model = self.builder.get_object('ssb_file_tree_store')
+            model = self._ssb_item_filter
             treepath = tree.get_path_at_pos(int(event.x), int(event.y))[0]
             if treepath is not None:
                 if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
