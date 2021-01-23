@@ -1354,6 +1354,17 @@ class MainController:
         """Handle a SSB file removal."""
         # todo
 
+    # Debug Flags Checkbox
+    def on_chk_debug_flag_1_toggled(self, w):
+        self.debugger.set_debug_flag_1(int(w.get_name()[len("debug_flag_1_"):]), int(w.get_active()))
+    def on_chk_debug_flag_2_toggled(self, w):
+        self.debugger.set_debug_flag_2(int(w.get_name()[len("debug_flag_2_"):]), int(w.get_active()))
+    
+    def set_check_debug_flag_1(self, flag_id, value):
+        self.builder.get_object("chk_debug_flag_1_"+str(flag_id)).set_active(bool(value))
+    def set_check_debug_flag_2(self, flag_id, value):
+        self.builder.get_object("chk_debug_flag_2_"+str(flag_id)).set_active(bool(value))
+
     def break_pulled(self, state: BreakpointState):
         """
         The DebuggerController has paused at an instruction.
