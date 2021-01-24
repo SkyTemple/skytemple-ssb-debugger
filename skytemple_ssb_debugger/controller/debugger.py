@@ -277,14 +277,12 @@ class DebuggerController:
     def hook__set_debug_flag_1(self, address, size):
         flag_id = self.emu_thread.emu.memory.register_arm9.r0
         value = self.emu_thread.emu.memory.register_arm9.r1
-        self.set_debug_flag_1(flag_id, value)
         threadsafe_gtk_nonblocking(lambda: self.parent.set_check_debug_flag_1(flag_id, value))
     
     @synchronized(debugger_state_lock)
     def hook__set_debug_flag_2(self, address, size):
         flag_id = self.emu_thread.emu.memory.register_arm9.r0
         value = self.emu_thread.emu.memory.register_arm9.r1
-        self.set_debug_flag_2(flag_id, value)
         threadsafe_gtk_nonblocking(lambda: self.parent.set_check_debug_flag_2(flag_id, value))
 
     @synchronized(debugger_state_lock)
