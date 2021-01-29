@@ -54,6 +54,8 @@ class NdsStrPnt(int):
 
 debugger_state_lock = threading.Lock()
 
+NB_DEBUG_FLAGS_1 = 0xC
+NB_DEBUG_FLAGS_2 = 0x10
 
 class DebuggerController:
     def __init__(self, emu_thread: EmulatorThread, print_callback, parent: 'MainController'):
@@ -72,6 +74,10 @@ class DebuggerController:
         # Force a halt at the breakpoint hook
         self._breakpoint_force = False
 
+        self._debug_flags_1 = [0]*NB_DEBUG_FLAGS_1
+        self._debug_flags_2 = [0]*NB_DEBUG_FLAGS_2
+        self._debug_flag_temp_input = 0
+        
         self._log_operations = False
         self._log_debug_print = False
         self._log_printfs = False
@@ -98,6 +104,13 @@ class DebuggerController:
         arm9 = self.rom_data.binaries['arm9.bin']
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
         self.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, self.hook__breaking_point)
+        self.register_exec(arm9.functions['GetDebugFlag1'].begin_absolute, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions['GetDebugFlag2'].begin_absolute, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions['GetDebugFlag1'].begin_absolute+0x4, self.hook__get_debug_flag_1)
+        self.register_exec(arm9.functions['GetDebugFlag2'].begin_absolute+0x4, self.hook__get_debug_flag_2)
+        self.register_exec(arm9.functions['SetDebugFlag1'].begin_absolute, self.hook__set_debug_flag_1)
+        self.register_exec(arm9.functions['SetDebugFlag2'].begin_absolute, self.hook__set_debug_flag_2)
+        self.register_exec(arm9.functions['DebugPrint0'].begin_absolute, partial(self.hook__log_printfs, 0))
         self.register_exec(arm9.functions['DebugPrint'].begin_absolute, partial(self.hook__log_printfs, 1))
         self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, partial(self.hook__log_printfs, 0))
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
@@ -115,6 +128,13 @@ class DebuggerController:
         arm9 = self.rom_data.binaries['arm9.bin']
         ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
         self.register_exec(ov11.functions['FuncThatCallsCommandParsing'].begin_absolute + 0x58, None)
+        self.register_exec(arm9.functions['GetDebugFlag1'].begin_absolute, None)
+        self.register_exec(arm9.functions['GetDebugFlag2'].begin_absolute, None)
+        self.register_exec(arm9.functions['GetDebugFlag1'].begin_absolute+0x4, None)
+        self.register_exec(arm9.functions['GetDebugFlag2'].begin_absolute+0x4, None)
+        self.register_exec(arm9.functions['SetDebugFlag1'].begin_absolute, None)
+        self.register_exec(arm9.functions['SetDebugFlag2'].begin_absolute, None)
+        self.register_exec(arm9.functions['DebugPrint0'].begin_absolute, None)
         self.register_exec(arm9.functions['DebugPrint'].begin_absolute, None)
         self.register_exec(arm9.functions['DebugPrint2'].begin_absolute, None)
         self.register_exec(ov11.functions['ScriptCommandParsing'].begin_absolute + 0x3C40, None)
@@ -242,6 +262,38 @@ class DebuggerController:
             debugger_state_lock.release()
 
     @synchronized(debugger_state_lock)
+    def hook__get_debug_flag_get_input(self, address, size):
+        self._debug_flag_temp_input = self.emu_thread.emu.memory.register_arm9.r0
+    
+    @synchronized(debugger_state_lock)
+    def hook__get_debug_flag_1(self, address, size):
+        self.emu_thread.emu.memory.register_arm9.r0 = self._debug_flags_1[self._debug_flag_temp_input]
+        
+    @synchronized(debugger_state_lock)
+    def hook__get_debug_flag_2(self, address, size):
+        self.emu_thread.emu.memory.register_arm9.r0 = self._debug_flags_2[self._debug_flag_temp_input]
+        
+    @synchronized(debugger_state_lock)
+    def hook__set_debug_flag_1(self, address, size):
+        flag_id = self.emu_thread.emu.memory.register_arm9.r0
+        value = self.emu_thread.emu.memory.register_arm9.r1
+        threadsafe_gtk_nonblocking(lambda: self.parent.set_check_debug_flag_1(flag_id, value))
+    
+    @synchronized(debugger_state_lock)
+    def hook__set_debug_flag_2(self, address, size):
+        flag_id = self.emu_thread.emu.memory.register_arm9.r0
+        value = self.emu_thread.emu.memory.register_arm9.r1
+        threadsafe_gtk_nonblocking(lambda: self.parent.set_check_debug_flag_2(flag_id, value))
+
+    @synchronized(debugger_state_lock)
+    def set_debug_flag_1(self, flag_id, value):
+        self._debug_flags_1[flag_id] = value
+        
+    @synchronized(debugger_state_lock)
+    def set_debug_flag_2(self, flag_id, value):
+        self._debug_flags_2[flag_id] = value
+    
+    @synchronized(debugger_state_lock)
     def hook__log_printfs(self, register_offset, address, size):
         if not self._log_printfs or self._boost:
             return
@@ -251,81 +303,7 @@ class DebuggerController:
         # TODO: There's got to be a better way!(tm)
         dbg_string = dbg_string.replace('%p', '%x').rstrip('\n')
         args_count = dbg_string.count('%')
-
-        if args_count == 0:
-            self.print_callback(dbg_string)
-        elif args_count == 1:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1])
-            ))
-        elif args_count == 2:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2])
-            ))
-        elif args_count == 3:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3])
-            ))
-        elif args_count == 4:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4])
-            ))
-        elif args_count == 5:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 5])
-            ))
-        elif args_count == 6:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 5]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 6])
-            ))
-        elif args_count == 7:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 5]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 6]),
-                NdsStrPnt(emu, emu.memory.register_arm9.r8)
-            ))
-        elif args_count == 8:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 5]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 6]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 7]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 8])
-            ))
-        elif args_count == 9:
-            self.print_callback(dbg_string % (
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 1]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 2]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 3]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 4]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 5]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 6]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 7]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 8]),
-                NdsStrPnt(emu, emu.memory.register_arm9[register_offset + 9])
-            ))
+        self.print_callback(dbg_string % tuple([NdsStrPnt(emu, emu.memory.register_arm9[register_offset + i + 1]) for i in range(args_count)]))
 
     @synchronized(debugger_state_lock)
     def hook__log_debug_print(self, address, size):
