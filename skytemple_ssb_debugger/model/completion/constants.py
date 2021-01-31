@@ -24,6 +24,7 @@ from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate, \
     backward_until_special_char
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_GLOBAL_SCRIPT
+from skytemple_files.common.i18n_util import f, _
 
 
 class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvider):
@@ -32,7 +33,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         self.all_constants = list(SsbConstant.collect_all(rom_data.script_data))
 
     def do_get_name(self) -> str:
-        return "Constants & Variables"
+        return _("Constants & Variables")
 
     def do_get_priority(self) -> int:
         return 1

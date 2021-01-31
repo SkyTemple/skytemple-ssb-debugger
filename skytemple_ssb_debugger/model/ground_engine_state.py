@@ -365,9 +365,9 @@ class GroundEngineState:
 
     @synchronized_now(ground_engine_lock)
     def hook__write_unionall_address(self, address, size):
+        """Write the location of the unionall script into the container object for this"""
         if not self.overlay11_loaded():
             return
-        """Write the location of the unionall script into the container object for this"""
         self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))
 
     def overlay11_loaded(self):

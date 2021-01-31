@@ -20,6 +20,7 @@ from gi.repository import GObject
 from gi.repository import GtkSource, Gtk
 
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_files.common.i18n_util import f, _
 
 ALL_STATEMENTS = ['return', 'end', 'hold', 'if', 'elseif', 'else', 'with', 'actor', 'object', 'performer', 'jump',
                   'for', 'while', 'forever', 'break', 'break_loop', 'continue', 'case',
@@ -28,7 +29,7 @@ ALL_STATEMENTS = ['return', 'end', 'hold', 'if', 'elseif', 'else', 'with', 'acto
 
 class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.CompletionProvider):
     def do_get_name(self) -> str:
-        return "Statements"
+        return _("Statements")
 
     def do_get_priority(self) -> int:
         return 0

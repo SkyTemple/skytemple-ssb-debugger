@@ -25,6 +25,7 @@ from explorerscript.source_map import SourceMapPositionMark
 from explorerscript.ssb_converting.compiler.compiler_visitor.position_mark_visitor import PositionMarkVisitor
 from explorerscript.ssb_converting.ssb_data_types import SsbOpParamPositionMarker
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
+from skytemple_files.common.i18n_util import f, _
 
 
 class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
@@ -82,9 +83,9 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
             md = self.context.message_dialog_cls()(
                 None,
                 Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK,
-                f"The script contains a syntax error, please fix it before editing the Position Mark.\n"
-                f"Parse error: {err}",
-                title="Warning!"
+                f(_("The script contains a syntax error, please fix it before editing the Position Mark.\n"
+                    "Parse error: {err}")),
+                title=_("Warning!")
             )
             md.run()
             md.destroy()

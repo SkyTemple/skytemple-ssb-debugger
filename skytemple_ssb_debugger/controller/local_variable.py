@@ -30,6 +30,7 @@ from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileSta
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, synchronized, threadsafe_gtk_nonblocking
+from skytemple_files.common.i18n_util import f, _
 
 local_variables_lock = Lock()
 macro_variables_lock = Lock()
@@ -52,12 +53,12 @@ class LocalVariableController:
         self._macro__list_store: Gtk.ListStore = builder.get_object('macro_variables_store')
 
         self._local__tree: Gtk.TreeView = builder.get_object('local_variables_list')
-        self._local__tree.append_column(resizable(TreeViewColumn("Name", Gtk.CellRendererText(), text=0)))
-        self._local__tree.append_column(resizable(TreeViewColumn("Value", Gtk.CellRendererText(), text=1)))
+        self._local__tree.append_column(resizable(TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=0)))
+        self._local__tree.append_column(resizable(TreeViewColumn(_("Value"), Gtk.CellRendererText(), text=1)))
 
         self._macro__tree: Gtk.TreeView = builder.get_object('macro_variables_list')
-        self._macro__tree.append_column(resizable(TreeViewColumn("Name", Gtk.CellRendererText(), text=0)))
-        self._macro__tree.append_column(resizable(TreeViewColumn("Value", Gtk.CellRendererText(), text=1)))
+        self._macro__tree.append_column(resizable(TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=0)))
+        self._macro__tree.append_column(resizable(TreeViewColumn(_("Value"), Gtk.CellRendererText(), text=1)))
 
         self._local_vars_specs: Optional[List[Pmd2ScriptGameVar]] = None
         self._local_vars_values: List[int] = []

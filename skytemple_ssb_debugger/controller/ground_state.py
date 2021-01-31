@@ -25,8 +25,9 @@ from skytemple_ssb_debugger.model.constants import ICON_GLOBAL_SCRIPT, ICON_ACTO
     ICON_POSITION_MARKER, ICON_EVENTS
 from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
+from skytemple_files.common.i18n_util import f, _
 
-GE_FILE_STORE_SCRIPT = 'Script'
+GE_FILE_STORE_SCRIPT = _('Script')
 
 gi.require_version('Gtk', '3.0')
 
@@ -60,21 +61,21 @@ class GroundStateController:
         self._files__tree: Gtk.TreeView = builder.get_object('ground_state_files_tree')
         icon = Gtk.CellRendererPixbuf()
         path = Gtk.CellRendererText()
-        column = TreeViewColumn("Path")
+        column = TreeViewColumn(_("Path"))
         column.pack_start(icon, True)
         column.pack_start(path, True)
         column.add_attribute(icon, "icon_name", 0)
         column.add_attribute(path, "text", 1)
         self._files__tree.append_column(resizable(column))
-        self._files__tree.append_column(resizable(TreeViewColumn("Hanger", Gtk.CellRendererText(), text=3)))
-        self._files__tree.append_column(resizable(TreeViewColumn("Type", Gtk.CellRendererText(), text=2)))
+        self._files__tree.append_column(resizable(TreeViewColumn(_("Hanger"), Gtk.CellRendererText(), text=3)))  # TRANSLATOR: Special context of a loaded script... the weird is engrish.
+        self._files__tree.append_column(resizable(TreeViewColumn(_("Type"), Gtk.CellRendererText(), text=2)))
 
         self._entities__tree: Gtk.TreeView = builder.get_object('ground_state_entities_tree')
         #self._files__tree.append_column(resizable(TreeViewColumn("Preview", Gtk.CellRendererPixbuf(), xxx=4)))
         icon = Gtk.CellRendererPixbuf()
         debug_icon = Gtk.CellRendererPixbuf()
         slot_id = Gtk.CellRendererText()
-        column = TreeViewColumn("ID")
+        column = TreeViewColumn(_("ID"))
         column.pack_start(icon, True)
         column.pack_start(debug_icon, True)
         column.pack_start(slot_id, True)
@@ -82,12 +83,12 @@ class GroundStateController:
         column.add_attribute(icon, "icon_name", 7)
         column.add_attribute(slot_id, "text", 0)
         self._entities__tree.append_column(resizable(column))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Kind", Gtk.CellRendererText(), text=5)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Hanger", Gtk.CellRendererText(), text=1)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("X", Gtk.CellRendererText(), text=8)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Y", Gtk.CellRendererText(), text=9)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Sector", Gtk.CellRendererText(), text=2)))
-        self._entities__tree.append_column(resizable(TreeViewColumn("Script", Gtk.CellRendererText(), text=3)))
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("Kind"), Gtk.CellRendererText(), text=5)))
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("Hanger"), Gtk.CellRendererText(), text=1)))  # TRANSLATOR: Special context of a loaded script... the weird is engris
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("X"), Gtk.CellRendererText(), text=8)))
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("Y"), Gtk.CellRendererText(), text=9)))
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("Sector"), Gtk.CellRendererText(), text=2)))  # TRANSLATOR: Engrish for 'Layer'
+        self._entities__tree.append_column(resizable(TreeViewColumn(_("Script"), Gtk.CellRendererText(), text=3)))
 
         self._files__tree_store: Gtk.TreeStore = builder.get_object('ground_state_files_tree_store')
         self._entities__tree_store: Gtk.TreeStore = builder.get_object('ground_state_entities_store')
@@ -182,21 +183,21 @@ class GroundStateController:
                 self._files__tree_store.clear()
                 if ssb[0]:
                     self._files__tree_store.append(None, [
-                        'skytemple-e-script-symbolic', self.short_fname(ssb[0].file_name), GE_FILE_STORE_SCRIPT, '0 (Global)'
+                        'skytemple-e-script-symbolic', self.short_fname(ssb[0].file_name), GE_FILE_STORE_SCRIPT, _('0 (Global)')
                     ])
                 else:
                     self._files__tree_store.append(None, [
-                        'skytemple-action-unavailable-symbolic', '<Empty>', '', '0 (Global)'
+                        'skytemple-action-unavailable-symbolic', _('<Empty>'), '', _('0 (Global)')
                     ])
                 for i in range(1, 4):
                     # Build the three main hanger slots
-                    hanger_str = '1 (Enter)'
+                    hanger_str = _('1 (Enter)')
                     type_str = 'SSE'
                     if i == 2:
-                        hanger_str = '2 (Sub)'
+                        hanger_str = _('2 (Sub)')
                         type_str = 'SSS'
                     elif i == 3:
-                        hanger_str = '3 (Acting)'
+                        hanger_str = _('3 (Acting)')
                         type_str = 'SSA'
 
                     if ssx[i]:
@@ -207,7 +208,7 @@ class GroundStateController:
                     else:
                         # Slot is not filled
                         ssx_root = self._files__tree_store.append(None, [
-                            'skytemple-action-unavailable-symbolic', '<Empty>', '', hanger_str
+                            'skytemple-action-unavailable-symbolic', _('<Empty>'), '', hanger_str
                         ])
 
                     if ssb[i]:
@@ -230,12 +231,12 @@ class GroundStateController:
                 except (IndexError, AttributeError):
                     pass
                 self._entities__tree_store.append(None, [
-                    '<Global>', '0', '',
+                    _('<Global>'), '0', '',
                     self.get_short_sname(ssb, breaked, global_script.script_struct.hanger_ssb), None, '',
                     'skytemple-media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
                 ])
                 actors_node = self._entities__tree_store.append(None, [
-                    'Actors', '', '', '', None, '', '', ICON_ACTOR, '', '', -1
+                    _('Actors'), '', '', '', None, '', '', ICON_ACTOR, '', '', -1
                 ])
                 for actor in actors:
                     breaked = False
@@ -251,7 +252,7 @@ class GroundStateController:
                         f'{actor.x_map}', f'{actor.y_map}', SsbRoutineType.ACTOR.value
                     ])
                 objects_node = self._entities__tree_store.append(None, [
-                    'Objects', '', '', '', None, '', '', ICON_OBJECT, '', '', -1
+                    _('Objects'), '', '', '', None, '', '', ICON_OBJECT, '', '', -1
                 ])
                 for object in objects:
                     kind_name = object.kind.name
@@ -270,7 +271,7 @@ class GroundStateController:
                         f'{object.x_map}', f'{object.y_map}', SsbRoutineType.OBJECT.value
                     ])
                 performers_node = self._entities__tree_store.append(None, [
-                    'Performers', '', '', '', None, '', '', ICON_PERFORMER, '', '', -1
+                    _('Performers'), '', '', '', None, '', '', ICON_PERFORMER, '', '', -1
                 ])
                 for performer in performers:
                     breaked = False
@@ -286,7 +287,7 @@ class GroundStateController:
                         f'{performer.x_map}', f'{performer.y_map}', SsbRoutineType.PERFORMER.value
                     ])
                 events_node = self._entities__tree_store.append(None, [
-                    'Triggers', '', '', '', None, '', '', ICON_EVENTS, '', '', -1
+                    _('Triggers'), '', '', '', None, '', '', ICON_EVENTS, '', '', -1
                 ])
                 for event in events:
                     self._entities__tree_store.append(events_node, [
@@ -295,7 +296,7 @@ class GroundStateController:
                     ])
 
                 pos_marks_node = self._entities__tree_store.append(None, [
-                    'Pos. Marks', '', '', '', None, '', '', ICON_POSITION_MARKER, '', '', -1
+                    _('Pos. Marks'), '', '', '', None, '', '', ICON_POSITION_MARKER, '', '', -1  # TRANSLATORS: Position Marks
                 ])
                 for ssb in ground_state.loaded_ssb_files:
                     if ssb is not None:

@@ -32,6 +32,7 @@ from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
+from skytemple_files.common.i18n_util import f, _
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
@@ -256,8 +257,8 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
             None,
             Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
             Gtk.ButtonsType.OK,
-            f"Macros have no scenes.",
-            title="Action not supported"
+            f(_("Macros have no scenes.")),
+            title=_("Action not supported")
         )
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()

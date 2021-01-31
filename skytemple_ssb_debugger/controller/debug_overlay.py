@@ -24,6 +24,7 @@ from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.emulator_thread import FRAMES_PER_SECOND
 from skytemple_ssb_debugger.threadsafe import synchronized, threadsafe_emu_nonblocking_coro
+from skytemple_files.common.i18n_util import f, _
 
 ALPHA_T = 0.7
 COLOR_ACTOR = (1.0, 0, 1.0, ALPHA_T)
@@ -171,10 +172,10 @@ class DebugOverlayController:
             ctx.set_source_rgb(1.0, 0, 0)
             ctx.move_to(10, 20)
             ctx.set_font_size(20)
-            ctx.show_text("BOOST")
+            ctx.show_text(_("BOOST"))  # TRANSLATORS: Shown in enulator when boosting / fast-forward
             ctx.set_font_size(12)
             ctx.move_to(10, 30)
-            ctx.show_text("Debugging disabled.")
+            ctx.show_text(_("Debugging disabled."))
 
 
 def not_none(it: Iterable):

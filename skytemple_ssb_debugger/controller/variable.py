@@ -32,6 +32,7 @@ from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, synchronized, \
     threadsafe_emu
+from skytemple_files.common.i18n_util import f, _
 
 gi.require_version('Gtk', '3.0')
 
@@ -43,35 +44,35 @@ variables_lock = Lock()
 
 class VariableController:
     CATEGORIES = {
-        'Scenario': ['SCENARIO_MAIN', 'SCENARIO_MAIN_BIT_FLAG', 'SCENARIO_TALK_BIT_FLAG', 'SCENARIO_SIDE',
-                     'SCENARIO_SUB1', 'SCENARIO_SUB2', 'SCENARIO_SUB3', 'SCENARIO_SUB4', 'SCENARIO_SUB5',
-                     'SCENARIO_SUB6', 'SCENARIO_SUB7', 'SCENARIO_SUB8', 'SCENARIO_BALANCE_FLAG',
-                     'COMPULSORY_SAVE_POINT', 'COMPULSORY_SAVE_POINT_SIDE', 'PERFORMANCE_PROGRESS_LIST',
-                     'SCENARIO_BALANCE_DEBUG'],
-        'Init': ['SCENARIO_SELECT', 'GROUND_ENTER', 'GROUND_ENTER_LINK', 'GROUND_GETOUT', 'GROUND_MAP',
-                 'GROUND_PLACE', 'GROUND_START_MODE'],
-        'Dungeon Progress': ['DUNGEON_OPEN_LIST', 'DUNGEON_ENTER_LIST', 'DUNGEON_ARRIVE_LIST', 'DUNGEON_CONQUEST_LIST',
-                             'DUNGEON_PRESENT_LIST', 'DUNGEON_REQUEST_LIST'],
-        'Dungeon Init': ['DUNGEON_SELECT', 'DUNGEON_ENTER', 'DUNGEON_ENTER_MODE', 'DUNGEON_ENTER_INDEX',
-                         'DUNGEON_ENTER_FREQUENCY', 'DUNGEON_RESULT'],
-        'World Map': ['WORLD_MAP_MARK_LIST_NORMAL', 'WORLD_MAP_MARK_LIST_SPECIAL', 'WORLD_MAP_LEVEL'],
-        'Specific': ['SIDE02_TALK', 'SIDE06_ROOM', 'SIDE08_BOSS2ND', 'SIDE01_BOSS2ND',
-                     'CRYSTAL_COLOR_01', 'CRYSTAL_COLOR_02', 'CRYSTAL_COLOR_03', 'EVENT_LOCAL', 'DUNGEON_EVENT_LOCAL',
-                     'BIT_FUWARANTE_LOCAL', 'LOTTERY_RESULT', 'SUB30_TREASURE_DISCOVER', 'SUB30_SPOT_DISCOVER',
-                     'SUB30_SPOT_LEVEL', 'SUB30_PROJECTP'],
-        'Player': ['PLAYER_KIND', 'ATTENDANT1_KIND', 'ATTENDANT2_KIND', 'CARRY_GOLD', 'BANK_GOLD',
-                   'HERO_FIRST_KIND', 'HERO_FIRST_NAME', 'PARTNER_FIRST_KIND', 'PARTNER_FIRST_NAME',
-                   'HERO_TALK_KIND', 'PARTNER_TALK_KIND', 'RANDOM_REQUEST_NPC03_KIND', 'CONFIG_COLOR_KIND',
-                   ],
-        'Mode': ['GAME_MODE', 'EXECUTE_SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_OPEN',
-                 'SPECIAL_EPISODE_OPEN_OLD', 'SPECIAL_EPISODE_CONQUEST'],
-        'Backup': ['SCENARIO_SELECT_BACKUP', 'SCENARIO_MAIN_BIT_FLAG_BACKUP', 'GROUND_ENTER_BACKUP',
-                   'GROUND_ENTER_LINK_BACKUP', 'GROUND_GETOUT_BACKUP', 'GROUND_MAP_BACKUP', 'GROUND_PLACE_BACKUP',
-                   'DUNGEON_ENTER_BACKUP', 'DUNGEON_ENTER_MODE_BACKUP', 'DUNGEON_ENTER_INDEX_BACKUP',
-                   'DUNGEON_ENTER_FREQUENCY_BACKUP', 'DUNGEON_RESULT_BACKUP', 'GROUND_START_MODE_BACKUP',
-                   'PLAYER_KIND_BACKUP', 'ATTENDANT1_KIND_BACKUP', 'ATTENDANT2_KIND_BACKUP',
-                   'ITEM_BACKUP', 'ITEM_BACKUP_KUREKURE', 'ITEM_BACKUP_TAKE', 'ITEM_BACKUP_GET'],
-        'Misc': ['VERSION', 'CONDITION', 'ROM_VARIATION', 'LANGUAGE_TYPE',
+        _('Scenario'): ['SCENARIO_MAIN', 'SCENARIO_MAIN_BIT_FLAG', 'SCENARIO_TALK_BIT_FLAG', 'SCENARIO_SIDE',
+                        'SCENARIO_SUB1', 'SCENARIO_SUB2', 'SCENARIO_SUB3', 'SCENARIO_SUB4', 'SCENARIO_SUB5',
+                        'SCENARIO_SUB6', 'SCENARIO_SUB7', 'SCENARIO_SUB8', 'SCENARIO_BALANCE_FLAG',
+                        'COMPULSORY_SAVE_POINT', 'COMPULSORY_SAVE_POINT_SIDE', 'PERFORMANCE_PROGRESS_LIST',
+                        'SCENARIO_BALANCE_DEBUG'],
+        _('Init'): ['SCENARIO_SELECT', 'GROUND_ENTER', 'GROUND_ENTER_LINK', 'GROUND_GETOUT', 'GROUND_MAP',
+                    'GROUND_PLACE', 'GROUND_START_MODE'],
+        _('Dungeon Progress'): ['DUNGEON_OPEN_LIST', 'DUNGEON_ENTER_LIST', 'DUNGEON_ARRIVE_LIST', 'DUNGEON_CONQUEST_LIST',
+                                'DUNGEON_PRESENT_LIST', 'DUNGEON_REQUEST_LIST'],
+        _('Dungeon Init'): ['DUNGEON_SELECT', 'DUNGEON_ENTER', 'DUNGEON_ENTER_MODE', 'DUNGEON_ENTER_INDEX',
+                            'DUNGEON_ENTER_FREQUENCY', 'DUNGEON_RESULT'],
+        _('World Map'): ['WORLD_MAP_MARK_LIST_NORMAL', 'WORLD_MAP_MARK_LIST_SPECIAL', 'WORLD_MAP_LEVEL'],
+        _('Specific'): ['SIDE02_TALK', 'SIDE06_ROOM', 'SIDE08_BOSS2ND', 'SIDE01_BOSS2ND',
+                        'CRYSTAL_COLOR_01', 'CRYSTAL_COLOR_02', 'CRYSTAL_COLOR_03', 'EVENT_LOCAL', 'DUNGEON_EVENT_LOCAL',
+                        'BIT_FUWARANTE_LOCAL', 'LOTTERY_RESULT', 'SUB30_TREASURE_DISCOVER', 'SUB30_SPOT_DISCOVER',
+                        'SUB30_SPOT_LEVEL', 'SUB30_PROJECTP'],
+        _('Player'): ['PLAYER_KIND', 'ATTENDANT1_KIND', 'ATTENDANT2_KIND', 'CARRY_GOLD', 'BANK_GOLD',
+                      'HERO_FIRST_KIND', 'HERO_FIRST_NAME', 'PARTNER_FIRST_KIND', 'PARTNER_FIRST_NAME',
+                      'HERO_TALK_KIND', 'PARTNER_TALK_KIND', 'RANDOM_REQUEST_NPC03_KIND', 'CONFIG_COLOR_KIND',
+                     ],
+        _('Mode'): ['GAME_MODE', 'EXECUTE_SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_OPEN',
+                    'SPECIAL_EPISODE_OPEN_OLD', 'SPECIAL_EPISODE_CONQUEST'],
+        _('Backup'): ['SCENARIO_SELECT_BACKUP', 'SCENARIO_MAIN_BIT_FLAG_BACKUP', 'GROUND_ENTER_BACKUP',
+                      'GROUND_ENTER_LINK_BACKUP', 'GROUND_GETOUT_BACKUP', 'GROUND_MAP_BACKUP', 'GROUND_PLACE_BACKUP',
+                      'DUNGEON_ENTER_BACKUP', 'DUNGEON_ENTER_MODE_BACKUP', 'DUNGEON_ENTER_INDEX_BACKUP',
+                      'DUNGEON_ENTER_FREQUENCY_BACKUP', 'DUNGEON_RESULT_BACKUP', 'GROUND_START_MODE_BACKUP',
+                      'PLAYER_KIND_BACKUP', 'ATTENDANT1_KIND_BACKUP', 'ATTENDANT2_KIND_BACKUP',
+                     'ITEM_BACKUP', 'ITEM_BACKUP_KUREKURE', 'ITEM_BACKUP_TAKE', 'ITEM_BACKUP_GET'],
+        _('Misc'): ['VERSION', 'CONDITION', 'ROM_VARIATION', 'LANGUAGE_TYPE',
                  'FRIEND_SUM', 'UNIT_SUM',
                  'POSITION_X', 'POSITION_Y', 'POSITION_HEIGHT', 'POSITION_DIRECTION',
                  'STATION_ITEM_STATIC', 'STATION_ITEM_TEMP', 'DELIVER_ITEM_STATIC', 'DELIVER_ITEM_TEMP',
@@ -255,7 +256,7 @@ class VariableController:
                 try:
                     value = int(wdg.get_text())
                 except ValueError as err:
-                    raise ValueError("The variable must have a number as value.") from err
+                    raise ValueError(_("The variable must have a number as value.")) from err
                 if var.type == GameVariableType.BIT:
                     if value < 0 or value > 1:
                         raise ValueError("This variable must have one of these values: 0, 1.")
@@ -280,8 +281,8 @@ class VariableController:
             except ValueError as err:
                 md = self.context.message_dialog_cls()(self.builder.get_object('main_window'),
                                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                                       Gtk.ButtonsType.OK, f"Invalid variable value:\n{err}\nThe value was not written to RAM.",
-                                                       title="Error!")
+                                                       Gtk.ButtonsType.OK, f(_("Invalid variable value:\n{err}\nThe value was not written to RAM.")),
+                                                       title=_("Error!"))
                 md.set_position(Gtk.WindowPosition.CENTER)
                 md.run()
                 md.destroy()
@@ -315,7 +316,7 @@ class VariableController:
             self.context.display_error(
                 sys.exc_info(),
                 str(err),
-                "Unable to load variables!"
+                _("Unable to load variables!")
             )
             return
 
