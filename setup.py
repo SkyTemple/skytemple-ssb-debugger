@@ -23,7 +23,7 @@ setup(
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
         'py-desmume >= 0.0.3',
-        'explorerscript >= 0.0.7',
+        'explorerscript >= 0.1.0',
         'nest-asyncio >= 1.4.1',
         'pygtkspellcheck >= 4.0'
     ],

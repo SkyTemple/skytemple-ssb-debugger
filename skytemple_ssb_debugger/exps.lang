@@ -72,6 +72,7 @@
       <keyword>end</keyword>
       <keyword>hold</keyword>
       <keyword>jump</keyword>
+      <keyword>call</keyword>
       <keyword>while</keyword>
       <keyword>for</keyword>
     </context>
