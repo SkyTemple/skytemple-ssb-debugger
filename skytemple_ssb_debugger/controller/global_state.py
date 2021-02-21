@@ -32,6 +32,7 @@ from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlConte
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, synchronized, \
     threadsafe_emu
+from skytemple_files.common.i18n_util import f, _
 
 gi.require_version('Gtk', '3.0')
 
@@ -41,11 +42,11 @@ from gi.repository import Gtk
 global_state_lock = Lock()
 
 class MemAllocType(Enum):
-    UNUSED = 0x00, 'Free'
-    STATIC = 0x01, 'Static'
-    BLOCK = 0x02, 'Block'
-    TEMPORARY = 0x03, 'Temporary'
-    SUBTABLE = 0x04, 'Sub Table'
+    UNUSED = 0x00, _('Free')
+    STATIC = 0x01, _('Static')
+    BLOCK = 0x02, _('Block')
+    TEMPORARY = 0x03, _('Temporary')
+    SUBTABLE = 0x04, _('Sub Table')
     
     def __new__(cls, *args, **kwargs):
         obj = object.__new__(cls)

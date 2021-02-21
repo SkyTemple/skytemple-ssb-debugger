@@ -22,7 +22,7 @@ import sys
 import traceback
 import webbrowser
 from functools import partial
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 
 import cairo
 import gi
@@ -57,6 +57,7 @@ from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_nonblocking, threadsafe_gtk_nonblocking, \
     generate_emulator_proxy
+from skytemple_files.common.i18n_util import f, _
 
 gi.require_version('Gtk', '3.0')
 
@@ -147,15 +148,15 @@ class MainController:
         menu_view_schemes.set_submenu(submenu)
 
         self._filter_nds = Gtk.FileFilter()
-        self._filter_nds.set_name("Nintendo DS ROMs (*.nds)")
+        self._filter_nds.set_name(_("Nintendo DS ROMs (*.nds)"))
         self._filter_nds.add_pattern("*.nds")
 
         self._filter_gba_ds = Gtk.FileFilter()
-        self._filter_gba_ds.set_name("Nintendo DS ROMs with binary loader (*.ds.gba)")
+        self._filter_gba_ds.set_name(_("Nintendo DS ROMs with binary loader (*.ds.gba)"))
         self._filter_gba_ds.add_pattern("*.nds")
 
         self._filter_any = Gtk.FileFilter()
-        self._filter_any.set_name("All files")
+        self._filter_any.set_name(_("All files"))
         self._filter_any.add_pattern("*")
 
         self.main_draw = builder.get_object("draw_main")
@@ -219,7 +220,7 @@ class MainController:
 
         # Trees / Lists
         ssb_file_tree: TreeView = self.builder.get_object('ssb_file_tree')
-        column_main = TreeViewColumn("Name", Gtk.CellRendererText(), text=1)
+        column_main = TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
         ssb_file_tree.append_column(column_main)
 
         # Other gtk stuff
@@ -319,10 +320,10 @@ class MainController:
             self.emu_thread = None
             self.context.display_error(
                 sys.exc_info(),
-                f"DeSmuME couldn't be loaded. "
-                f"Debugging functionality will not be available:\n\n"
-                f"{ex}",
-                "Error loading the emulator!"
+                f(_("DeSmuME couldn't be loaded. "
+                    "Debugging functionality will not be available:\n\n"
+                    "{ex}")),
+                _("Error loading the emulator!")
             )
             return
 
@@ -473,7 +474,7 @@ class MainController:
         if self.emu_thread:
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
 
-        response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, "Open...", (self._filter_nds, self._filter_gba_ds, self._filter_any))
+        response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, _("Open..."), (self._filter_nds, self._filter_gba_ds, self._filter_any))
 
         if response == Gtk.ResponseType.OK:
             try:
@@ -481,7 +482,7 @@ class MainController:
             except BaseException as ex:
                 self.context.display_error(
                     sys.exc_info(),
-                    f"Unable to load: {fn}\n{ex}"
+                    f(_("Unable to load: {fn}\n{ex}"))
                 )
             self.load_rom()
 
@@ -580,7 +581,7 @@ class MainController:
         if not supports_joystick():
             self.context.display_error(
                 None,
-                "Joysticks are not supported on macOS. Sorry!",
+                _("Joypads are not supported on macOS. Sorry!"),
             )
             return
         self._joystick_cfg = JoystickControlsDialogController(self.window).run(
@@ -635,10 +636,10 @@ class MainController:
 
     def on_menu_emulator_screenshot_activate(self, button: Gtk.CheckMenuItem, *args):
         filter_png = Gtk.FileFilter()
-        filter_png.set_name("PNG Image (*.png)")
+        filter_png.set_name(_("PNG Image (*.png)"))
         filter_png.add_pattern("*.png")
 
-        response, fn = self._file_chooser(Gtk.FileChooserAction.SAVE, "Save Screenshot...",
+        response, fn = self._file_chooser(Gtk.FileChooserAction.SAVE, _("Save Screenshot..."),
                                           (filter_png, self._filter_any))
 
         if response == Gtk.ResponseType.OK:
@@ -791,14 +792,14 @@ class MainController:
             if treepath is not None:
                 if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
                     menu: Gtk.Menu = Gtk.Menu.new()
-                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Open Scenes...")
+                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scenes..."))
                     open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[treepath][0]))
                     menu.add(open_scene)
                     menu.show_all()
                     menu.popup_at_pointer(event)
                 if model[treepath][2] in ['map_sss_entry', 'ssb']:
                     menu: Gtk.Menu = Gtk.Menu.new()
-                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Open Scene...")
+                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scene..."))
                     open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
                         self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
                     ))
@@ -807,17 +808,17 @@ class MainController:
                     menu.popup_at_pointer(event)
                 if model[treepath][2] == 'exps_macro_dir':
                     menu: Gtk.Menu = Gtk.Menu.new()
-                    create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create directory...")
+                    create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
                     create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
-                    create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Create new script file...")
+                    create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
                     create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))
                     menu.attach_to_widget(tree, None)
                     menu.add(create_dir)
                     menu.add(create_file)
-                    if model[treepath][1] != 'Macros':
+                    if model[treepath][1] != _('Macros'):
                         # prevent main dir from being deleted
                         # todo: this is a bit lazy and obviously flawed...
-                        delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Delete directory...")
+                        delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete directory..."))
                         delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
                         menu.add(Gtk.SeparatorMenuItem.new())
                         menu.add(delete_dir)
@@ -825,7 +826,7 @@ class MainController:
                     menu.popup_at_pointer(event)
                 elif model[treepath][2] == 'exps_macro':
                     menu: Gtk.Menu = Gtk.Menu.new()
-                    delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label("Delete script file...")
+                    delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
                     delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
                     menu.attach_to_widget(tree, None)
                     menu.add(delete_file)
@@ -834,7 +835,7 @@ class MainController:
 
     def on_ssb_file_tree__menu_create_macro_dir(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
         row = store[treepath]
-        response, dirname = self._show_generic_input('Name of the directory:', 'Create Directory')
+        response, dirname = self._show_generic_input(_('Name of the directory:'), _('Create Directory'))
         if response == Gtk.ResponseType.OK:
             abs_dirname = row[0] + os.path.sep + dirname
             os.makedirs(abs_dirname, exist_ok=True)
@@ -842,7 +843,7 @@ class MainController:
 
     def on_ssb_file_tree__menu_create_macro_file(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
         row = store[treepath]
-        response, filename = self._show_generic_input('Name of the new script file:', 'Create File')
+        response, filename = self._show_generic_input(_('Name of the new script file:'), _('Create File'))
         if len(filename) < 5 or filename[-5:] != EXPLORERSCRIPT_EXT:
             filename += EXPLORERSCRIPT_EXT
         if response == Gtk.ResponseType.OK:
@@ -854,16 +855,16 @@ class MainController:
 
     def on_ssb_file_tree__menu_delete_dir(self, model: Gtk.TreeModel, treepath: Gtk.TreePath, *args):
         row = model[treepath]
-        response = self._show_are_you_sure_delete(f"Do you want to delete the directory "
-                                                  f"{row[1]} with all of it's contents?")
+        response = self._show_are_you_sure_delete(f(_("Do you want to delete the directory "
+                                                      "{row[1]} with all of it's contents?")))
         if response == Gtk.ResponseType.DELETE_EVENT:
             shutil.rmtree(row[0])
             del model[treepath]
 
     def on_ssb_file_tree__menu_delete_file(self, model, treepath, *args):
         row = model[treepath]
-        response = self._show_are_you_sure_delete(f"Do you want to delete the script file "
-                                                  f"{row[1]}?")
+        response = self._show_are_you_sure_delete(f(_("Do you want to delete the script file "
+                                                      "{row[1]}?")))
         if response == Gtk.ResponseType.DELETE_EVENT:
             os.remove(row[0])
             del model[treepath]
@@ -885,7 +886,7 @@ class MainController:
         #    -> Macros
         macros_dir_name = self.context.get_project_macro_dir()
         macros_tree_nodes = {macros_dir_name: ssb_file_tree_store.append(
-            None, [macros_dir_name, 'Macros', 'exps_macro_dir', True]
+            None, [macros_dir_name, _('Macros'), 'exps_macro_dir', True]
         )}
         for root, dnames, fnames in os.walk(macros_dir_name):
             root_node = macros_tree_nodes[root]
@@ -899,7 +900,7 @@ class MainController:
 
         # SSB SCRIPT FILES
         #    -> Common [common]
-        common_root = ssb_file_tree_store.append(None, ['', 'Common', 'common_dir', True])
+        common_root = ssb_file_tree_store.append(None, ['', _('Common'), 'common_dir', True])
         #       -> Master Script (unionall) [ssb]
         #       -> (others) [ssb]
         for name in script_files['common']:
@@ -909,7 +910,7 @@ class MainController:
             #    -> (Map Name) [map]
             map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root', True])
 
-            enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Enter (sse)', 'map_sse', True])
+            enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], _('Enter (sse)'), 'map_sse', True])
             self._tree_branches[f"{map_obj['name']}_enter"] = enter_root
             if map_obj['enter_sse'] is not None:
                 #          -> Script X [ssb]
@@ -920,9 +921,9 @@ class MainController:
                     ssb_file_tree_store.append(enter_root, [ssb_name, ssb, 'ssb', True])
 
             #       -> Acting Scripts [lsd]
-            acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Acting (ssa)', 'map_ssa', True])
+            acting_root = ssb_file_tree_store.append(map_root, [map_obj['name'], _('Acting (ssa)'), 'map_ssa', True])
             self._tree_branches[f"{map_obj['name']}_acting"] = acting_root
-            for _, ssb in map_obj['ssas']:
+            for __, ssb in map_obj['ssas']:
                 #             -> Script [ssb]
                 ssb_name = f"{map_obj['name']}/{ssb}"
                 self._scene_types[ssb_name] = 'ssa'
@@ -930,7 +931,7 @@ class MainController:
                 ssb_file_tree_store.append(acting_root, [ssb_name, ssb, 'ssb', True])
 
             #       -> Sub Scripts [sub]
-            sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], 'Sub (sss)', 'map_sss', True])
+            sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], _('Sub (sss)'), 'map_sss', True])
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
                 sss_name = f"{map_obj['name']}/{sss}"
@@ -962,14 +963,14 @@ class MainController:
         self.global_state_controller.sync()
         
     def on_global_state_alloc_dump_clicked(self, *args):
-        active_rows : List[Gtk.TreePath] = self.builder.get_object('global_state_alloc_treeview').get_selection().get_selected_rows()[1]
-        if len(active_rows)>=1:
+        active_rows: List[Gtk.TreePath] = self.builder.get_object('global_state_alloc_treeview').get_selection().get_selected_rows()[1]
+        if len(active_rows) >= 1:
             data = self.global_state_controller.dump(active_rows[0].get_indices()[0])
             dialog = Gtk.FileChooserNative.new(
-                "Save dumped block...",
+                _("Save dumped block..."),
                 self.window,
                 Gtk.FileChooserAction.SAVE,
-                '_Save', None
+                _('_Save'), None
             )
 
             response = dialog.run()
@@ -1187,7 +1188,7 @@ class MainController:
             self.context.display_error(
                 sys.exc_info(),
                 str(err),
-                "Unable to save savestate!"
+                _("Unable to save savestate!")
             )
             return
 
@@ -1222,7 +1223,7 @@ class MainController:
                 self.context.display_error(
                     sys.exc_info(),
                     str(ex),
-                    "Unable to load savestate!"
+                    _("Unable to load savestate!")
                 )
                 return
 
@@ -1304,7 +1305,7 @@ class MainController:
 
             self._set_buttons_stopped()
             self.load_debugger_state()
-            self.write_info_bar(Gtk.MessageType.WARNING, "The game is stopped.")
+            self.write_info_bar(Gtk.MessageType.WARNING, _("The game is stopped."))
 
     def emu_pause(self):
         if self.breakpoint_state and self.breakpoint_state.is_stopped():
@@ -1313,7 +1314,7 @@ class MainController:
         if self.emu_is_running:
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.pause())
         self.load_debugger_state()
-        self.write_info_bar(Gtk.MessageType.INFO, "The game is paused.")
+        self.write_info_bar(Gtk.MessageType.INFO, _("The game is paused."))
 
         self._set_buttons_paused()
         self.emu_is_running = False
@@ -1391,7 +1392,7 @@ class MainController:
         )
         state.set_file_state(breakpoint_file_state)
 
-        self.write_info_bar(Gtk.MessageType.WARNING, f"The debugger is halted at {ssb.file_name}.")
+        self.write_info_bar(Gtk.MessageType.WARNING, f(_("The debugger is halted at {ssb.file_name}.")))
         # This will mark the hanger as being breaked:
         self.debugger.ground_engine_state.break_pulled(state)
         # This will tell the code editor to refresh the debugger controls for all open editors
@@ -1545,11 +1546,11 @@ class MainController:
             self.window,
             Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
             Gtk.ButtonsType.OK_CANCEL,
-            f"You have unsaved changes to variables.\n"
-            f"Variables are reset when the game is rebooted.\n"
-            f"You need to save the variables and load them after boot.\n\n"
-            f"Do you still want to continue?",
-            title="Warning!"
+            _("You have unsaved changes to variables.\n"
+              "Variables are reset when the game is rebooted.\n"
+              "You need to save the variables and load them after boot.\n\n"
+              "Do you still want to continue?"),
+            title=_("Warning!")
         )
 
         response = md.run()
@@ -1608,10 +1609,10 @@ class MainController:
             Gtk.MessageType.WARNING,
             Gtk.ButtonsType.NONE, text
         )
-        dont_save: Gtk.Widget = dialog.add_button("Delete", Gtk.ResponseType.DELETE_EVENT)
+        dont_save: Gtk.Widget = dialog.add_button(_("Delete"), Gtk.ResponseType.DELETE_EVENT)
         dont_save.get_style_context().add_class('destructive-action')
-        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
-        dialog.format_secondary_text('You will not be able to restore it.')
+        dialog.add_button(_("Cancel"), Gtk.ResponseType.CANCEL)
+        dialog.format_secondary_text(_('You will not be able to restore it.'))
         response = dialog.run()
         dialog.destroy()
         return response
@@ -1621,7 +1622,7 @@ class MainController:
         entry: Gtk.Entry = self.builder.get_object('generic_input_dialog_entry')
         label: Gtk.Label = self.builder.get_object('generic_input_dialog_label')
         label.set_text(label_text)
-        btn_cancel = dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        btn_cancel = dialog.add_button(_("Cancel"), Gtk.ResponseType.CANCEL)
         btn = dialog.add_button(ok_text, Gtk.ResponseType.OK)
         btn.set_can_default(True)
         btn.grab_default()

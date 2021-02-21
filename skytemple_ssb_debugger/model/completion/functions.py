@@ -20,6 +20,7 @@ from gi.repository import GObject, GtkSource, Gtk
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_files.common.i18n_util import f, _
 
 
 class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvider):
@@ -28,7 +29,7 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
         self.opcodes = opcodes
 
     def do_get_name(self) -> str:
-        return "Functions"
+        return _("Functions")
 
     def do_get_priority(self) -> int:
         return 2

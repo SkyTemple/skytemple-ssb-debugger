@@ -41,6 +41,7 @@ from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUti
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.settings import TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.pixbuf.icons import *
+from skytemple_files.common.i18n_util import f, _
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
@@ -257,7 +258,7 @@ class ScriptEditorController:
         self._saving_dialog: Gtk.Dialog = self.builder.get_object('file_saving_dialog')
         self._saving_dialog.set_transient_for(self._main_window)
         self.builder.get_object('file_saving_dialog_label').set_label(
-            f'Compiling script "{self.filename}"...'
+            f(_('Compiling script "{self.filename}"...'))
         )
 
         self.file_context.save(save_text=save_text,
@@ -274,12 +275,12 @@ class ScriptEditorController:
             self._saving_dialog = None
         prefix = ''
         if isinstance(err, ParseError):
-            prefix = 'Parse error: '
+            prefix = _('Parse error: ')
         self.parent.get_context().display_error(
             exc_info,
-            f"The script file {self.filename} could not be saved.\n"
-            f"{prefix}{err}",
-            "Error saving the script."
+            f(_("The script file {self.filename} could not be saved.\n"
+                "{prefix}{err}")),
+            _("Error saving the script.")
         )
 
     def _save_done(self, modified_buffer: GtkSource.Buffer):
@@ -358,10 +359,10 @@ class ScriptEditorController:
         def load__gtk__exps_exception(exc_info, exception):
             self.parent.get_context().display_error(
                 exc_info,
-                f"There was an error while loading the ExplorerScript "
-                f"source code. The source will not be available.\n"
-                f"Please close and reopen the tab.\n\n"
-                f"{exception}"
+                f(_("There was an error while loading the ExplorerScript "
+                    "source code. The source will not be available.\n"
+                    "Please close and reopen the tab.\n\n"
+                    "{exception}"))
             )
 
         def load__gtk__ssbs_not_available():
@@ -369,7 +370,7 @@ class ScriptEditorController:
                 ssbs_bx.remove(child)
             self._refill_info_bar(
                 self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.WARNING,
-                "SSBScript is not available for this file."
+                _("SSBScript is not available for this file.")
             )
             self._ssb_script_view.set_editable(False)
 
@@ -458,16 +459,16 @@ class ScriptEditorController:
         if not breakable:
             self._refill_info_bar(
                 info_bar, Gtk.MessageType.WARNING,
-                "An old version of this script is still loaded in RAM, but breakpoints are not available.\n"
-                "Debugging is disabled for this file, until it is reloaded."
+                _("An old version of this script is still loaded in RAM, but breakpoints are not available.\n"
+                  "Debugging is disabled for this file, until it is reloaded.")
             )
             return
 
         if not ram_state_up_to_date:
             self._refill_info_bar(
                 info_bar, Gtk.MessageType.INFO,
-                "An old version of this script is still loaded in RAM, old breakpoints are still used, until "
-                "the file is reloaded."
+                _("An old version of this script is still loaded in RAM, old breakpoints are still used, until "
+                  "the file is reloaded.")
             )
             return
 
@@ -746,7 +747,7 @@ class ScriptEditorController:
                 search_settings.get_at_word_boundaries())
             self.builder.get_object('sr_search_setting_regex').set_active(search_settings.get_regex_enabled())
             self.builder.get_object('sr_search_setting_wrap_around').set_active(search_settings.get_wrap_around())
-            self._loaded_search_window.set_title(f'Search and Replace in {self.filename}')
+            self._loaded_search_window.set_title(f(_('Search and Replace in {self.filename}')))
             self._loaded_search_window.show_all()
 
     def switch_style_scheme(self, scheme):
@@ -899,7 +900,7 @@ class ScriptEditorController:
             # Show notice on SSBS info bar
             self._refill_info_bar(
                 self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.INFO,
-                "This is a read-only representation of the compiled ExplorerScript."
+                _("This is a read-only representation of the compiled ExplorerScript.")
             )
             # Force refresh of ES info bar
         else:
@@ -910,7 +911,7 @@ class ScriptEditorController:
             # Show notice on ES info bar
             self._refill_info_bar(
                 self.builder.get_object('code_editor_box_es_bar'), Gtk.MessageType.INFO,
-                "ExplorerScript is not available for this file."
+                _("ExplorerScript is not available for this file.")
             )
             # Force refresh of ES info bar
 
@@ -931,13 +932,13 @@ class ScriptEditorController:
             self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
             Gtk.ButtonsType.NONE,
-            f"The ExplorerScript source code does not match the compiled script that is present in the ROM.\n"
-            f"Do you want to keep your ExplorerScript source code, or reload (decompile) it from ROM?\n"
-            f"Warning: If you choose to reload, you will lose your file, including all comments in it.",
-            title="ExplorerScript Inconsistency"
+            f(_("The ExplorerScript source code does not match the compiled script that is present in the ROM.\n"
+                "Do you want to keep your ExplorerScript source code, or reload (decompile) it from ROM?\n"
+                "Warning: If you choose to reload, you will lose your file, including all comments in it.")),
+            title=_("ExplorerScript Inconsistency")
         )
-        md.add_button('Reload from ROM', Gtk.ResponseType.YES)
-        md.add_button('Keep ExplorerScript source code', Gtk.ResponseType.NO)
+        md.add_button(_('Reload from ROM'), Gtk.ResponseType.YES)
+        md.add_button(_('Keep ExplorerScript source code'), Gtk.ResponseType.NO)
 
         response = md.run()
         md.destroy()

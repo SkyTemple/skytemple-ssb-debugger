@@ -31,6 +31,7 @@ from ..model.breakpoint_file_state import BreakpointFileState
 from ..model.script_file_context.abstract import AbstractScriptFileContext
 from ..model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
 from ..model.script_file_context.ssb_file import SsbFileScriptFileContext
+from skytemple_files.common.i18n_util import f, _
 
 if TYPE_CHECKING:
     from .main import MainController
@@ -316,13 +317,13 @@ class EditorNotebookController:
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
-            Gtk.ButtonsType.NONE, f"Do you want to save changes to {filename}?"
+            Gtk.ButtonsType.NONE, f(_("Do you want to save changes to {filename}?"))
         )
-        dont_save: Gtk.Widget = dialog.add_button("Don't Save", 0)
+        dont_save: Gtk.Widget = dialog.add_button(_("Don't Save"), 0)
         dont_save.get_style_context().add_class('destructive-action')
-        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
-        dialog.add_button("Save", 1)
-        dialog.format_secondary_text(f"If you don't save, your changes will be lost.")
+        dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
+        dialog.add_button(_("_Save"), 1)
+        dialog.format_secondary_text(_("If you don't save, your changes will be lost."))
         response = dialog.run()
         dialog.destroy()
         return response
@@ -333,10 +334,10 @@ class EditorNotebookController:
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
             Gtk.ButtonsType.YES_NO,
-            f"The file is still loaded in RAM! Currently you are still able to debug using the old cached "
-            f"information stored in the editor.\nIf you close the editor, you won't be able to debug this "
-            f"file until it is reloaded in RAM.\n\nDo you still want to close this file?",
-            title="Warning!"
+            _("The file is still loaded in RAM! Currently you are still able to debug using the old cached "
+              "information stored in the editor.\nIf you close the editor, you won't be able to debug this "
+              "file until it is reloaded in RAM.\n\nDo you still want to close this file?"),
+            title=_("Warning!")
         )
 
         response = md.run()
@@ -357,7 +358,7 @@ def tab_label_close_button(filename, close_callback):
     label.set_width_chars(10)
 
     button: Gtk.Button = Gtk.Button.new_from_icon_name('window-close-symbolic', Gtk.IconSize.MENU)
-    button.set_tooltip_text('Close')
+    button.set_tooltip_text(_('Close'))
     button.set_relief(Gtk.ReliefStyle.NONE)
     button.set_focus_on_click(False)
     button.connect('clicked', lambda *args: close_callback(filename))
