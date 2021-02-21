@@ -59,8 +59,12 @@ class ScriptEditorController:
             enable_explorerscript=True, hide_ssb_script=False
     ):
         path = os.path.abspath(os.path.dirname(__file__))
-        self.builder = Gtk.Builder()
-        self.builder.add_from_file(os.path.join(path, "ssb_editor.glade"))
+        try:
+            from skytemple.core.ui_utils import make_builder
+            self.builder = make_builder(os.path.join(path, "ssb_editor.glade"))
+        except ImportError:
+            self.builder = Gtk.Builder()
+            self.builder.add_from_file(os.path.join(path, "ssb_editor.glade"))
         self.file_context: AbstractScriptFileContext = file_context
         self.mapname = mapname
         self.rom_data = rom_data
