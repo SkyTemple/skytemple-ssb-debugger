@@ -102,6 +102,8 @@ class MainController:
 
         self._log_stdout_io_source = None
 
+        self._file_tree_store = Gtk.TreeStore(str, str, str, bool)
+
         self._current_screen_width = SCREEN_WIDTH
         self._current_screen_height = SCREEN_HEIGHT
 
@@ -870,7 +872,7 @@ class MainController:
             del model[treepath]
 
     def init_file_tree(self):
-        ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
+        ssb_file_tree_store: Gtk.TreeStore = self._file_tree_store
         ssb_file_tree_store.clear()
 
         if not self._ssb_item_filter:
@@ -1342,7 +1344,7 @@ class MainController:
             branch_name = f'{mapname}_{scene_name}'
         else:
             return  # todo: raise error?
-        ssb_file_tree_store: Gtk.TreeStore = self.builder.get_object('ssb_file_tree_store')
+        ssb_file_tree_store: Gtk.TreeStore = self._file_tree_store
         if branch_name not in self._tree_branches:
             return  # todo: raise error?
         self._scene_types[ssb_path] = scene_type
@@ -1459,7 +1461,7 @@ class MainController:
     # TODO: CODE DUPLICATION BETWEEN SKYTEMPLE AND SSB DEBUGGER -- If we ever make a common package, this must go into it!
     def _filter__refresh_results(self):
         """Filter the main item view"""
-        item_store = self.builder.get_object('ssb_file_tree_store')
+        item_store = self._file_tree_store
         if self._search_text == "":
             item_store.foreach(self._filter__reset_row, True)
         else:
