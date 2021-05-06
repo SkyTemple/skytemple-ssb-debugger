@@ -22,7 +22,8 @@ setup(
         'skytemple-icons >= 0.1.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
-        'py-desmume >= 0.0.3',
+        'py-desmume >= 0.0.3 ; sys_platform != "darwin"',
+        'py-desmume == 0.0.3.post1 ; sys_platform == "darwin"',  # bug with newest upstream DesMuME
         'explorerscript >= 0.1.1',
         'nest-asyncio >= 1.4.1',
         'pygtkspellcheck >= 4.0'
