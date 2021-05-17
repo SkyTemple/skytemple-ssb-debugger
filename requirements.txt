@@ -2,7 +2,7 @@ ndspy==3.0.0
 skytemple-files==1.2.3
 skytemple-icons==1.2.0
 pygobject==3.36.0
-pycairo==1.18.2
+pycairo==1.20.0
 py-desmume==0.0.3.post2 ; sys_platform != "darwin"
 py-desmume==0.0.3.post1 ; sys_platform == "darwin"
 explorerscript==0.1.1
