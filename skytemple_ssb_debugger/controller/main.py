@@ -112,8 +112,11 @@ class MainController:
         self._scene_types: Dict[str, str] = {}
         self._scene_names: Dict[str, str] = {}
         # Significant sub-branches of the file list. Contains entries in the form:
-        # mapname_{enter,acting,{sss_name_with_extension}}
+        # mapname_{enter,acting,subroot,{sss_name_with_extension}}
         self._tree_branches: Dict[str, Gtk.TreeIter] = {}
+        # Root branches for the maps. Contains entries in the form:
+        # mapname
+        self._registered_maps: Dict[str, Gtk.TreeIter] = {}
 
         spellcheck_enabled_item = self.builder.get_object('menu_spellcheck_enabled')
         if sys.platform.startswith('darwin'):
@@ -911,6 +914,7 @@ class MainController:
         for i, map_obj in enumerate(script_files['maps'].values()):
             #    -> (Map Name) [map]
             map_root = ssb_file_tree_store.append(None, [map_obj['name'], map_obj['name'], 'map_root', True])
+            self._registered_maps[map_obj['name']] = map_root
 
             enter_root = ssb_file_tree_store.append(map_root, [map_obj['name'], _('Enter (sse)'), 'map_sse', True])
             self._tree_branches[f"{map_obj['name']}_enter"] = enter_root
@@ -934,6 +938,7 @@ class MainController:
 
             #       -> Sub Scripts [sub]
             sub_root = ssb_file_tree_store.append(map_root, [map_obj['name'], _('Sub (sss)'), 'map_sss', True])
+            self._tree_branches[f"{map_obj['name']}_subroot"] = sub_root
             for sss, ssbs in map_obj['subscripts'].items():
                 #          -> (name) [sub_entry]
                 sss_name = f"{map_obj['name']}/{sss}"
@@ -1346,12 +1351,36 @@ class MainController:
             return  # todo: raise error?
         ssb_file_tree_store: Gtk.TreeStore = self._file_tree_store
         if branch_name not in self._tree_branches:
-            return  # todo: raise error?
+            self._create_tree_branch(*branch_name.split('_')[0:2])
         self._scene_types[ssb_path] = scene_type
         self._scene_names[ssb_path] = f'{mapname}/{scene_name}'
         ssb_file_tree_store.append(self._tree_branches[branch_name], [
             ssb_path, ssb_path.split('/')[-1], 'ssb', True
         ])
+
+    def _create_tree_branch(self, mapname, branch):
+        # TODO: Refactor class to only use this method for tree branch creation.
+        if mapname not in self._registered_maps:
+            map_root = self._file_tree_store.append(None, [mapname, mapname, 'map_root', True])
+            self._registered_maps[mapname] = map_root
+        map_root = self._registered_maps[mapname]
+
+        if branch == 'enter':
+            enter_root = self._file_tree_store.append(map_root, [mapname, _('Enter (sse)'), 'map_sse', True])
+            self._tree_branches[f"{mapname}_enter"] = enter_root
+        elif branch == 'acting':
+            acting_root = self._file_tree_store.append(map_root, [mapname, _('Acting (ssa)'), 'map_ssa', True])
+            self._tree_branches[f"{mapname}_acting"] = acting_root
+        else:
+            if f'{mapname}_subroot' not in self._tree_branches:
+                sub_root = self._file_tree_store.append(map_root, [mapname, _('Sub (sss)'), 'map_sss', True])
+                self._tree_branches[f"{mapname}_subroot"] = sub_root
+            sub_root = self._tree_branches[f"{mapname}_subroot"]
+            sss_name = f"{mapname}/{branch.replace('_','/')}"
+            self._scene_types[sss_name] = 'sss'
+            self._scene_names[sss_name] = sss_name
+            sub_entry = self._file_tree_store.append(sub_root, [sss_name, branch.replace('_', '/'), 'map_sss_entry', True])
+            self._tree_branches[sss_name.replace('/', '_')] = sub_entry
 
     def on_script_removed(self, ssb_path):
         """Handle a SSB file removal."""
