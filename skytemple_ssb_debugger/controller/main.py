@@ -247,15 +247,6 @@ class MainController:
         builder.connect_signals(self)
         self.window.present()
 
-        # Show the initial assistant window
-        if not self.settings.get_assistant_shown():
-            assistant: Gtk.Assistant = self.builder.get_object('intro_dialog')
-            assistant.set_position(Gtk.WindowPosition.CENTER_ON_PARENT)
-            assistant.commit()
-            assistant.set_transient_for(self.window)
-            assistant.set_attached_to(self.window)
-            assistant.show()
-
         if not self.context.allows_interactive_file_management():
             menu_file: Gtk.Menu = self.builder.get_object('menu_file')
             for child in menu_file:
@@ -1028,10 +1019,6 @@ class MainController:
         self.settings.set_window_position(self.window.get_position())
         self.settings.set_window_size(self.window.get_size())
         self._resize_timeout_id = None
-
-    def on_intro_dialog_close(self, assistant: Gtk.Assistant):
-        self.settings.set_assistant_shown(True)
-        assistant.hide()
 
     # TODO: A bit of weird coupling with those two signal handlers.
     def on_ground_state_entities_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
