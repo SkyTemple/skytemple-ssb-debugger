@@ -30,7 +30,11 @@ from skytemple_files.common.i18n_util import f, _
 class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvider):
     def __init__(self, rom_data: Pmd2Data):
         super().__init__()
-        self.all_constants = list(SsbConstant.collect_all(rom_data.script_data))
+        self.constant_source = rom_data.script_data
+
+    @property
+    def all_constants(self):
+        return list(SsbConstant.collect_all(self.constant_source))
 
     def do_get_name(self) -> str:
         return _("Constants & Variables")
