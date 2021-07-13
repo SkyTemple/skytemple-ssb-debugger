@@ -111,13 +111,6 @@ class SsbFileManager:
         logger.debug(f"{ssb_filename}: Save")
         project_fm.explorerscript_save(ssb_filename, code, f.exps.source_map)
 
-        # Update the hash of the ExplorerScript file
-        logger.debug(f"{ssb_filename}: Hash")
-        new_hash = self.hash(ssb_new_bin)
-        f.exps.ssb_hash = new_hash
-        logger.debug(f"{ssb_filename}: Save Hash")
-        project_fm.explorerscript_save_hash(ssb_filename, new_hash)
-
         # Update the inclusion maps of included files.
         logger.debug(f"{ssb_filename}: Build IM")
         new_inclusion_list = IncludedUsageMap(f.exps.source_map, exps_filename)
@@ -132,6 +125,14 @@ class SsbFileManager:
         # Save ROM
         logger.debug(f"{ssb_filename}: Save ROM")
         self.context.save_ssb(ssb_filename, f.ssb_model, self)
+
+        # Update the hash of the ExplorerScript file
+        logger.debug(f"{ssb_filename}: Hash")
+        new_hash = self.hash(ssb_new_bin)
+        f.exps.ssb_hash = new_hash
+        logger.debug(f"{ssb_filename}: Save Hash")
+        project_fm.explorerscript_save_hash(ssb_filename, new_hash)
+
         # After save:
         logger.debug(f"{ssb_filename}: After Save")
         result = self._handle_after_save(ssb_filename), new_inclusion_list.included_files
