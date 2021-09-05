@@ -119,13 +119,7 @@ class MainController:
         self._registered_maps: Dict[str, Gtk.TreeIter] = {}
 
         spellcheck_enabled_item = self.builder.get_object('menu_spellcheck_enabled')
-        if sys.platform.startswith('darwin'):
-            # Disable spellchecking on darwin for now since it causes run-time errors that make the UI unusable
-            # TODO: investigate the issue further
-            spellcheck_enabled_item.set_active(False)
-            spellcheck_enabled_item.hide()
-        else:
-            spellcheck_enabled_item.set_active(self.settings.get_spellcheck_enabled())
+        spellcheck_enabled_item.set_active(self.settings.get_spellcheck_enabled())
 
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
