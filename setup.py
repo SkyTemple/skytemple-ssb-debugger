@@ -1,4 +1,4 @@
-__version__ = '1.2.5'
+__version__ = '1.3.0rc1'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -18,7 +18,7 @@ setup(
     url='https://github.com/SkyTemple/skytemple-ssb-debugger',
     install_requires=[
         'ndspy >= 3.0.0',
-        'skytemple-files >= 1.2.4',
+        'skytemple-files >= 1.3.0rc1',
         'skytemple-icons >= 0.1.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
