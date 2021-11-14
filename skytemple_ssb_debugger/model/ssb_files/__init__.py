@@ -29,7 +29,7 @@ class AbstractScriptFile:
     def load(self):
         pass
 
-    @property
+    @property  # type: ignore
     @abstractmethod
     def text(self):
         pass

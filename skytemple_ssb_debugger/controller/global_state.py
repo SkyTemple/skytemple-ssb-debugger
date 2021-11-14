@@ -41,6 +41,7 @@ from gi.repository import Gtk
 
 global_state_lock = Lock()
 
+
 class MemAllocType(Enum):
     UNUSED = 0x00, _('Free')
     STATIC = 0x01, _('Static')
@@ -59,6 +60,7 @@ class MemAllocType(Enum):
     ):
         self.description = description
 
+
 class MemTableEntry:
     def __init__(self, type_alloc: MemAllocType, unk1: int, unk2: int, start_address: int, available: int, used: int):
         self.type_alloc = type_alloc
@@ -67,7 +69,8 @@ class MemTableEntry:
         self.start_address = start_address
         self.available = available
         self.used = used
-        
+
+
 class MemTable:
     def __init__(self, entries: List[MemTableEntry], start_address: int, parent_table: int, addr_table: int, max_entries: int, addr_data: int, len_data: int):
         self.entries = entries
@@ -78,17 +81,17 @@ class MemTable:
         self.addr_data = addr_data
         self.len_data = len_data
 
-class GlobalStateController:
 
+class GlobalStateController:
     def __init__(self, emu_thread: Optional[EmulatorThread], builder: Gtk.Builder):
         super().__init__()
         self.emu_thread = emu_thread
         self.builder = builder
-        self.rom_data: Pmd2Data = None
-        self._tables = []
+        self.rom_data: Optional[Pmd2Data] = None
+        self._tables: List[MemTable] = []
         self._current_table = 0
 
-    def change_current_table(self, current_table) -> bytes:
+    def change_current_table(self, current_table):
         self._current_table = max(0, min(current_table, len(self._tables)))
         threadsafe_gtk_nonblocking(self._do_sync_gtk)
     
@@ -96,8 +99,8 @@ class GlobalStateController:
         """Dump one file from the rom"""
         start = self._tables[self._current_table].entries[file_id].start_address
         length = self._tables[self._current_table].entries[file_id].available
-        return self.emu_thread.emu.memory.unsigned[start:start+length]
-        
+        return self.emu_thread.emu.memory.unsigned[start:start+length]  # type: ignore
+
     def sync(self):
         """Manual force sync of global state"""
         if not self.emu_thread:
@@ -140,7 +143,7 @@ class GlobalStateController:
         self.builder.get_object('spin_alloc_table_nb').set_range(0, len(self._tables)-1)
 
     def _read_table(self, start_address) -> MemTable:
-        accessor = self.emu_thread.emu.memory.unsigned
+        accessor = self.emu_thread.emu.memory.unsigned  # type: ignore
         parent_table = accessor.read_long(start_address+0x4)
         addr_table = accessor.read_long(start_address+0x8)
         entries = accessor.read_long(start_address+0xc)
@@ -150,7 +153,7 @@ class GlobalStateController:
         blocks = []
         for x in range(entries):
             entry_start = addr_table+0x18*x
-            ent_type = MemAllocType(accessor.read_long(entry_start))
+            ent_type = MemAllocType(accessor.read_long(entry_start))  # type: ignore
             unk1 = accessor.read_long(entry_start+0x4)
             unk2 = accessor.read_long(entry_start+0x8)
             start_addr = accessor.read_long(entry_start+0xc)

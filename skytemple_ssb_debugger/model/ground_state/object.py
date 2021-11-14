@@ -39,17 +39,17 @@ class Object(AbstractEntityWithScriptStruct):
     def _script_struct_offset(self):
         return OBJECT_BEGIN_SCRIPT_STRUCT
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def valid(self):
         return self.emu_thread.emu.memory.signed.read_short(self.pnt + self._script_struct_offset) > 0
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def id(self):
         return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x04)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def kind(self) -> Pmd2ScriptObject:
         kind_id = self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x06)
@@ -58,47 +58,47 @@ class Object(AbstractEntityWithScriptStruct):
         except KeyError:
             return Pmd2ScriptObject(kind_id, -1, -1, -1, 'UNKNOWN')
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def hanger(self):
         return self.emu_thread.emu.memory.signed.read_short(self.pnt + 0x0A)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def sector(self):
         return self.emu_thread.emu.memory.signed.read_byte(self.pnt + 0x0C)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def direction(self):
         return self.rom_data.script_data.directions__by_id[0]  # TODO!!
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_north(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x134)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_west(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x138)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_south(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x13C)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_east(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x140)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_map(self):
         return pos_in_map_coord(self.x_north, self.x_south)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_map(self):
         return pos_in_map_coord(self.y_west, self.y_east)

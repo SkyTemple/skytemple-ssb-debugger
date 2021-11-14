@@ -47,14 +47,14 @@ class ScriptRuntimeStruct:
         """The first entry contains a pointer to something unknown (global script state?) when valid"""
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt) != 0
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def script_target_type(self) -> SsbRoutineType:
         """The type of target for this script struct (ACTOR, OBJECT, PERFORMER) or GENERIC for global script"""
         idx = self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x08)
         return SsbRoutineType.create_for_index(idx)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def script_target_slot_id(self) -> int:
         """The slot id of the target type's entity list (always 0 for global script)"""
@@ -63,23 +63,23 @@ class ScriptRuntimeStruct:
             script_target_id = self.emu_thread.emu.memory.unsigned.read_short(script_target_address)
         return script_target_id
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def current_opcode(self) -> Pmd2ScriptOpCode:
         address_current_opcode = self.current_opcode_addr
         return self.rom_data.script_data.op_codes__by_id[self.emu_thread.emu.memory.unsigned.read_short(address_current_opcode)]
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def start_addr_routine_infos(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x14)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def start_addr_opcodes(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x18)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def current_opcode_addr(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x1c)
@@ -89,28 +89,28 @@ class ScriptRuntimeStruct:
         """The current opcode address relative to the start of the SSB file (after header), in words."""
         return int((self.current_opcode_addr - self.start_addr_routine_infos) / 2)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def start_addr_str_table(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x20)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def has_call_stack(self) -> bool:
         """Whether or not there is a script return address on the stack -> the debugger can step out"""
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x2c) != 0
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def call_stack__start_addr_routine_infos(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x24)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def call_stack__start_addr_opcodes(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x28)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def call_stack__current_opcode_addr(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x2c)
@@ -120,22 +120,22 @@ class ScriptRuntimeStruct:
         """The stack opcode address relative to the start of the SSB file (after header), in words."""
         return int((self.call_stack__current_opcode_addr - self.call_stack__start_addr_routine_infos) / 2)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def call_stack__start_addr_str_table(self) -> int:
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x30)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def target_type(self) -> SsbRoutineType:
         return SsbRoutineType(self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 8))
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def is_in_unionall(self):
         return self.start_addr_routine_infos == self.unionall_load_addr.get() and self.unionall_load_addr.get() != 0
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def hanger_ssb(self):
         """
@@ -149,7 +149,7 @@ class ScriptRuntimeStruct:
             return 0
         return self.emu_thread.emu.memory.signed.read_short(self.pnt + 0x10)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def target_id(self) -> int:
         script_target_id = script_target_address = self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 4)

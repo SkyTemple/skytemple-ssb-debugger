@@ -32,12 +32,11 @@ setup(
         'Development Status :: 4 - Beta',
         'Programming Language :: Python',
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9'
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
     ],
-    package_data={'skytemple_ssb_debugger': ['*.lang', '*.css', '*.glade', '**/*.glade', 'data/*/*/*/*/*']},
+    package_data={'skytemple_ssb_debugger': ['*.lang', '*.css', '*.glade', '**/*.glade', 'data/*/*/*/*/*', 'py.typed']},
     entry_points='''
         [console_scripts]
         skytemple-ssb-debugger=skytemple_ssb_debugger.main:main

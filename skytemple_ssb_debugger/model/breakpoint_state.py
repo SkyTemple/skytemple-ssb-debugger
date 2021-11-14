@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import threading
 from enum import Enum
-from typing import Optional
+from typing import Optional, List, Callable
 
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
@@ -63,7 +63,7 @@ class BreakpointState:
         self._state: BreakpointStateType = BreakpointStateType.STOPPED
         self._file_state: Optional[BreakpointFileState] = None
         # Hook callbacks to call, when somewhere the break is released.
-        self._release_hooks = []
+        self._release_hooks: List[Callable] = []
 
     @synchronized(file_state_lock)
     def set_file_state(self, file_state: BreakpointFileState):
@@ -72,12 +72,12 @@ class BreakpointState:
     def get_file_state(self) -> Optional[BreakpointFileState]:
         return self._file_state
 
-    @property
+    @property  # type: ignore
     @synchronized(manual_step_opcode_offset_lock)
     def manual_step_opcode_offset(self):
         return self._manual_step_opcode_offset
 
-    @manual_step_opcode_offset.setter
+    @manual_step_opcode_offset.setter  # type: ignore
     @synchronized(manual_step_opcode_offset_lock)
     def manual_step_opcode_offset(self, value):
         self._manual_step_opcode_offset = value
@@ -93,7 +93,7 @@ class BreakpointState:
     def release(self):
         self.condition.release()
 
-    @property
+    @property  # type: ignore
     @synchronized(breakpoint_state_state_lock)
     def state(self):
         return self._state
@@ -139,15 +139,15 @@ class BreakpointState:
 
     def step_manual(self, opcode_offset: int):
         """Transition to the STEP_MANUAL state and set the opcode to halt at."""
-        self.state = BreakpointStateType.STEP_MANUAL
-        self.manual_step_opcode_offset = opcode_offset
+        self.state = BreakpointStateType.STEP_MANUAL  # type: ignore
+        self.manual_step_opcode_offset = opcode_offset  # type: ignore
         self._wakeup()
 
     def transition(self, state_type: BreakpointStateType):
         """Transition to the specified state. Can not transition to STOPPED."""
         if state_type == BreakpointStateType.STOPPED:
             raise ValueError("Can not transition breakpoint state to stopped.")
-        self.state = state_type
+        self.state = state_type  # type: ignore
         self._wakeup()
 
     def _wakeup(self):
@@ -159,7 +159,7 @@ class BreakpointState:
 
     # INTERNAL ONLY, should not be set from outside.
 
-    @state.setter
+    @state.setter  # type: ignore
     @synchronized(breakpoint_state_state_lock)
     def state(self, value):
         self._state = value

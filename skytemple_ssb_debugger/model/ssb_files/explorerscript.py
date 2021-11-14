@@ -19,13 +19,13 @@ import os
 from typing import Optional
 
 from explorerscript.source_map import SourceMap
-from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile, SsbLoadedFile
 
 logger = logging.getLogger(__name__)
 
 
 class ExplorerScriptFile(AbstractScriptFile):
-    def __init__(self, parent: 'SsbLoadedFile'):
+    def __init__(self, parent: SsbLoadedFile):
         super().__init__(parent)
         self.ssb_hash: str = ''
         self._text: str = ''

@@ -85,8 +85,8 @@ class VariableController:
         self.emu_thread = emu_thread
         self.builder = builder
         self.context = context
-        self.rom_data: Pmd2Data = None
-        self.var_form_elements = None
+        self.rom_data: Optional[Pmd2Data] = None
+        self.var_form_elements: Optional[List[Optional[List[Optional[Gtk.Widget]]]]] = None
         self._suppress_events = False
         self._boost = False
         # Cached variable values
@@ -176,7 +176,7 @@ class VariableController:
                         y = math.floor(i / 3)
                         sub_grid.attach(self.create_var_form_element(var, i), x, y, 1, 1)
                 else:
-                    sub_box: Gtk.Box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
+                    sub_box = Gtk.Box.new(Gtk.Orientation.VERTICAL, 0)
                     sub_box.set_margin_bottom(2)
                     page_grid.attach(sub_box, 0, row + 1, 1, 1)
                     for i in range(0, var.nbvalues):
@@ -186,14 +186,15 @@ class VariableController:
         notebook.show_all()
         self.sync()
 
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValue'].begin_absolute,
-            self.hook__variable_set
-        ))
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValueWithOffset'].begin_absolute,
-            self.hook__variable_set_with_offset
-        ))
+        if self.emu_thread:
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(  # type: ignore
+                self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValue'].begin_absolute,  # type: ignore
+                self.hook__variable_set
+            ))
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(  # type: ignore
+                self.rom_data.binaries['arm9.bin'].functions['SaveScriptVariableValueWithOffset'].begin_absolute,  # type: ignore
+                self.hook__variable_set_with_offset
+            ))
 
     def uninit(self):
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
@@ -228,12 +229,13 @@ class VariableController:
         else:
             label = ''
 
+        wgd: Gtk.Widget
         if var.type == GameVariableType.BIT:
-            wgd: Gtk.CheckButton = Gtk.CheckButton.new()
+            wgd = Gtk.CheckButton.new()
             wgd.set_label(label)
             wgd.connect('toggled', partial(self.on_var_changed_check, var, offset))
         else:
-            wgd: Gtk.Entry = Gtk.Entry.new()
+            wgd = Gtk.Entry.new()
             if var.type == GameVariableType.UINT32 or var.type == GameVariableType.INT32:
                 wgd.set_width_chars(11)
             elif var.type == GameVariableType.UINT16 or var.type == GameVariableType.INT16:
@@ -244,7 +246,7 @@ class VariableController:
 
         wgd.set_halign(Gtk.Align.END)
         box.pack_start(wgd, True, True, 0)
-        self.var_form_elements[var.id][offset] = wgd
+        self.var_form_elements[var.id][offset] = wgd  # type: ignore
         return box
 
     def on_var_changed_entry(self, var: Pmd2ScriptGameVar, offset: int, wdg: Gtk.Entry, *args):
@@ -309,7 +311,7 @@ class VariableController:
             with open_utf8(path, 'r') as f:
                 vars = json.load(f)
             for name, values in vars.items():
-                var_id = self.rom_data.script_data.game_variables__by_name[name].id
+                var_id = self.rom_data.script_data.game_variables__by_name[name].id  # type: ignore
                 for i, value in enumerate(values):
                     self._queue_variable_write(var_id, i, value)
         except BaseException as err:
@@ -329,7 +331,7 @@ class VariableController:
 
     def _queue_variable_write(self, var_id: int, offset: int, value: int):
         threadsafe_emu(
-            self.emu_thread, lambda: GameVariable.write(self.emu_thread.emu.memory, self.rom_data, var_id, offset, value)
+            self.emu_thread, lambda: GameVariable.write(self.emu_thread.emu.memory, self.rom_data, var_id, offset, value)  # type: ignore
         )
 
         # Also update the cached values
@@ -342,28 +344,28 @@ class VariableController:
     def hook__variable_set(self, address: int, size: int):
         if self._boost:
             return
-        var_id = self.emu_thread.emu.memory.register_arm9.r1
+        var_id = self.emu_thread.emu.memory.register_arm9.r1  # type: ignore
         if var_id >= 0x400:
             return
         var_offset = 0
-        value_raw = self.emu_thread.emu.memory.register_arm9.r2
+        value_raw = self.emu_thread.emu.memory.register_arm9.r2  # type: ignore
         # TODO: Do we need to process the raw value...?
 
-        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw
+        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw  # type: ignore
         threadsafe_gtk_nonblocking(partial(self.hook__variable_set_gtk, var_id, var_offset, value_raw))
 
     @synchronized(variables_lock)
     def hook__variable_set_with_offset(self, address: int, size: int):
         if self._boost:
             return
-        var_id = self.emu_thread.emu.memory.register_arm9.r1
+        var_id = self.emu_thread.emu.memory.register_arm9.r1  # type: ignore
         if var_id >= 0x400:
             return
-        var_offset = self.emu_thread.emu.memory.register_arm9.r2
-        value_raw = self.emu_thread.emu.memory.register_arm9.r3
+        var_offset = self.emu_thread.emu.memory.register_arm9.r2  # type: ignore
+        value_raw = self.emu_thread.emu.memory.register_arm9.r3  # type: ignore
         # TODO: Do we need to process the raw value...?
 
-        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw
+        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value_raw  # type: ignore
         threadsafe_gtk_nonblocking(partial(self.hook__variable_set_gtk, var_id, var_offset, value_raw))
 
     @synchronized(variables_lock)

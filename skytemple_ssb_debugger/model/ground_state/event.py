@@ -37,57 +37,57 @@ class Event:
             self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
         ) + self.offset
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def valid(self):
         return self.emu_thread.emu.memory.signed.read_short(self.pnt + EVENT_EXISTS_CHECK_OFFSET) > 0
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def id(self):
         return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x00)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def kind(self):
         return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x02)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def hanger(self):
         return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x04)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def sector(self):
         return self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x06)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_north(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x10)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_west(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x14)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_south(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x18)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_east(self):
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x1C)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def x_map(self):
         return pos_in_map_coord(self.x_north, self.x_south)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def y_map(self):
         return pos_in_map_coord(self.y_west, self.y_east)

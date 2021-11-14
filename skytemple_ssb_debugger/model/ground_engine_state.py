@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+import typing
 import warnings
 from threading import Lock
 from typing import Optional, List, Tuple
@@ -101,12 +102,14 @@ class GroundEngineState:
         self.reset()
 
     @synchronized_now(ground_engine_lock)
+    @typing.no_type_check
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
         self._loaded_ssb_files[state.hanger_id].breaked = True
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
         state.add_release_hook(self.break_released)
 
+    @typing.no_type_check
     def step_into_macro_call(self, state: BreakpointState):
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
 
@@ -122,12 +125,12 @@ class GroundEngineState:
     def running(self):
         return self._running
 
-    @property
+    @property  # type: ignore
     @synchronized_now(ground_engine_lock)
     def loaded_ssx_files(self):
         return self._loaded_ssx_files
 
-    @property
+    @property  # type: ignore
     @synchronized_now(ground_engine_lock)
     def loaded_ssb_files(self):
         return self._loaded_ssb_files

@@ -19,6 +19,7 @@ import asyncio
 import logging
 import sys
 from asyncio import Future
+from concurrent import futures
 from threading import Thread, current_thread, Lock, Condition
 from typing import Optional
 
@@ -53,7 +54,7 @@ class EmulatorThread(Thread):
     @classmethod
     def instance(cls) -> 'EmulatorThread':
         if cls._instance is None:
-            return None
+            return None  # type: ignore
         return cls._instance
 
     @classmethod
@@ -141,7 +142,7 @@ class EmulatorThread(Thread):
             self.registered_main_loop = True
         start_lock.release()
 
-    def run_task(self, coro) -> Future:
+    def run_task(self, coro) -> futures.Future:
         """Runs an asynchronous task"""
         start_lock.acquire()
         retval = asyncio.run_coroutine_threadsafe(self.coro_runner(coro), self.loop)
@@ -245,7 +246,7 @@ class EmulatorThread(Thread):
     def display_buffer_as_rgbx(self):
         return self._display_buffer
 
-    @property
+    @property  # type: ignore
     @synchronized(fps_frame_count_lock)
     def current_frame_id(self):
         """The ID of the current frame. Warning: Resets every 1000 frames back to 0."""

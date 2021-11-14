@@ -21,7 +21,7 @@ import os
 import re
 import webbrowser
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING, Callable
+from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
@@ -97,7 +97,7 @@ class ScriptEditorController:
         self._ssb_script_revealer: Gtk.Revealer = None
         self._explorerscript_revealer: Gtk.Revealer = None
         self._ssb_script_search: Gtk.SearchEntry = None
-        self._explorerscript_revealer: Gtk.SearchEntry = None
+        self._explorerscript_search: Gtk.SearchEntry = None
         self._ssb_script_search_context: GtkSource.SearchContext = None
         self._explorerscript_search_context: GtkSource.SearchContext = None
         self._saving_dialog: Optional[Gtk.Dialog] = None
@@ -105,7 +105,7 @@ class ScriptEditorController:
         self._still_loading = True
         self._foucs_opcode_after_load = None
         self._on_break_pulled_after_load = None
-        self._hanger_halt_lines_after_load = None
+        self._hanger_halt_lines_after_load: Optional[Tuple[str, List[Tuple[SsbRoutineType, int, int]]]] = None
         self._spellchecker_loaded = False
 
         self._loaded_search_window: Optional[Gtk.Dialog] = None
@@ -299,7 +299,7 @@ class ScriptEditorController:
         # Resync the breakpoints at the Breakpoint Manager.
         # Collect all line marks and check which is the first temporary opcode text mark in it, this is
         # the opcode to break on.
-        breakpoints_to_resync = {}
+        breakpoints_to_resync: Dict[str, List[int]] = {}
         for line in range(0, modified_buffer.get_line_count()):
             marks = EditorTextMarkUtil.get_line_marks_for(modified_buffer, line, 'breakpoint')
             if len(marks) > 0:
@@ -583,22 +583,23 @@ class ScriptEditorController:
         return True
 
     def on_sr_search_setting_regex_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
         s.set_regex_enabled(btn.get_active())
 
     def on_sr_search_setting_wrap_around_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
         s.set_wrap_around(btn.get_active())
 
     def on_sr_search_setting_match_words_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
         s.set_at_word_boundaries(btn.get_active())
 
     def on_sr_search_setting_case_sensitive_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
         s.set_case_sensitive(btn.get_active())
 
     def on_sr_search_clicked(self, btn: Gtk.Button, *args):
+        assert self._active_search_context
         buffer: Gtk.TextBuffer = self._active_search_context.get_buffer()
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
@@ -620,6 +621,7 @@ class ScriptEditorController:
                 self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_sr_replace_clicked(self, btn: Gtk.Button, *args):
+        assert self._active_search_context
         buffer: Gtk.TextBuffer = self._active_search_context.get_buffer()
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
@@ -635,6 +637,7 @@ class ScriptEditorController:
             self._active_search_context.replace(match_start, match_end, self.builder.get_object('sr_replace_text').get_text(), -1)
 
     def on_sr_replace_all_clicked(self, btn: Gtk.Button, *args):
+        assert self._active_search_context
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
         settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
@@ -987,13 +990,13 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
             type_id = -1
             slot_id = -1
             if len(execution_marks) > 0:
-                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
             self.set_pixbuf(create_breaked_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script
             ))
             return
         if len(execution_marks) > 0:
-            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
             # Don't show for global
             self.set_pixbuf(create_execution_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script

@@ -18,13 +18,13 @@ import logging
 from typing import Optional
 
 from explorerscript.source_map import SourceMap
-from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile, SsbLoadedFile
 
 logger = logging.getLogger(__name__)
 
 
 class SsbScriptFile(AbstractScriptFile):
-    def __init__(self, parent: 'SsbLoadedFile'):
+    def __init__(self, parent: SsbLoadedFile):
         super().__init__(parent)
         self._text: str = ''
         self._source_map: Optional[SourceMap] = None
