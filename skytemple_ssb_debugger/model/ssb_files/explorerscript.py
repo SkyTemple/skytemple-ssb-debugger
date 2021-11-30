@@ -16,10 +16,15 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import os
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from explorerscript.source_map import SourceMap
 from skytemple_ssb_debugger.model.ssb_files import AbstractScriptFile
+
+
+if TYPE_CHECKING:
+    from skytemple_ssb_debugger.model.ssb_files import SsbLoadedFile
+
 
 logger = logging.getLogger(__name__)
 

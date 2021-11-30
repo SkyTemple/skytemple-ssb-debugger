@@ -32,13 +32,13 @@ class Map:
             self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
         )
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def camera_x_pos(self):
         """Returns the center position of the camera"""
         return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x200)
 
-    @property
+    @property  # type: ignore
     @wrap_threadsafe_emu()
     def camera_y_pos(self):
         """Returns the center position of the camera"""

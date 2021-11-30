@@ -47,8 +47,8 @@ class EditorNotebookController:
         self.rom_data: Optional[Pmd2Data] = None
         self._open_editors: Dict[str, ScriptEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
-        self._cached_hanger_halt_lines = {}
-        self._cached_file_bpnt_state: BreakpointFileState = None
+        self._cached_hanger_halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]] = {}
+        self._cached_file_bpnt_state: Optional[BreakpointFileState] = None
         self.enable_explorerscript = enable_explorerscript
         self._main_window = main_window
 
@@ -68,6 +68,8 @@ class EditorNotebookController:
         return None
 
     def open_ssb(self, ssb_rom_path: str):
+        assert self.file_manager
+        assert self.breakpoint_manager
         context = SsbFileScriptFileContext(
             self.file_manager.open_in_editor(ssb_rom_path),
             self.parent.get_scene_type_for(ssb_rom_path),
@@ -77,20 +79,24 @@ class EditorNotebookController:
         return self._open_common(ssb_rom_path, context, mapname=ssb_rom_path.split('/')[1])
 
     def open_exps_macro(self, abs_path: str):
+        assert self.file_manager
+        assert self.breakpoint_manager
         context = ExpsMacroFileScriptFileContext(
             abs_path, self.file_manager, self.breakpoint_manager, self
         )
         return self._open_common(abs_path, context)
 
     def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: str = None):
+        assert self.file_manager
         if self.file_manager:
             if registered_fname in self._open_editors:
                 self._notebook.set_current_page(self._notebook.page_num(
                     self._open_editors[registered_fname].get_root_object()
                 ))
             else:
+                assert self.rom_data
                 editor_controller = ScriptEditorController(
-                    self, self._main_window, file_context,
+                    self, self._main_window, file_context,  # type: ignore
                     self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript,
                     not self.get_context().show_ssb_script_editor()
                 )
@@ -159,6 +165,7 @@ class EditorNotebookController:
                 return True
 
             if filename[-4:] == '.ssb':
+                assert self.file_manager
                 if not self.file_manager.close_in_editor(filename, warning_callback):
                     return False
 
@@ -191,6 +198,7 @@ class EditorNotebookController:
     def break_pulled(self, state: BreakpointState):
         """The debugger paused. Enable debugger controls for file_name."""
         file_state = state.get_file_state()
+        assert file_state
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
             editor.on_break_pulled(file_state.ssb_filename, file_state.opcode_addr, file_state.halted_on_call)

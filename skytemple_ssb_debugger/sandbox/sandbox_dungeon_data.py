@@ -252,7 +252,7 @@ def draw_full_map(addr_entities, img, x, y, tile, chunks: Image.Image):
     if tile.stairs == DungeonRamStairType.STAIRS:
         color = (163, 170, 0, 100)
         txt = "STR"
-        draw: ImageDraw.ImageDraw = ImageDraw.Draw(img, 'RGBA')
+        draw = ImageDraw.Draw(img, 'RGBA')
         pos = (x * CHUNK_DIM, y * CHUNK_DIM, (x+1) * CHUNK_DIM, (y+1) * CHUNK_DIM)
         draw.rectangle(pos, color)
         draw.text((pos[0] + 4, pos[1] + 8), txt, (0, 0, 0, 255))

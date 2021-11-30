@@ -59,6 +59,7 @@ class EditorTextMarkUtil:
     @classmethod
     def extract_opcode_data_from_line_mark(cls, mark: GtkSource.Mark) -> Tuple[str, int]:
         match = MARK_PATTERN.match(mark.get_name()[4:])
+        assert match
         return str(match.group(1)), int(match.group(2))
 
     @classmethod
@@ -67,7 +68,7 @@ class EditorTextMarkUtil:
         m: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, True)
         if m is not None:
             ms.append(m)
-        m: Gtk.TextMark = cls._get_opcode_mark(b, ssb_filename, opcode_offset, False)
+        m = cls._get_opcode_mark(b, ssb_filename, opcode_offset, False)
         if m is not None:
             ms.append(m)
         for i, m in enumerate(ms):
@@ -118,6 +119,7 @@ class EditorTextMarkUtil:
                     b.delete_mark(om)
                 # Move by deleting and re-creating.
                 match = MARK_PATTERN_TMP.match(m.get_name())
+                assert match
                 if match.group(3):
                     b.create_mark(f'opcode_<<<{str(match.group(1))}>>>_{int(match.group(2))}_{match.group(3)}', textiter)
                 else:
@@ -146,6 +148,7 @@ class EditorTextMarkUtil:
             ]
             for m in marks_at_pos:
                 match = marker_pattern.match(m.get_name())
+                assert match
                 marks.append((str(match.group(1)), int(match.group(2))))
             if not i.forward_char():  # TODO: the other forwards might also work!
                 return marks

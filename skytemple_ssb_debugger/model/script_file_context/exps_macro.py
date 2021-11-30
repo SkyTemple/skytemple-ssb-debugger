@@ -20,7 +20,7 @@ import os
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional, Dict, Tuple, TYPE_CHECKING
+from typing import Callable, Optional, Dict, Tuple, TYPE_CHECKING, Any
 
 from gi.repository import GLib, Gtk
 
@@ -71,7 +71,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
 
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         logger.debug(f"{loaded_ssb.filename}: Reloaded")
-        if self._on_ssbs_state_change:
+        if self._on_ssbs_state_change and self._on_ssbs_reload:
             self._on_ssbs_reload(loaded_ssb.filename)
 
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
@@ -95,7 +95,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         load_exps: bool, load_ssbs: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[any, BaseException], None],
+        exps_exception_callback: Callable[[Any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -165,7 +165,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
-    def save(self, save_text: str, save_exps: bool, error_callback: Callable[[any, BaseException], None],
+    def save(self, save_text: str, save_exps: bool, error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
         if not save_exps:
             return  # not supported.

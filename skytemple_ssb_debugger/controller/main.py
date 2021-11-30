@@ -62,7 +62,6 @@ from skytemple_files.common.i18n_util import f, _
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk, Gdk, GLib
-from gi.repository.Gtk import *
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +73,7 @@ COL_VISIBLE = 3
 
 class MainController:
     
-    def __init__(self, builder: Builder, window: Window, control_context: AbstractDebuggerControlContext):
+    def __init__(self, builder: Gtk.Builder, window: Gtk.Window, control_context: AbstractDebuggerControlContext):
         self.builder = builder
         self.window = window
         self.context: AbstractDebuggerControlContext = control_context
@@ -200,11 +199,11 @@ class MainController:
                 self._suppress_event = False
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
-            self.builder, self, self.window, self._enable_explorerscript)
+            self.builder, self, self.window, self._enable_explorerscript)  # type: ignore
         self.variable_controller: VariableController = VariableController(self.emu_thread, self.builder, self.context)
         self.global_state_controller: GlobalStateController = GlobalStateController(self.emu_thread, self.builder)
         self.local_variable_controller: LocalVariableController = LocalVariableController(self.emu_thread, self.builder, self.debugger)
-        self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)
+        self.ground_state_controller = GroundStateController(self.emu_thread, self.debugger, self.builder)  # type: ignore
 
         # Load more initial settings
         self.on_debug_log_cntrl_ops_toggled(builder.get_object('debug_log_cntrl_ops'))
@@ -218,8 +217,8 @@ class MainController:
         self.on_debug_log_scroll_to_bottom_toggled(builder.get_object('debug_log_scroll_to_bottom'))
 
         # Trees / Lists
-        ssb_file_tree: TreeView = self.builder.get_object('ssb_file_tree')
-        column_main = TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
+        ssb_file_tree: Gtk.TreeView = self.builder.get_object('ssb_file_tree')
+        column_main = Gtk.TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
         ssb_file_tree.append_column(column_main)
 
         # Other gtk stuff
@@ -575,8 +574,8 @@ class MainController:
             )
             return
         self._joystick_cfg = JoystickControlsDialogController(self.window).run(
-            self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
+            self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),  # type: ignore
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())  # type: ignore
         )
         self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
@@ -634,7 +633,7 @@ class MainController:
 
         if response == Gtk.ResponseType.OK:
             fn = add_extension_if_missing(fn, 'png')
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.screenshot().save(fn))
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.screenshot().save(fn))  # type: ignore
 
     # MENU HELP
     def on_menu_help_exps_docs_activate(self, btn: Gtk.MenuItem, *args):
@@ -789,8 +788,8 @@ class MainController:
                     menu.show_all()
                     menu.popup_at_pointer(event)
                 if model[treepath][2] in ['map_sss_entry', 'ssb']:
-                    menu: Gtk.Menu = Gtk.Menu.new()
-                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scene..."))
+                    menu = Gtk.Menu.new()
+                    open_scene = Gtk.MenuItem.new_with_label(_("Open Scene..."))
                     open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
                         self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
                     ))
@@ -798,7 +797,7 @@ class MainController:
                     menu.show_all()
                     menu.popup_at_pointer(event)
                 if model[treepath][2] == 'exps_macro_dir':
-                    menu: Gtk.Menu = Gtk.Menu.new()
+                    menu = Gtk.Menu.new()
                     create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
                     create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
                     create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
@@ -816,7 +815,7 @@ class MainController:
                     menu.show_all()
                     menu.popup_at_pointer(event)
                 elif model[treepath][2] == 'exps_macro':
-                    menu: Gtk.Menu = Gtk.Menu.new()
+                    menu = Gtk.Menu.new()
                     delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
                     delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
                     menu.attach_to_widget(tree, None)
@@ -1026,16 +1025,18 @@ class MainController:
                     script_entity_id = int(model[treeiter][0])
                 except ValueError:
                     pass
+                assert self.debugger
                 ges = self.debugger.ground_engine_state
                 if ges:
+                    ss: ScriptRuntimeStruct
                     if script_entity_type == SsbRoutineType.GENERIC:
                         ss = ges.global_script.script_struct
                     elif script_entity_type == SsbRoutineType.ACTOR:
-                        ss = ges.get_actor(script_entity_id).script_struct
+                        ss = ges.get_actor(script_entity_id).script_struct  # type: ignore
                     elif script_entity_type == SsbRoutineType.OBJECT:
-                        ss = ges.get_object(script_entity_id).script_struct
+                        ss = ges.get_object(script_entity_id).script_struct  # type: ignore
                     elif script_entity_type == SsbRoutineType.PERFORMER:
-                        ss = ges.get_performer(script_entity_id).script_struct
+                        ss = ges.get_performer(script_entity_id).script_struct  # type: ignore
                     else:
                         return
                     if ss.hanger_ssb == -1:
@@ -1171,8 +1172,10 @@ class MainController:
             )
 
             with open_utf8(ground_engine_savestate_path, 'w') as f:
-                json.dump(self.debugger.ground_engine_state.serialize(), f)
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.save_file(desmume_savestate_path))
+                assert self.debugger
+                json.dump(self.debugger.ground_engine_state.serialize(), f)  # type: ignore
+            assert self.emu_thread
+            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.save_file(desmume_savestate_path))  # type: ignore
         except BaseException as err:
             self.context.display_error(
                 sys.exc_info(),
@@ -1193,15 +1196,17 @@ class MainController:
             self.context.get_project_debugger_dir(), f'{rom_basename}.save.{i}.{SAVESTATE_EXT_GROUND_ENGINE}'
         )
 
+        assert self.emu_thread
+        assert self.debugger
         if os.path.exists(ground_engine_savestate_path):
             try:
-                was_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
+                was_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())  # type: ignore
                 self._stopped = False
                 self.emu_reset()
-                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.load_file(desmume_savestate_path))
+                threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.savestate.load_file(desmume_savestate_path))  # type: ignore
                 with open_utf8(ground_engine_savestate_path, 'r') as f:
-                    self.debugger.ground_engine_state.deserialize(json.load(f))
-                self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())
+                    self.debugger.ground_engine_state.deserialize(json.load(f))  # type: ignore
+                self.emu_is_running = threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())  # type: ignore
                 self.load_debugger_state()
                 self.variable_controller.sync()
                 if was_running:
@@ -1217,6 +1222,7 @@ class MainController:
                 return
 
     def set_touch_pos(self, x: int, y: int):
+        assert self.renderer
         scale = self.renderer.get_scale()
         rotation = self.renderer.get_screen_rotation()
         x /= scale
@@ -1388,10 +1394,12 @@ class MainController:
         - Tell the code editor about which file to open and which instruction to jump to.
         - Add release hook.
         """
+        assert self.emu_thread
+        assert self.ssb_fm
         srs = state.script_struct
         threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(0))
 
-        ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]
+        ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]  # type: ignore
         opcode_addr = srs.current_opcode_addr_relative
         self.breakpoint_state = state
         self._set_buttons_paused()
@@ -1407,23 +1415,24 @@ class MainController:
 
         self.write_info_bar(Gtk.MessageType.WARNING, f(_("The debugger is halted at {ssb.file_name}.")))
         # This will mark the hanger as being breaked:
-        self.debugger.ground_engine_state.break_pulled(state)
+        self.debugger.ground_engine_state.break_pulled(state)  # type: ignore
         # This will tell the code editor to refresh the debugger controls for all open editors
         self.editor_notebook.break_pulled(state)
         self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
         self.load_debugger_state(srs, breakpoint_file_state)
-        self.debug_overlay.break_pulled()
+        self.debug_overlay.break_pulled()  # type: ignore
 
         state.add_release_hook(self.break_released)
 
     def step_into_macro_call(self, file_state: BreakpointFileState):
         """Step into a macro call, by simulating it via the BreakpointFileState."""
+        assert self.debugger
         file_state.step_into_macro_call()
-        self.debugger.ground_engine_state.step_into_macro_call(file_state.parent)
+        self.debugger.ground_engine_state.step_into_macro_call(file_state.parent)  # type: ignore
         self.editor_notebook.step_into_macro_call(file_state)
         self.editor_notebook.focus_by_opcode_addr(file_state.ssb_filename, file_state.opcode_addr)
         self.load_debugger_state(
-            file_state.parent.script_struct, file_state
+            file_state.parent.script_struct, file_state  # type: ignore
         )
 
     def break_released(self, state: BreakpointState):
@@ -1433,6 +1442,8 @@ class MainController:
         - Update the main UI (info bar, emulator controls).
         - The ground state controller and code editors have their own hooks for the releasing.
         """
+        assert self.emu_thread
+        assert self.debug_overlay
         if self.global_state__audio_enabled:
             threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.volume_set(100))
         self.breakpoint_state = None
@@ -1506,14 +1517,14 @@ class MainController:
         This is super annoying. Because of the two different "views" on the model,
         we can't do this in show_matches, because we have to use the filter model here!
         """
-        search_query = self._search_text.lower()
+        search_query = self._search_text.lower()  # type: ignore
         text = model[iter][1].lower()
         ssb_file_tree = self.builder.get_object('ssb_file_tree')
         if search_query in text:
             ssb_file_tree.expand_to_path(path)
 
     def _filter__show_matches(self, model: Gtk.TreeStore, path, iter):
-        search_query = self._search_text.lower()
+        search_query = self._search_text.lower()  # type: ignore
         text = model[iter][1].lower()
         if search_query in text:
             # Propagate visibility change up

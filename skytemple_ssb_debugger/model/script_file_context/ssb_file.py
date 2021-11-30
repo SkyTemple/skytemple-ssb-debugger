@@ -18,7 +18,7 @@ import logging
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional, TYPE_CHECKING, Tuple
+from typing import Callable, Optional, TYPE_CHECKING, Tuple, Any
 
 from gi.repository import GLib
 
@@ -65,7 +65,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         logger.debug(f"{loaded_ssb.filename}: Reloaded")
         if self._on_ssbs_state_change:
-            self._on_ssbs_reload(loaded_ssb.filename)
+            self._on_ssbs_reload(loaded_ssb.filename)  # type: ignore
 
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
         logger.debug(f"{loaded_ssb.filename}: Property change")
@@ -82,7 +82,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         load_exps: bool, load_ssbs: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[any, BaseException], None],
+        exps_exception_callback: Callable[[Any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -142,7 +142,6 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         logger.debug(f"Loaded. Loading in opcode marks.")
         if self._do_insert_opcode_text_mark:
             for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
-                source_map: SourceMap
                 if source_map is not None:
                     for opcode_offset, source_mapping in source_map:
                         if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
@@ -162,7 +161,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         after_callback()
 
     def save(self, save_text: str, save_exps: bool,
-             error_callback: Callable[[any, BaseException], None],
+             error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
 
         logger.debug(f"Saving SSB. From exps? {save_exps}")
@@ -199,7 +198,6 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         # the real ones with those in on_ssb_reloaded
         if self._do_insert_opcode_text_mark:
             for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
-                source_map: SourceMap
                 if source_map is not None:
                     for opcode_offset, source_mapping in source_map:
                         if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
@@ -220,7 +218,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         success_callback()
         if ready_to_reload:
             logger.debug(f"After save: NOW READY TO RELOAD!")
-            self._ssb_file.file_manager.force_reload(self._ssb_file.filename)
+            self._ssb_file.file_manager.force_reload(self._ssb_file.filename)  # type: ignore
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
         if ssb_filename == self._ssb_file.filename:

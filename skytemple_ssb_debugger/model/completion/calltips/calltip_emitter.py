@@ -58,7 +58,7 @@ class CalltipEmitter:
         op: Pmd2ScriptOpCode
         op, arg_index = tip
         if not self._active_widget:
-            self._active_widget: GtkSource.CompletionInfo = GtkSource.CompletionInfo.new()
+            self._active_widget = GtkSource.CompletionInfo.new()
             self._active_widget.set_attached_to(self.view)
 
         self._active_widget.move_to_iter(self.view, textiter)
@@ -76,7 +76,7 @@ class CalltipEmitter:
 
         if not op_was_same or self._active_arg != arg_index:
             self._active_arg = arg_index
-            btn_box: Gtk.Box = self._active_widget.get_children()[0].get_children()[0]
+            btn_box = self._active_widget.get_children()[0].get_children()[0]
             for c in btn_box.get_children():
                 btn_box.remove(c)
             for i, arg in enumerate(op.arguments):
@@ -90,10 +90,10 @@ class CalltipEmitter:
                 lbl.set_markup(markup)
                 btn_box.pack_start(lbl, True, False, 0)
             if op.repeating_argument_group:
-                lbl: Gtk.Label = Gtk.Label.new('[')
+                lbl = Gtk.Label.new('[')
                 btn_box.pack_start(lbl, True, False, 0)
                 for i, arg in enumerate(op.repeating_argument_group.arguments):
-                    lbl: Gtk.Label = Gtk.Label.new('')
+                    lbl = Gtk.Label.new('')
                     # TODO: Support highlighting individual repeating args. (not really used though)
                     if arg_index >= len(op.arguments):
                         markup = f'<b>{arg.name}: <i>{arg.type}</i></b>, '
@@ -103,7 +103,7 @@ class CalltipEmitter:
                         markup = markup.rstrip(', ')
                     lbl.set_markup(markup)
                     btn_box.pack_start(lbl, True, False, 0)
-                lbl: Gtk.Label = Gtk.Label.new('... ]')
+                lbl = Gtk.Label.new('... ]')
                 btn_box.pack_start(lbl, True, False, 0)
 
         if self.position_mark_calltip is not None:

@@ -61,7 +61,7 @@ class DebuggerController:
     def __init__(self, emu_thread: EmulatorThread, print_callback, parent: 'MainController'):
         self.emu_thread = emu_thread
         self.is_active = False
-        self.rom_data = None
+        self.rom_data: Optional[Pmd2Data] = None
         self._print_callback_fn = print_callback
         self.ground_engine_state: Optional[GroundEngineState] = None
         self.parent: 'MainController' = parent
@@ -359,6 +359,7 @@ class DebuggerController:
 
     def _get_next_opcode_addr(self, current_opcode_addr: int, current_opcode_addr_relative: int):
         """ Returns current_opcode_addr_relative + the length of the current opcode. """
+        assert self.rom_data
         current_opcode = self.rom_data.script_data.op_codes__by_id[
             self.emu_thread.emu.memory.unsigned.read_short(current_opcode_addr)
         ]

@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from abc import ABC, abstractmethod
-from typing import List, Optional, Callable, Tuple
+from typing import List, Optional, Callable, Tuple, Any
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -47,20 +47,20 @@ class AbstractScriptFileContext(ABC):
         self._on_ssbs_reload = on_ssbs_reload
 
     def register_insert_opcode_text_mark_handler(self,
-                                                 handler: Optional[Callable[[bool, str, int, int, int, bool], None]]):
+                                                 handler: Optional[Callable[[bool, str, int, int, int, bool, bool], None]]):
         self._do_insert_opcode_text_mark = handler
 
-    @property
+    @property  # type: ignore
     @abstractmethod
     def ssb_filepath(self) -> Optional[str]:
         pass
 
-    @property
+    @property  # type: ignore
     @abstractmethod
     def exps_filepath(self) -> str:
         pass
 
-    @property
+    @property  # type: ignore
     @abstractmethod
     def breakpoint_manager(self) -> BreakpointManager:
         pass
@@ -83,7 +83,7 @@ class AbstractScriptFileContext(ABC):
         load_exps: bool, load_ssbs: bool,
         load_view_callback: Callable[[str, bool, str], None],
         after_callback: Callable[[], None],
-        exps_exception_callback: Callable[[any, BaseException], None],
+        exps_exception_callback: Callable[[Any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
         ssbs_not_available_callback: Callable[[], None]
     ):
@@ -91,7 +91,7 @@ class AbstractScriptFileContext(ABC):
 
     @abstractmethod
     def save(self, save_text: str, save_exps: bool,
-             error_callback: Callable[[any, BaseException], None],
+             error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
         pass
 

@@ -15,9 +15,10 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+# mypy: ignore-errors
 
 from functools import partial
-from typing import Tuple, List, Optional
+from typing import Tuple, List, Optional, Type
 
 from desmume.emulator import DeSmuME
 from skytemple_ssb_debugger.sandbox.sandbox import hook__primary_opcode_parsing, hook__debug_enable_branch, \
@@ -28,7 +29,7 @@ class AbstractMemoryProbe:
     pass
 
 
-ProbeDef = Tuple[type(AbstractMemoryProbe), int, str, int]
+ProbeDef = Tuple[Type[AbstractMemoryProbe], int, str, int]
 
 
 class MemoryProbe(AbstractMemoryProbe):

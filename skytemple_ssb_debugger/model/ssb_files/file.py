@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import logging
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Callable
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
@@ -52,10 +52,10 @@ class SsbLoadedFile:
         # are not available (because the source view for it was closed).
         self._not_breakable = False
 
-        self._event_handlers_manager = []
-        self._event_handlers_editor = []
+        self._event_handlers_manager: List[Callable] = []
+        self._event_handlers_editor: List[Callable] = []
 
-        self._event_handlers_property_change = []
+        self._event_handlers_property_change: List[Callable] = []
 
     @property
     def position_markers(self) -> Optional[List[SourceMapPositionMark]]:
