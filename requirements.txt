@@ -8,3 +8,4 @@ nest-asyncio==1.5.1
 pygtkspellcheck==4.0.6
 git+git://github.com/skytemple/skytemple-files@master#egg=skytemple_files
 git+git://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
+types-setuptools
