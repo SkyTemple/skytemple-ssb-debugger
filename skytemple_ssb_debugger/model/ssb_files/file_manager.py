@@ -45,7 +45,7 @@ class SsbFileManager:
 
     def get(self, filename: str) -> SsbLoadedFile:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
-        return self.context.get_ssb(filename, self)
+        return self.context.get_ssb(filename, self)  # type: ignore
 
     def save_from_ssb_script(self, filename: str, code: str) -> bool:
         """
@@ -64,7 +64,7 @@ class SsbFileManager:
         f = self.get(filename)
         f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
         logger.debug(f"{filename}: Saving to ROM")
-        self.context.save_ssb(filename, f.ssb_model, self)
+        self.context.save_ssb(filename, f.ssb_model, self)  # type: ignore
         # After save:
         return self._handle_after_save(filename)
 
@@ -124,7 +124,7 @@ class SsbFileManager:
 
         # Save ROM
         logger.debug(f"{ssb_filename}: Save ROM")
-        self.context.save_ssb(ssb_filename, f.ssb_model, self)
+        self.context.save_ssb(ssb_filename, f.ssb_model, self)  # type: ignore
 
         # Update the hash of the ExplorerScript file
         logger.debug(f"{ssb_filename}: Hash")
@@ -153,7 +153,7 @@ class SsbFileManager:
             f.write(code)
 
         ready_to_reloads = []
-        included_files_list = []
+        included_files_list: List[Set[str]] = []
         project_fm = self.context.get_project_filemanager()
         for ssb in changed_ssbs:
             # Skip non-existing or not up to date exps:
@@ -243,7 +243,7 @@ class SsbFileManager:
         return self.hash(self.get(filename).ssb_model.original_binary_data)
 
     @staticmethod
-    def hash(binary_data: bin):
+    def hash(binary_data: bytes):
         return hashlib.sha256(binary_data).hexdigest()
 
     def mark_invalid(self, filename: str):

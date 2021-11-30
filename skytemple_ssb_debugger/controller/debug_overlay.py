@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 from threading import Lock
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 import cairo
 
@@ -49,10 +49,10 @@ class DebugOverlayController:
         self._refresh_cache = True
         self._cache_running = False
         self._cache_redrawing_registered = False
-        self._actor_bbox_cache = []
-        self._object_bbox_cache = []
-        self._perf_bbox_cache = []
-        self._event_bbox_cache = []
+        self._actor_bbox_cache: List[Tuple[int, int, int, int]] = []
+        self._object_bbox_cache: List[Tuple[int, int, int, int]] = []
+        self._perf_bbox_cache: List[Tuple[int, int, int, int]] = []
+        self._event_bbox_cache: List[Tuple[int, int, int, int]] = []
         self._camera_pos_cache = (0, 0)
         self._boost = False
 
@@ -105,7 +105,7 @@ class DebugOverlayController:
                     ground_state = self.debugger.ground_engine_state
                     for ssb in ground_state.loaded_ssb_files:
                         if ssb is not None:
-                            for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:
+                            for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:  # type: ignore
                                 x_absolute = (mark.x_with_offset * TILE_SIZE) - self._camera_pos_cache[0]
                                 y_absolute = (mark.y_with_offset * TILE_SIZE) - self._camera_pos_cache[1]
                                 ctx.set_source_rgba(*COLOR_POS_MARKERS)

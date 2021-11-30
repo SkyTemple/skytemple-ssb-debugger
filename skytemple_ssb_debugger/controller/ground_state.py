@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, List, Tuple
 
 import gi
 from gi.repository.Gtk import TreeViewColumn
@@ -134,7 +134,7 @@ class GroundStateController:
 
                 if code_editor:
                     # Sync the code editor execution lines
-                    files = {}
+                    files: Dict[str, List[Tuple[SsbRoutineType, int, int]]] = {}
                     try:
                         if global_script.script_struct.hanger_ssb > -1 and ssb[global_script.script_struct.hanger_ssb] is not None:
                             if ssb[global_script.script_struct.hanger_ssb].file_name not in files:
@@ -300,10 +300,10 @@ class GroundStateController:
                 ])
                 for ssb in ground_state.loaded_ssb_files:
                     if ssb is not None:
-                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:
+                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:  # type: ignore
                             self._entities__tree_store.append(pos_marks_node, [
                                 f'{mark.name}', '', '',
-                                ssb.file_name.split('/')[-1], None,
+                                ssb.file_name.split('/')[-1], None,  # type: ignore
                                 '', '', '',
                                 f'{mark.x_with_offset}', f'{mark.y_with_offset}', -1
                             ])

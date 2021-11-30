@@ -17,7 +17,7 @@
 import json
 import logging
 import os
-from typing import List, Tuple, Dict, Optional
+from typing import List, Tuple, Dict, Optional, Callable
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.util import open_utf8
@@ -46,8 +46,8 @@ class BreakpointManager:
             except ValueError:
                 self.breakpoint_mapping = {}
 
-        self._callbacks_added = []
-        self._callbacks_remvoed = []
+        self._callbacks_added: List[Callable] = []
+        self._callbacks_remvoed: List[Callable] = []
 
     def register_callbacks(self, open, remove):
         self._callbacks_added.append(open)

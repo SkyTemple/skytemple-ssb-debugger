@@ -109,7 +109,7 @@ class GameVariable:
                 if game_mode == 1:
                     value = mem.unsigned.read_long(static_data.binaries['arm9.bin'].pointers['DebugSpecialEpisodeType'].begin_absolute)
                 elif game_mode == 3:
-                    value = GameVariable.read(mem, static_data, 0x4a, 0)
+                    _, value = GameVariable.read(mem, static_data, 0x4a, 0)
                 else:
                     value = 0
             elif var.id == 0x70:  # NOTE_MODIFY_FLAG

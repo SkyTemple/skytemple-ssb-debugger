@@ -56,7 +56,7 @@ class AbstractEntityWithScriptStruct(ABC):
             self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
         )
 
-    @property
+    @property  # type: ignore
     @abstractmethod
     def _script_struct_offset(self):
         pass

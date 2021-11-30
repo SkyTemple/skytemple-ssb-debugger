@@ -66,7 +66,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
 
         if pos is not None and pos != self._active_pos:
             self._active_pos = pos
-            self._active_widget: Gtk.Button = Gtk.Button.new_with_label('Edit Position Mark')
+            self._active_widget = Gtk.Button.new_with_label('Edit Position Mark')
             self._active_widget.connect('clicked', self.on_clicked)
             box.pack_start(self._active_widget, True, False, 0)
 
