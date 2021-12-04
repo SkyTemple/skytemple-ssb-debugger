@@ -90,7 +90,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         return self._project_fm.dir()  # type: ignore
 
     def load_script_files(self) -> ScriptFiles:
-        return load_script_files(get_rom_folder(self._rom, SCRIPT_DIR))
+        return load_script_files(get_rom_folder(self._rom, SCRIPT_DIR))  # type: ignore
 
     def is_project_loaded(self) -> bool:
         return self._rom is not None
