@@ -113,7 +113,7 @@ class GlobalStateController:
         self._tables = []
         self._current_table = 0
         if self.rom_data:
-            address_table_head = self.rom_data.binaries['arm9.bin'].pointers['MemoryAllocTable'].begin_absolute
+            address_table_head = self.rom_data.binaries['arm9.bin'].symbols['MemoryAllocTable'].begin_absolute
             accessor = self.emu_thread.emu.memory.unsigned
             for x in range(accessor.read_long(address_table_head)):
                 address_table = address_table_head+0x20+0x4*x
