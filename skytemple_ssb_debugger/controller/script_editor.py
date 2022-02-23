@@ -60,7 +60,7 @@ class ScriptEditorController:
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         try:
-            from skytemple.core.ui_utils import make_builder
+            from skytemple.core.ui_utils import make_builder  # type: ignore
             self.builder = make_builder(os.path.join(path, "ssb_editor.glade"))
         except ImportError:
             self.builder = Gtk.Builder()
