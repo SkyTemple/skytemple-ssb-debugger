@@ -352,25 +352,25 @@ start_of_arm_ov11 = start_of_arm_ov11_eu
 
 # Fun_022DD164 [US] (Fun_22DDAA4 [EU])
 start_of_loop_fn = start_of_arm_ov11 + 0xF24
-assert static_data.binaries['overlay/overlay_0011.bin'].functions['FuncThatCallsCommandParsing'].begin_absolute == start_of_loop_fn
+assert static_data.binaries['overlay/overlay_0011.bin'].symbols['FuncThatCallsCommandParsing'].begin_absolute == start_of_loop_fn
 start_of_loop_fn_loop = start_of_loop_fn + 0x2C
 start_of_switch_last_return_code = start_of_loop_fn + 0x34
 start_of_call_to_opcode_parsing = start_of_loop_fn + 0x5C - 4
 
 # For US: 0x200C240
 debug_print_start = 0x0200c2c8
-assert static_data.binaries['arm9.bin'].functions['DebugPrint'].begin_absolute == debug_print_start
+assert static_data.binaries['arm9.bin'].symbols['DebugPrint'].begin_absolute == debug_print_start
 # Another one! For US: 0x0200C30C
 debug_print2_start = 0x0200c284
-assert static_data.binaries['arm9.bin'].functions['DebugPrint2'].begin_absolute == debug_print2_start
+assert static_data.binaries['arm9.bin'].symbols['DebugPrint2'].begin_absolute == debug_print2_start
 
 # For US: start_of_arm_ov11_us + 0x40C4      [ + 0x3C40 after FN start]
 point_to_print_print_debug = start_of_arm_ov11 + 0x5764
-assert static_data.binaries['overlay/overlay_0011.bin'].functions['ScriptCommandParsing'].begin_absolute == point_to_print_print_debug - 0x3C40
+assert static_data.binaries['overlay/overlay_0011.bin'].symbols['ScriptCommandParsing'].begin_absolute == point_to_print_print_debug - 0x3C40
 
 # For US: start_of_arm_ov11_us + 0x1A4C      [ + 0x15C8 after FN start]
 point_where_branch_debug_decides = start_of_arm_ov11 + 0x30EC
-assert static_data.binaries['overlay/overlay_0011.bin'].functions['ScriptCommandParsing'].begin_absolute == point_where_branch_debug_decides - 0x15C8
+assert static_data.binaries['overlay/overlay_0011.bin'].symbols['ScriptCommandParsing'].begin_absolute == point_where_branch_debug_decides - 0x15C8
 
 # For US: start_of_arm_ov11_us + 0x4BAC
 start_of_other_opcode_read_in_parsing = start_of_arm_ov11 + 0x624C
@@ -406,29 +406,29 @@ start_of_get_script_id_name = 0x02065378
 table_variable_info = 0x0209ddf4
 # For US: 0x22AB0AC
 table_variable_values = 0x022ab9ec
-assert static_data.binaries['arm9.bin'].blocks['GameVarsValues'].begin_absolute == table_variable_values
+assert static_data.binaries['arm9.bin'].symbols['GameVarsValues'].begin_absolute == table_variable_values
 # For US: 0x20A5490
 table_script_files = 0x020a5be0
 
 # For US: TODO
 misc_game_data_pointer = 0x020aff70
-assert static_data.binaries['arm9.bin'].pointers['GameStateValues'].begin_absolute == misc_game_data_pointer
+assert static_data.binaries['arm9.bin'].symbols['GameStateValues'].begin_absolute == misc_game_data_pointer
 
 # For US: TODO
 language_info_data_pointer = 0x020b05a8
-assert static_data.binaries['arm9.bin'].pointers['LanguageInfoData'].begin_absolute == language_info_data_pointer
+assert static_data.binaries['arm9.bin'].symbols['LanguageInfoData'].begin_absolute == language_info_data_pointer
 
 # For US: TODO
 game_mode_data_pointer = 0x020b088c
-assert static_data.binaries['arm9.bin'].pointers['GameMode'].begin_absolute == game_mode_data_pointer
+assert static_data.binaries['arm9.bin'].symbols['GameMode'].begin_absolute == game_mode_data_pointer
 
 # For US: TODO
 execute_special_episode_type__game_mode_1_pointer = 0x022abdec
-assert static_data.binaries['arm9.bin'].pointers['DebugSpecialEpisodeType'].begin_absolute == execute_special_episode_type__game_mode_1_pointer
+assert static_data.binaries['arm9.bin'].symbols['DebugSpecialEpisodeType'].begin_absolute == execute_special_episode_type__game_mode_1_pointer
 
 # For US: TODO
 notify_note_flag_data_pointer = 0x020b0814
-assert static_data.binaries['arm9.bin'].pointers['NotifyNote'].begin_absolute == notify_note_flag_data_pointer
+assert static_data.binaries['arm9.bin'].symbols['NotifyNote'].begin_absolute == notify_note_flag_data_pointer
 
 # Points that call the Fun_022DD164 [US] (Fun_22DDAA4 [EU])
 # [EU 0x22f8534] Possibly handling global script:
