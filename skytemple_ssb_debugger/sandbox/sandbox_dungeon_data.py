@@ -54,8 +54,8 @@ CHUNK_DIM = 8 * 3
 
 rom = NintendoDSRom.fromFile("../../../skyworkcopy_us.nds")
 pmd2data = get_ppmdu_config_for_rom(rom)
-blk_dungeon_current_id = pmd2data.binaries['arm9.bin'].blocks["DungeonCurrentId"]
-pnt_dungeon_data = pmd2data.binaries['arm9.bin'].pointers["DungeonData"]
+blk_dungeon_current_id = pmd2data.binaries['arm9.bin'].symbols["DungeonCurrentId"]
+pnt_dungeon_data = pmd2data.binaries['arm9.bin'].symbols["DungeonData"]
 addr_current_id = blk_dungeon_current_id.begin_absolute                   # uin16
 
 dungeon_bin = FileType.DUNGEON_BIN.deserialize(rom.getFileByName('DUNGEON/dungeon.bin'), pmd2data)
@@ -386,7 +386,7 @@ if __name__ == '__main__':
 
     emu.volume_set(0)
 
-    emu.memory.register_exec(pmd2data.binaries['overlay/overlay_0011.bin'].functions['ScriptCommandParsing'].begin_absolute + 0x15C8, partial(hook__debug_enable_branch, emu))
+    emu.memory.register_exec(pmd2data.binaries['overlay/overlay_0011.bin'].symbols['ScriptCommandParsing'].begin_absolute + 0x15C8, partial(hook__debug_enable_branch, emu))
 
     fc = 0
     while not win.has_quit():
