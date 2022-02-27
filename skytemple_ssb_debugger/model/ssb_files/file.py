@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, List, Optional, Callable
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
-from skytemple_files.script.ssb.model import Ssb
+from skytemple_files.script.ssb.protocol import SsbProtocol
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
 
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class SsbLoadedFile:
-    def __init__(self, filename: str, model: Ssb,
+    def __init__(self, filename: str, model: SsbProtocol,
                  ssb_file_manager: Optional['SsbFileManager'], project_file_manager: 'ProjectFileManager'):
         self.filename = filename
         self.ssb_model = model
