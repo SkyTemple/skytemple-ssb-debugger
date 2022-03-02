@@ -633,6 +633,8 @@ class MainController:
                                           (filter_png, self._filter_any))
 
         if response == Gtk.ResponseType.OK:
+            if '.' not in fn:
+                fn += '.png'
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.screenshot().save(fn))
 
     # MENU HELP
