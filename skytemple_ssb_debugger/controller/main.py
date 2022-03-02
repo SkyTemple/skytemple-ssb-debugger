@@ -27,7 +27,7 @@ from typing import Optional, Dict, List
 import cairo
 import gi
 
-from skytemple_files.common.util import open_utf8
+from skytemple_files.common.util import open_utf8, add_extension_if_missing
 
 gi.require_version('GtkSource', '3.0')
 from gi.repository.GtkSource import StyleSchemeManager
@@ -633,8 +633,7 @@ class MainController:
                                           (filter_png, self._filter_any))
 
         if response == Gtk.ResponseType.OK:
-            if '.' not in fn:
-                fn += '.png'
+            fn = add_extension_if_missing(fn, 'png')
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.screenshot().save(fn))
 
     # MENU HELP
