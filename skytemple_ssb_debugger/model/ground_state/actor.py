@@ -71,7 +71,7 @@ class Actor(AbstractEntityWithScriptStruct):
     @property
     @wrap_threadsafe_emu()
     def direction(self):
-        return self.rom_data.script_data.directions__by_id[self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x15A)]
+        return self.rom_data.script_data.directions__by_ssa_id[self.emu_thread.emu.memory.unsigned.read_byte(self.pnt + 0x15A)]
 
     @property
     @wrap_threadsafe_emu()

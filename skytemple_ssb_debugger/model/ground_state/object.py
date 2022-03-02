@@ -71,7 +71,7 @@ class Object(AbstractEntityWithScriptStruct):
     @property
     @wrap_threadsafe_emu()
     def direction(self):
-        return self.rom_data.script_data.directions__by_id[0]  # TODO!!
+        return self.rom_data.script_data.directions__by_ssa_id[0]  # TODO!!
 
     @property
     @wrap_threadsafe_emu()

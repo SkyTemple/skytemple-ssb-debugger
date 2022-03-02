@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List, Iterable, Type
+from typing import TYPE_CHECKING, Optional, List, Iterable, Type, Dict
 
 from gi.repository import Gtk
 
@@ -24,6 +24,7 @@ from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles
+from skytemple_files.common.util import Capturable
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -212,13 +213,31 @@ class AbstractDebuggerControlContext(ABC):
         """
 
     @abstractmethod
-    def display_error(self, exc_info, error_message, error_title='SkyTemple Script Engine Debugger - Error'):
+    def display_error(
+            self, exc_info, error_message,
+            error_title='SkyTemple Script Engine Debugger - Error',
+            *, context: Optional[Dict[str, Capturable]] = None
+    ):
         """
         Display an error dialog for the user.
         :param exc_info: Return value of sys.exc_info inside the 'except' block. May be None if no exception is being
                          handled.
         :param error_message: The message to display to the user.
         :param error_title: The title of the dialog to display.
+        :param context: Additional error context for logging purposes.
+        """
+
+    @abstractmethod
+    def capture_error(
+            self, exc_info,
+            *, context: Optional[Dict[str, Capturable]] = None
+    ):
+        """
+        Same as display_error, but not intended to be shown to the user or logged to the main log
+        but to be captured for internal error analysis.
+        :param exc_info: Return value of sys.exc_info inside the 'except' block. May be None if no exception is being
+                         handled.
+        :param context: Additional error context for logging purposes.
         """
 
     @abstractmethod

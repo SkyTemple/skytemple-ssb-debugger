@@ -33,7 +33,7 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR
 from skytemple_files.common.types.file_types import FileType
-from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom
+from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom, Capturable
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext, EXPS_KEYWORDS
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
@@ -168,7 +168,11 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             "Action not supported"
         )
 
-    def display_error(self, exc_info, error_message, error_title='SkyTemple Script Engine Debugger - Error'):
+    def display_error(
+            self, exc_info, error_message,
+            error_title='SkyTemple Script Engine Debugger - Error',
+            *, context: Optional[Dict[str, Capturable]] = None
+    ):
         logger.error(error_message, exc_info=exc_info)
         md = self.message_dialog_cls()(self._main_window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
@@ -178,6 +182,12 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
+
+    def capture_error(
+            self, exc_info,
+            *, context: Optional[Dict[str, Capturable]] = None
+    ):
+        pass
 
     def get_special_words(self) -> Iterable[str]:
         """
