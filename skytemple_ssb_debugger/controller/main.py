@@ -371,7 +371,7 @@ class MainController:
             if event.state & mask == 0:
                 if key and self.emu_is_running:
                     threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_add_key(key))
-                    if key == keymask(Keys.KEY_BOOST - 1):
+                    if key == keymask(Keys.KEY_BOOST):
                         # Handle boost
                         self.toggle_boost(True)
                     return True
@@ -382,7 +382,7 @@ class MainController:
             key = self.lookup_key(event.keyval)
             if key and self.emu_is_running:
                 threadsafe_emu_nonblocking(self.emu_thread, lambda: self.emu_thread.emu.input.keypad_rm_key(key))
-                if key == keymask(Keys.KEY_BOOST - 1):
+                if key == keymask(Keys.KEY_BOOST):
                     # Handle boost
                     self.toggle_boost(False)
 
@@ -1243,7 +1243,7 @@ class MainController:
         key = False
         for i in range(0, Keys.NB_KEYS):
             if keyval == self._keyboard_cfg[i]:
-                key = keymask(i)
+                key = keymask(i + 1)
                 break
         return key
 
