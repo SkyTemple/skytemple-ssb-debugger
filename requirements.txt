@@ -5,6 +5,6 @@ py-desmume==0.0.4
 explorerscript==0.1.1
 nest-asyncio==1.5.4
 pygtkspellcheck==4.0.6
-git+git://github.com/skytemple/skytemple-files@master#egg=skytemple_files
-git+git://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
+git+https://github.com/skytemple/skytemple-files@master#egg=skytemple_files
+git+https://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
 types-setuptools
