@@ -605,7 +605,7 @@ class ScriptEditorController:
 
         settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backward2s').get_active()
+        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
         if search_down:
             found, match_start, match_end, wrap = self._active_search_context.forward2(cursor)
         else:
@@ -627,7 +627,7 @@ class ScriptEditorController:
 
         settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backward2s').get_active()
+        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
         if search_down:
             found, match_start, match_end, wrap = self._active_search_context.forward2(cursor)
         else:
