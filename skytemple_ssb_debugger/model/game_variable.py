@@ -125,7 +125,7 @@ class GameVariable:
         If the script runtime struct is not set, local variables can not be used!
 
         Partial reimplementation of
-        SaveScriptVariableValue and SaveScriptVariableValueWithOffset
+        SaveScriptVariableValue and SaveScriptVariableValueAtIndex
         """
         var: Pmd2ScriptGameVar = static_data.script_data.game_variables__by_id[var_id]
         value_pnt = _get_value_pnt(static_data, srs, var)
