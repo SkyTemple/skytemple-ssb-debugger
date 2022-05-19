@@ -3,7 +3,7 @@ pygobject==3.42.1
 pycairo==1.18.2
 py-desmume==0.0.4.post2
 explorerscript==0.1.1
-nest-asyncio==1.5.4
+nest-asyncio==1.5.5
 pygtkspellcheck==4.0.6
 git+https://github.com/skytemple/skytemple-files@master#egg=skytemple_files
 git+https://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
