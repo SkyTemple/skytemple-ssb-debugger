@@ -20,6 +20,7 @@ setup(
         'ndspy >= 3.0.0',
         'skytemple-files >= 1.3.7',
         'skytemple-icons >= 0.1.0',
+        'range-typed-integers >= 1.0.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
         'py-desmume >= 0.0.4.post2',
