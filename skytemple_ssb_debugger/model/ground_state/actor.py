@@ -14,6 +14,8 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from range_typed_integers import u16
+
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptEntity
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
@@ -56,7 +58,7 @@ class Actor(AbstractEntityWithScriptStruct):
         try:
             return self.rom_data.script_data.level_entities__by_id[kind_id]
         except KeyError:
-            return Pmd2ScriptEntity(kind_id, -1, 'UNKNOWN', -1, -1, -1)
+            return Pmd2ScriptEntity(u16(kind_id), u16(0), 'UNKNOWN', u16(0), u16(0), u16(0))
 
     @property  # type: ignore
     @wrap_threadsafe_emu()
