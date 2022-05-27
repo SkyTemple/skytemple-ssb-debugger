@@ -1,5 +1,5 @@
 """Testing module, to find out how to map ssb files in memory back to disk."""
-#  Copyright 2020-2021 Capypara and the SkyTemple Contributors
+#  Copyright 2020-2022 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
 #

@@ -3,7 +3,7 @@ Utility functions for easier thread-safe asynchronous / synchronous calling.
 This module happens, when you forget that you might need multiple threads before starting a project...
 """
 import functools
-#  Copyright 2020-2021 Capypara and the SkyTemple Contributors
+#  Copyright 2020-2022 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
 #
