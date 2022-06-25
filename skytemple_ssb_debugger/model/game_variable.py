@@ -32,7 +32,7 @@ def _get_value_pnt(static_data: Pmd2Data, srs: Optional[ScriptRuntimeStruct], va
         return srs.pnt + START_OFFSET_LOCAL_VARIABLES + (var.memoffset * 8)
     else:
         # GLOBAL VARIABLE
-        return static_data.binaries['arm9.bin'].symbols['GameVarsValues'].begin_absolute + var.memoffset
+        return static_data.bin_sections.ram.data.SCRIPT_VARS_VALUES.absolute_address + var.memoffset
 
 
 class GameVariable:
@@ -89,7 +89,7 @@ class GameVariable:
             elif var.id == 0x3B:  # UNIT_SUM
                 pass  # TODO - Possibly unusued but definitely relatively complicated, so not implemented for now.
             elif var.id == 0x3C:  # CARRY_GOLD
-                misc_data_begin = mem.unsigned.read_long(static_data.binaries['arm9.bin'].symbols['GameStateValues'].begin_absolute)
+                misc_data_begin = mem.unsigned.read_long(static_data.bin_sections.arm9.data.GAME_STATE_VALUES.absolute_address)
                 # Possibly who the money belongs to? Main team, Special episode team, etc.
                 some_sort_of_offset = mem.unsigned.read_byte(
                     misc_data_begin + 0x388
@@ -97,23 +97,23 @@ class GameVariable:
                 address_carry_gold = misc_data_begin + (some_sort_of_offset * 4) + 0x1394
                 value = mem.unsigned.read_long(address_carry_gold)
             elif var.id == 0x3D:  # BANK_GOLD
-                misc_data_begin = mem.unsigned.read_long(static_data.binaries['arm9.bin'].symbols['GameStateValues'].begin_absolute)
+                misc_data_begin = mem.unsigned.read_long(static_data.bin_sections.arm9.data.GAME_STATE_VALUES.absolute_address)
                 address_bank_gold = misc_data_begin + 0x13a0
                 value = mem.unsigned.read_long(address_bank_gold)
             elif var.id == 0x47:  # LANGUAGE_TYPE
-                value = mem.signed.read_byte(static_data.binaries['arm9.bin'].symbols['LanguageInfoData'].begin_absolute + 1)
+                value = mem.signed.read_byte(static_data.bin_sections.arm9.data.LANGUAGE_INFO_DATA.absolute_address + 1)
             elif var.id == 0x48:  # GAME_MODE
-                value = mem.unsigned.read_byte(static_data.binaries['arm9.bin'].symbols['GameMode'].begin_absolute)
+                value = mem.unsigned.read_byte(static_data.bin_sections.arm9.data.GAME_MODE.absolute_address)
             elif var.id == 0x49:  # EXECUTE_SPECIAL_EPISODE_TYPE
-                game_mode = mem.unsigned.read_byte(static_data.binaries['arm9.bin'].symbols['GameMode'].begin_absolute)
+                game_mode = mem.unsigned.read_byte(static_data.bin_sections.arm9.data.GAME_MODE.absolute_address)
                 if game_mode == 1:
-                    value = mem.unsigned.read_long(static_data.binaries['arm9.bin'].symbols['DebugSpecialEpisodeType'].begin_absolute)
+                    value = mem.unsigned.read_long(static_data.bin_sections.ram.data.DEBUG_SPECIAL_EPISODE_NUMBER.absolute_address)
                 elif game_mode == 3:
                     _, value = GameVariable.read(mem, static_data, 0x4a, 0)
                 else:
                     value = 0
             elif var.id == 0x70:  # NOTE_MODIFY_FLAG
-                value = mem.unsigned.read_byte(static_data.binaries['arm9.bin'].symbols['NotifyNote'].begin_absolute)
+                value = mem.unsigned.read_byte(static_data.bin_sections.arm9.data.NOTIFY_NOTE.absolute_address)
 
         return var, value
 
@@ -193,7 +193,7 @@ class GameVariable:
             elif var.id == 0x3B:  # UNIT_SUM
                 pass  # TODO: TBD
             elif var.id == 0x3C:  # CARRY_GOLD
-                misc_data_begin = mem.unsigned.read_long(static_data.binaries['arm9.bin'].symbols['GameStateValues'].begin_absolute)
+                misc_data_begin = mem.unsigned.read_long(static_data.bin_sections.arm9.data.GAME_STATE_VALUES.absolute_address)
                 # Possibly who the money belongs to? Main team, Special episode team, etc.
                 some_sort_of_offset = mem.unsigned.read_byte(
                     misc_data_begin + 0x388
@@ -201,16 +201,16 @@ class GameVariable:
                 address_carry_gold = misc_data_begin + (some_sort_of_offset * 4) + 0x1394
                 mem.write_long(address_carry_gold, value)
             elif var.id == 0x3D:  # BANK_GOLD
-                misc_data_begin = mem.unsigned.read_long(static_data.binaries['arm9.bin'].symbols['GameStateValues'].begin_absolute)
+                misc_data_begin = mem.unsigned.read_long(static_data.bin_sections.arm9.data.GAME_STATE_VALUES.absolute_address)
                 address_bank_gold = misc_data_begin + 0x13a0
                 mem.write_long(address_bank_gold, value)
             elif var.id == 0x47:  # LANGUAGE_TYPE
-                mem.write_byte(static_data.binaries['arm9.bin'].symbols['LanguageInfoData'].begin_absolute + 1, value)
+                mem.write_byte(static_data.bin_sections.arm9.data.LANGUAGE_INFO_DATA.absolute_address + 1, value)
             elif var.id == 0x48:  # GAME_MODE
-                mem.write_byte(static_data.binaries['arm9.bin'].symbols['GameMode'].begin_absolute, value)
+                mem.write_byte(static_data.bin_sections.arm9.data.GAME_MODE.absolute_address, value)
             elif var.id == 0x49:  # EXECUTE_SPECIAL_EPISODE_TYPE
-                game_mode = mem.unsigned.read_byte(static_data.binaries['arm9.bin'].symbols['GameMode'].begin_absolute)
+                game_mode = mem.unsigned.read_byte(static_data.bin_sections.arm9.data.GAME_MODE.absolute_address)
                 if game_mode == 1:
-                    mem.write_long(static_data.binaries['arm9.bin'].symbols['DebugSpecialEpisodeType'].begin_absolute, value)
+                    mem.write_long(static_data.bin_sections.ram.data.DEBUG_SPECIAL_EPISODE_NUMBER.absolute_address, value)
             elif var.id == 0x70:  # NOTE_MODIFY_FLAG
-                mem.write_byte(static_data.binaries['arm9.bin'].symbols['NotifyNote'].begin_absolute, value)
+                mem.write_byte(static_data.bin_sections.arm9.data.NOTIFY_NOTE.absolute_address, value)

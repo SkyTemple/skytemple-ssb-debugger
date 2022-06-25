@@ -19,6 +19,7 @@ from functools import partial
 from typing import Optional, TYPE_CHECKING
 
 from desmume.emulator import DeSmuME
+from skytemple_files.common import string_codec
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -27,7 +28,6 @@ from skytemple_ssb_debugger.model.game_variable import GameVariable
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-from skytemple_ssb_debugger.sandbox.sandbox import read_ssb_str_mem
 from skytemple_ssb_debugger.threadsafe import threadsafe_gtk_nonblocking, threadsafe_emu, synchronized
 
 if TYPE_CHECKING:
@@ -101,22 +101,23 @@ class DebuggerController:
         self.rom_data = rom_data
         self.breakpoint_manager = breakpoint_manager
 
-        arm9 = self.rom_data.binaries['arm9.bin']
-        ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
-        ov29 = self.rom_data.binaries['overlay/overlay_0029.bin']
-        self.register_exec(ov11.symbols['FuncThatCallsCommandParsing'].begin_absolute + 0x58, self.hook__breaking_point)
-        self.register_exec(arm9.symbols['GetDebugFlag1'].begin_absolute, self.hook__get_debug_flag_get_input)
-        self.register_exec(arm9.symbols['GetDebugFlag2'].begin_absolute, self.hook__get_debug_flag_get_input)
-        self.register_exec(arm9.symbols['GetDebugFlag1'].begin_absolute+0x4, self.hook__get_debug_flag_1)
-        self.register_exec(arm9.symbols['GetDebugFlag2'].begin_absolute+0x4, self.hook__get_debug_flag_2)
-        self.register_exec(arm9.symbols['SetDebugFlag1'].begin_absolute, self.hook__set_debug_flag_1)
-        self.register_exec(arm9.symbols['SetDebugFlag2'].begin_absolute, self.hook__set_debug_flag_2)
-        self.register_exec(arm9.symbols['DebugPrint0'].begin_absolute, partial(self.hook__log_printfs, 0))
-        self.register_exec(arm9.symbols['DebugPrint'].begin_absolute, partial(self.hook__log_printfs, 1))
-        self.register_exec(arm9.symbols['DebugPrint2'].begin_absolute, partial(self.hook__log_printfs, 0))
-        self.register_exec(ov11.symbols['ScriptCommandParsing'].begin_absolute + 0x3C40, self.hook__log_debug_print)
-        self.register_exec(ov11.symbols['ScriptCommandParsing'].begin_absolute + 0x15C8, self.hook__debug_mode)
-        self.register_write(ov29.symbols['DUNGEON_PTR'].begin_absolute, self.hook__write__debug_dungeon_skip)
+        arm9 = self.rom_data.bin_sections.arm9
+        arm9_e = self.rom_data.extra_bin_sections.arm9
+        ov11 = self.rom_data.bin_sections.overlay11
+        ov29 = self.rom_data.bin_sections.overlay29
+        self.register_exec(ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58, self.hook__breaking_point)
+        self.register_exec(arm9.functions.SetDebugFlag1.absolute_address, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions.SetDebugFlag2.absolute_address, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions.SetDebugFlag1.absolute_address+0x4, self.hook__get_debug_flag_1)
+        self.register_exec(arm9.functions.SetDebugFlag2.absolute_address+0x4, self.hook__get_debug_flag_2)
+        self.register_exec(arm9.functions.SetDebugFlag1.absolute_address, self.hook__set_debug_flag_1)
+        self.register_exec(arm9.functions.SetDebugFlag2.absolute_address, self.hook__set_debug_flag_2)
+        self.register_exec(arm9.functions.DebugPrint0.absolute_address, partial(self.hook__log_printfs, 0))
+        self.register_exec(arm9.functions.DebugPrint.absolute_address, partial(self.hook__log_printfs, 1))
+        self.register_exec(arm9_e.functions.DebugPrint2.absolute_address, partial(self.hook__log_printfs, 0))
+        self.register_exec(ov11.functions.ScriptCommandParsing.absolute_address + 0x3C40, self.hook__log_debug_print)
+        self.register_exec(ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8, self.hook__debug_mode)
+        self.register_write(ov29.data.DUNGEON_PTR.absolute_address, self.hook__write__debug_dungeon_skip)
 
         self.ground_engine_state = GroundEngineState(
             self.emu_thread, self.rom_data, self.print_callback, inform_ground_engine_start_cb, ssb_file_manager,
@@ -126,22 +127,23 @@ class DebuggerController:
         self.ground_engine_state.watch()
 
     def disable(self):
-        arm9 = self.rom_data.binaries['arm9.bin']
-        ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
-        ov29 = self.rom_data.binaries['overlay/overlay_0029.bin']
-        self.register_exec(ov11.symbols['FuncThatCallsCommandParsing'].begin_absolute + 0x58, None)
-        self.register_exec(arm9.symbols['GetDebugFlag1'].begin_absolute, None)
-        self.register_exec(arm9.symbols['GetDebugFlag2'].begin_absolute, None)
-        self.register_exec(arm9.symbols['GetDebugFlag1'].begin_absolute+0x4, None)
-        self.register_exec(arm9.symbols['GetDebugFlag2'].begin_absolute+0x4, None)
-        self.register_exec(arm9.symbols['SetDebugFlag1'].begin_absolute, None)
-        self.register_exec(arm9.symbols['SetDebugFlag2'].begin_absolute, None)
-        self.register_exec(arm9.symbols['DebugPrint0'].begin_absolute, None)
-        self.register_exec(arm9.symbols['DebugPrint'].begin_absolute, None)
-        self.register_exec(arm9.symbols['DebugPrint2'].begin_absolute, None)
-        self.register_exec(ov11.symbols['ScriptCommandParsing'].begin_absolute + 0x3C40, None)
-        self.register_exec(ov11.symbols['ScriptCommandParsing'].begin_absolute + 0x15C8, None)
-        self.register_write(ov29.symbols['DUNGEON_PTR'].begin_absolute, None)
+        arm9 = self.rom_data.bin_sections.arm9
+        arm9_e = self.rom_data.extra_bin_sections.arm9
+        ov11 = self.rom_data.bin_sections.overlay11
+        ov29 = self.rom_data.bin_sections.overlay29
+        self.register_exec(ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58, None)
+        self.register_exec(arm9.functions.GetDebugFlag1.absolute_address, None)
+        self.register_exec(arm9.functions.GetDebugFlag2.absolute_address, None)
+        self.register_exec(arm9.functions.GetDebugFlag1.absolute_address+0x4, None)
+        self.register_exec(arm9.functions.GetDebugFlag2.absolute_address+0x4, None)
+        self.register_exec(arm9.functions.GetDebugFlag1.absolute_address, None)
+        self.register_exec(arm9.functions.GetDebugFlag2.absolute_address, None)
+        self.register_exec(arm9.functions.DebugPrint0.absolute_address, None)
+        self.register_exec(arm9.functions.DebugPrint.absolute_address, None)
+        self.register_exec(arm9_e.functions.DebugPrint2.absolute_address, None)
+        self.register_exec(ov11.functions.ScriptCommandParsing.absolute_address + 0x3C40, None)
+        self.register_exec(ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8, None)
+        self.register_write(ov29.data.DUNGEON_PTR.absolute_address, None)
         self.is_active = False
         self.rom_data = None
         self.ground_engine_state.remove_watches()
@@ -375,7 +377,7 @@ class DebuggerController:
         return current_opcode_addr_relative + len
 
     def _set_dungeon_debug_skip(self):
-        pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.binaries['overlay/overlay_0029.bin'].symbols['DUNGEON_PTR'].begin_absolute)
+        pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.bin_sections.overlay29.symbols['DUNGEON_PTR'].absolute_address)
         if pointer != 0:
             self.emu_thread.emu.memory.write_byte(pointer + 6, 1 if self._debug_dungeon_skip else 0)
             self.emu_thread.emu.memory.write_byte(pointer + 8, 1 if self._debug_dungeon_skip else 0)
@@ -390,3 +392,9 @@ class DebuggerController:
     def set_boost(self, state):
         self._boost = state
         self.ground_engine_state.set_boost(state)
+
+
+def read_ssb_str_mem(mem, str_table_pointer, index):
+    rel_pointer_to_const_str = mem.unsigned.read_short(str_table_pointer + (index * 2))
+    abs_pointer_to_const_str = str_table_pointer + rel_pointer_to_const_str
+    return mem.read_string(abs_pointer_to_const_str, string_codec.PMD2_STR_ENCODER)

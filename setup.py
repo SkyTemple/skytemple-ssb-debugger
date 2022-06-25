@@ -19,6 +19,7 @@ setup(
     install_requires=[
         'ndspy >= 3.0.0',
         'skytemple-files >= 1.3.7',
+        'pmdsky-debug-py',  #  Whatever version skytemple-files requires.
         'skytemple-icons >= 0.1.0',
         'range-typed-integers >= 1.0.0',
         'pygobject >= 3.26.0',
