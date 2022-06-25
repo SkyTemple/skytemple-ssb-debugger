@@ -188,11 +188,11 @@ class VariableController:
 
         if self.emu_thread:
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(  # type: ignore
-                self.rom_data.binaries['arm9.bin'].symbols['SaveScriptVariableValue'].begin_absolute,  # type: ignore
+                self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValue.absolute_address,  # type: ignore
                 self.hook__variable_set
             ))
             threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(  # type: ignore
-                self.rom_data.binaries['arm9.bin'].symbols['SaveScriptVariableValueAtIndex'].begin_absolute,  # type: ignore
+                self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValueAtIndex.absolute_address,  # type: ignore
                 self.hook__variable_set_with_offset
             ))
 
@@ -203,11 +203,11 @@ class VariableController:
             notebook.remove_page(0)
 
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['arm9.bin'].symbols['SaveScriptVariableValue'].begin_absolute,
+            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValue.absolute_address,
             None
         ))
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(
-            self.rom_data.binaries['arm9.bin'].symbols['SaveScriptVariableValueAtIndex'].begin_absolute,
+            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValueAtIndex.absolute_address,
             None
         ))
 
