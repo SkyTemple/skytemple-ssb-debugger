@@ -57,15 +57,15 @@ class GroundEngineState:
         self.logging_enabled = False
         self._boost = False
 
-        self.pnt_map = rom_data.binaries['overlay/overlay_0011.bin'].symbols['GroundStateMap'].begin_absolute
-        base_pnt = rom_data.binaries['overlay/overlay_0011.bin'].symbols['GroundStatePntrs'].begin_absolute
+        self.pnt_map = rom_data.bin_sections.overlay11.data.GROUND_STATE_MAP.absolute_address
+        base_pnt = rom_data.bin_sections.overlay11.data.GROUND_STATE_PTRS.absolute_address
         self.pnt_main_script_struct = base_pnt
         #self.pnt_unk = base_pnt + 4
         self.pnt_actors = base_pnt + 8
         self.pnt_objects = base_pnt + 12
         self.pnt_performers = base_pnt + 16
         self.pnt_events = base_pnt + 20
-        self.pnt_unionall_load_addr = rom_data.binaries['overlay/overlay_0011.bin'].symbols['UNIONALL_RAM_ADDRESS'].begin_absolute
+        self.pnt_unionall_load_addr = rom_data.bin_sections.overlay11.data.UNIONALL_RAM_ADDRESS.absolute_address
         self.unionall_load_addr = AddressContainer(0)
 
         self._load_ssb_for = None
@@ -198,29 +198,29 @@ class GroundEngineState:
         return self.global_script, loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events
 
     def watch(self):
-        ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
+        ov11 = self.rom_data.bin_sections.overlay11
 
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x3C, self.hook__ground_start)
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x210, self.hook__ground_quit)
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x598, self.hook__ground_map_change)
-        self.register_exec(ov11.symbols['SsbLoad1'].begin_absolute, self.hook__ssb_load)
-        self.register_exec(ov11.symbols['SsbLoad2'].begin_absolute, self.hook__ssb_load)
-        self.register_exec(ov11.symbols['StationLoadHanger'].begin_absolute + 0xC0, self.hook__ssx_load)
-        self.register_exec(ov11.symbols['ScriptStationLoadTalk'].begin_absolute, self.hook__talk_load)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, self.hook__ground_start)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, self.hook__ground_quit)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, self.hook__ground_map_change)
+        self.register_exec(ov11.functions.SsbLoad1.absolute_address, self.hook__ssb_load)
+        self.register_exec(ov11.functions.SsbLoad2.absolute_address, self.hook__ssb_load)
+        self.register_exec(ov11.functions.StationLoadHanger.absolute_address + 0xC0, self.hook__ssx_load)
+        self.register_exec(ov11.functions.ScriptStationLoadTalk.absolute_address, self.hook__talk_load)
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_write(
             self.pnt_unionall_load_addr, self.hook__write_unionall_address, 4
         ))
 
     def remove_watches(self):
-        ov11 = self.rom_data.binaries['overlay/overlay_0011.bin']
+        ov11 = self.rom_data.bin_sections.overlay11
 
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x3C, None)
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x210, None)
-        self.register_exec(ov11.symbols['GroundMainLoop'].begin_absolute + 0x598, None)
-        self.register_exec(ov11.symbols['SsbLoad1'].begin_absolute, None)
-        self.register_exec(ov11.symbols['SsbLoad2'].begin_absolute, None)
-        self.register_exec(ov11.symbols['StationLoadHanger'].begin_absolute + 0xC0, None)
-        self.register_exec(ov11.symbols['ScriptStationLoadTalk'].begin_absolute, None)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, None)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, None)
+        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, None)
+        self.register_exec(ov11.functions.SsbLoad1.absolute_address, None)
+        self.register_exec(ov11.functions.SsbLoad2.absolute_address, None)
+        self.register_exec(ov11.functions.StationLoadHanger.absolute_address + 0xC0, None)
+        self.register_exec(ov11.functions.ScriptStationLoadTalk.absolute_address, None)
 
     def register_exec(self, pnt, cb):
         threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(pnt, cb))
@@ -375,7 +375,7 @@ class GroundEngineState:
 
     def overlay11_loaded(self):
         """TODO: Replace with a proper check..."""
-        begin_offset = self.rom_data.binaries['overlay/overlay_0011.bin'].symbols['GroundMainLoop'].begin_absolute
+        begin_offset = self.rom_data.bin_sections.overlay11.functions.GroundMainLoop.absolute_address
         return self.emu_thread.emu.memory.unsigned[begin_offset:begin_offset+len(O11_BYTE_CHECK)] == O11_BYTE_CHECK
 
     @synchronized(ground_engine_lock)
