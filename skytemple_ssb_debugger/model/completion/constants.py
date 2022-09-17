@@ -86,7 +86,7 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         return [self._build_item(s) for s in self.all_constants if s.name.startswith(cond)]
 
     def _build_item(self, const: SsbConstant) -> GtkSource.CompletionItem:
-        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new2()
+        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new()
         item.set_text(const.name)
         item.set_label(const.name)
 
