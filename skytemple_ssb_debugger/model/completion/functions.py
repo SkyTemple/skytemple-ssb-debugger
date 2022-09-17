@@ -74,7 +74,7 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
         return [self._build_item(opcode) for opcode in self.opcodes if opcode.name.startswith(cond)]
 
     def _build_item(self, opcode: Pmd2ScriptOpCode) -> GtkSource.CompletionItem:
-        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new2()
+        item: GtkSource.CompletionItem = GtkSource.CompletionItem.new()
         item.set_text(opcode.name)
         item.set_label(opcode.name)
         item.set_info(opcode.description)

@@ -29,10 +29,11 @@ import gi
 
 from skytemple_files.common.util import open_utf8, add_extension_if_missing
 
-gi.require_version('GtkSource', '3.0')
+gi.require_version('GtkSource', '4')
 from gi.repository.GtkSource import StyleSchemeManager
 
 from desmume.controls import Keys, keymask
+from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
 from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
 from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
