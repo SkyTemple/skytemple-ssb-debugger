@@ -27,7 +27,7 @@ setup(
         'py-desmume >= 0.0.4.post2',
         'explorerscript >= 0.1.1',
         'nest-asyncio >= 1.4.1',
-        'pygtkspellcheck >= 4.0,<5.0'
+        'pygtkspellcheck >= 5.0'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
