@@ -113,7 +113,7 @@ class GlobalStateController:
         self._tables = []
         self._current_table = 0
         if self.rom_data is not None:
-            address_table_head = self.rom_data.bin_sections.arm9.data.MEMORY_ALLOCATION_TABLE.absolute_address
+            address_table_head = self.rom_data.bin_sections.itcm.data.MEMORY_ALLOCATION_TABLE.absolute_address
             accessor = self.emu_thread.emu.memory.unsigned
             for x in range(accessor.read_long(address_table_head)):
                 address_table = address_table_head+0x20+0x4*x
