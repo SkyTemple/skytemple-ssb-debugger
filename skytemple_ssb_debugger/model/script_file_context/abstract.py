@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import List, Optional, Callable, Tuple, Any
 
@@ -50,17 +51,17 @@ class AbstractScriptFileContext(ABC):
                                                  handler: Optional[Callable[[bool, str, int, int, int, bool, bool], None]]):
         self._do_insert_opcode_text_mark = handler
 
-    @property  # type: ignore
+    @property
     @abstractmethod
     def ssb_filepath(self) -> Optional[str]:
         pass
 
-    @property  # type: ignore
+    @property
     @abstractmethod
     def exps_filepath(self) -> str:
         pass
 
-    @property  # type: ignore
+    @property
     @abstractmethod
     def breakpoint_manager(self) -> BreakpointManager:
         pass

@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import logging
 from threading import Lock
 from typing import Optional, TYPE_CHECKING, Dict, List, Iterable
@@ -22,13 +23,12 @@ import gi
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.script.ssb.constants import SsbConstant
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu, synchronized_now
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from ndspy.rom import NintendoDSRom
 
+from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR
@@ -62,10 +62,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def on_quit(self):
         Gtk.main_quit()
-        emu_instance = EmulatorThread.instance()
-        if emu_instance is not None:
-            emu_instance.end()
-        EmulatorThread.destroy_lib()
+        emulator_shutdown()
 
     def on_focus(self):
         pass
@@ -111,31 +108,31 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         self._check_loaded()
         return self._project_fm  # type: ignore
 
-    @synchronized_now(file_load_lock)
     def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
-        self._check_loaded()
-        if filename not in self._open_files:
-            try:
-                ssb_bin = self._rom.getFileByName(filename)  # type: ignore
-            except ValueError as err:
-                raise FileNotFoundError(str(err)) from err
-            self._open_files[filename] = SsbLoadedFile(
-                filename, FileType.SSB.deserialize(ssb_bin, self._static_data),
-                ssb_file_manager, self._project_fm  # type: ignore
-            )
-            self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
-        return self._open_files[filename]
+        with file_load_lock:
+            self._check_loaded()
+            if filename not in self._open_files:
+                try:
+                    ssb_bin = self._rom.getFileByName(filename)  # type: ignore
+                except ValueError as err:
+                    raise FileNotFoundError(str(err)) from err
+                self._open_files[filename] = SsbLoadedFile(
+                    filename, FileType.SSB.deserialize(ssb_bin, self._static_data),
+                    ssb_file_manager, self._project_fm  # type: ignore
+                )
+                self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
+            return self._open_files[filename]
 
     def on_script_edit(self, filename):
         pass
 
-    @synchronized_now(file_load_lock)
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
-        self._check_loaded()
-        self._rom.setFileByName(  # type: ignore
-            filename, FileType.SSB.serialize(ssb_model, self._static_data)
-        )
-        self.save_rom()
+        with file_load_lock:
+            self._check_loaded()
+            self._rom.setFileByName(  # type: ignore
+                filename, FileType.SSB.serialize(ssb_model, self._static_data)
+            )
+            self.save_rom()
 
     def _check_loaded(self):
         if self._rom is None:

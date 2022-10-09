@@ -14,20 +14,19 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
     pos_in_map_coord
 from skytemple_ssb_debugger.model.ground_state.map import Map
-from skytemple_ssb_debugger.threadsafe import wrap_threadsafe_emu
 
 PERFORMER_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
 class Performer(AbstractEntityWithScriptStruct):
-    def __init__(self, emulator_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int, unionall_load_addr: AddressContainer):
-        super().__init__(emulator_thread, pnt_to_block_start, rom_data, unionall_load_addr)
+    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
+        super().__init__(pnt_to_block_start, rom_data)
         self.offset = offset
 
     @property
@@ -38,63 +37,51 @@ class Performer(AbstractEntityWithScriptStruct):
     def _script_struct_offset(self):
         return PERFORMER_BEGIN_SCRIPT_STRUCT
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def valid(self):
-        return self.emu_thread.emu.memory.signed.read_short(self.pnt + self._script_struct_offset) > 0
+        return emulator_read_short(self.pnt + self._script_struct_offset) > 0
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def id(self):
-        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x04)
+        return emulator_read_short(self.pnt + 0x04)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def kind(self):
-        return self.emu_thread.emu.memory.unsigned.read_short(self.pnt + 0x06)
+        return emulator_read_short(self.pnt + 0x06)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def hanger(self):
-        return self.emu_thread.emu.memory.signed.read_short(self.pnt + 0x0A)
+        return emulator_read_short(self.pnt + 0x0A)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def sector(self):
-        return self.emu_thread.emu.memory.signed.read_byte(self.pnt + 0x0E)
+        return emulator_read_byte(self.pnt + 0x0E)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def direction(self):
         return self.rom_data.script_data.directions__by_ssb_id[0]  # TODO!!
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def x_north(self):
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x130)
+        return emulator_read_long(self.pnt + 0x130)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def y_west(self):
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x134)
+        return emulator_read_long(self.pnt + 0x134)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def x_south(self):
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x138)
+        return emulator_read_long(self.pnt + 0x138)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def y_east(self):
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x13C)
+        return emulator_read_long(self.pnt + 0x13C)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def x_map(self):
         return pos_in_map_coord(self.x_north, self.x_south)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def y_map(self):
         return pos_in_map_coord(self.y_west, self.y_east)
 

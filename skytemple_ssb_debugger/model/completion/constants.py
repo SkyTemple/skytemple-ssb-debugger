@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 from typing import Iterable, Tuple
 
 from gi.repository import GObject, GtkSource, Gtk
@@ -24,7 +25,7 @@ from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate, \
     backward_until_special_char
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_GLOBAL_SCRIPT
-from skytemple_files.common.i18n_util import f, _
+from skytemple_files.common.i18n_util import _
 
 
 class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvider):

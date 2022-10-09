@@ -24,7 +24,7 @@ setup(
         'range-typed-integers >= 1.0.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
-        'py-desmume >= 0.0.5',
+        'skytemple-ssb-emulator >= 1.4.0',
         'explorerscript >= 0.1.2',
         'nest-asyncio >= 1.4.1',
         'pygtkspellcheck >= 5.0'

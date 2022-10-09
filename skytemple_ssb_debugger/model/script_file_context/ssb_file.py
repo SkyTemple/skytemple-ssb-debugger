@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import logging
 import sys
 import threading
@@ -22,7 +23,7 @@ from typing import Callable, Optional, TYPE_CHECKING, Tuple, Any
 
 from gi.repository import GLib
 
-from explorerscript.source_map import SourceMap, MacroSourceMapping
+from explorerscript.source_map import MacroSourceMapping
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext

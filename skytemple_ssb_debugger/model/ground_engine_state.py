@@ -14,17 +14,16 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import typing
 import warnings
-from threading import Lock
 from typing import Optional, List, Tuple
 
 from gi.repository import Gtk, GLib
 
+from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.model.address_container import AddressContainer
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
 from skytemple_ssb_debugger.model.ground_state.event import Event
@@ -35,7 +34,6 @@ from skytemple_ssb_debugger.model.ground_state.performer import Performer
 from skytemple_ssb_debugger.model.ground_state.ssb_file_in_ram import SsbFileInRam
 from skytemple_ssb_debugger.model.ground_state.ssx_file_in_ram import SsxFileInRam
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-from skytemple_ssb_debugger.threadsafe import threadsafe_gtk_nonblocking, threadsafe_emu, synchronized, synchronized_now
 
 TALK_HANGER_OFFSET = 3
 MAX_SSX = 3
@@ -43,14 +41,10 @@ MAX_SSB = MAX_SSX + TALK_HANGER_OFFSET
 O11_BYTE_CHECK = bytes([0xf0, 0x4f, 0x2d, 0xe9, 0x34, 0xd0, 0x4d, 0xe2, 0x64, 0x2a, 0x9f, 0xe5])
 
 
-ground_engine_lock = Lock()
-
-
 class GroundEngineState:
-    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, print_callback, inform_ground_engine_start_cb,
+    def __init__(self, rom_data: Pmd2Data, print_callback, inform_ground_engine_start_cb,
                  ssb_file_manager: SsbFileManager, context: AbstractDebuggerControlContext):
         super().__init__()
-        self.emu_thread = emu_thread
         self.rom_data = rom_data
         self.ssb_file_manager = ssb_file_manager
         self.context = context
@@ -66,42 +60,40 @@ class GroundEngineState:
         self.pnt_performers = base_pnt + 16
         self.pnt_events = base_pnt + 20
         self.pnt_unionall_load_addr = rom_data.bin_sections.overlay11.data.UNIONALL_RAM_ADDRESS.absolute_address
-        self.unionall_load_addr = AddressContainer(0)
 
-        self._load_ssb_for = None
+        self._load_ssb_for: Optional[int] = None
 
         self._running = False
         self._print_callback = print_callback
         self._inform_ground_engine_start_cb = inform_ground_engine_start_cb
 
-        self._global_script = GlobalScript(self.emu_thread, self.rom_data, self.pnt_main_script_struct, self.unionall_load_addr)
-        self._map = Map(self.emu_thread, self.rom_data, self.pnt_map)
+        self._global_script = GlobalScript(self.rom_data, self.pnt_main_script_struct)
+        self._map = Map(self.rom_data, self.pnt_map)
 
         self._actors = []
         info = self.rom_data.script_data.ground_state_structs['Actors']
         for i in range(0, info.maxentries):
-            self._actors.append(Actor(self.emu_thread, self.rom_data, self.pnt_actors, i * info.entrylength, self.unionall_load_addr))
+            self._actors.append(Actor(self.rom_data, self.pnt_actors, i * info.entrylength))
 
         self._objects = []
         info = self.rom_data.script_data.ground_state_structs['Objects']
         for i in range(0, info.maxentries):
-            self._objects.append(Object(self.emu_thread, self.rom_data, self.pnt_objects, i * info.entrylength, self.unionall_load_addr))
+            self._objects.append(Object(self.rom_data, self.pnt_objects, i * info.entrylength))
 
         self._performers = []
         info = self.rom_data.script_data.ground_state_structs['Performers']
         for i in range(0, info.maxentries):
-            self._performers.append(Performer(self.emu_thread, self.rom_data, self.pnt_performers, i * info.entrylength, self.unionall_load_addr))
+            self._performers.append(Performer(self.rom_data, self.pnt_performers, i * info.entrylength))
 
         self._events = []
         info = self.rom_data.script_data.ground_state_structs['Events']
         for i in range(0, info.maxentries):
-            self._events.append(Event(self.emu_thread, self.rom_data, self.pnt_events, i * info.entrylength))
+            self._events.append(Event(self.rom_data, self.pnt_events, i * info.entrylength))
 
         self._loaded_ssx_files: List[Optional[SsxFileInRam]] = []
         self._loaded_ssb_files: List[Optional[SsbFileInRam]] = []
         self.reset()
 
-    @synchronized_now(ground_engine_lock)
     @typing.no_type_check
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
@@ -113,7 +105,6 @@ class GroundEngineState:
     def step_into_macro_call(self, state: BreakpointState):
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
 
-    @synchronized_now(ground_engine_lock)
     def break_released(self, state: BreakpointState):
         """Reset the breaked property of loaded ssb files again."""
         for x in self._loaded_ssb_files:
@@ -125,13 +116,11 @@ class GroundEngineState:
     def running(self):
         return self._running
 
-    @property  # type: ignore
-    @synchronized_now(ground_engine_lock)
+    @property
     def loaded_ssx_files(self):
         return self._loaded_ssx_files
 
-    @property  # type: ignore
-    @synchronized_now(ground_engine_lock)
+    @property
     def loaded_ssb_files(self):
         return self._loaded_ssb_files
 
@@ -200,34 +189,28 @@ class GroundEngineState:
     def watch(self):
         ov11 = self.rom_data.bin_sections.overlay11
 
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, self.hook__ground_start)
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, self.hook__ground_quit)
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, self.hook__ground_map_change)
-        self.register_exec(ov11.functions.SsbLoad1.absolute_address, self.hook__ssb_load)
-        self.register_exec(ov11.functions.SsbLoad2.absolute_address, self.hook__ssb_load)
-        self.register_exec(ov11.functions.StationLoadHanger.absolute_address + 0xC0, self.hook__ssx_load)
-        self.register_exec(ov11.functions.ScriptStationLoadTalk.absolute_address, self.hook__talk_load)
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_write(
-            self.pnt_unionall_load_addr, self.hook__write_unionall_address, 4
-        ))
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, self.hook__ground_start)
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, self.hook__ground_quit)
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, self.hook__ground_map_change)
+        emulator_register_ssb_load([
+            ov11.functions.SsbLoad1.absolute_address, ov11.functions.SsbLoad2.absolute_address
+        ], self.hook__ssb_load)
+        emulator_register_ssx_load(ov11.functions.StationLoadHanger.absolute_address + 0xC0, self.hook__ssx_load)
+        emulator_register_talk_load(ov11.functions.ScriptStationLoadTalk.absolute_address, self.hook__talk_load)
+        emulator_register_unionall_load_addr_change(self.pnt_unionall_load_addr)
 
     def remove_watches(self):
         ov11 = self.rom_data.bin_sections.overlay11
 
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, None)
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, None)
-        self.register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, None)
-        self.register_exec(ov11.functions.SsbLoad1.absolute_address, None)
-        self.register_exec(ov11.functions.SsbLoad2.absolute_address, None)
-        self.register_exec(ov11.functions.StationLoadHanger.absolute_address + 0xC0, None)
-        self.register_exec(ov11.functions.ScriptStationLoadTalk.absolute_address, None)
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, None)
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, None)
+        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, None)
+        emulator_unregister_ssb_load()
+        emulator_unregister_ssx_load()
+        emulator_unregister_talk_load()
+        emulator_unregister_unionall_load_addr_change()
 
-    def register_exec(self, pnt, cb):
-        threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.memory.register_exec(pnt, cb))
-
-    @synchronized_now(ground_engine_lock)
     def reset(self, keep_global=False, fully=False):
-        # ! Runs from either GTK or emu thread !
         if fully:
             self._running = False
         self._loaded_ssx_files = [None for _ in range(0, MAX_SSX + 1)]
@@ -240,7 +223,6 @@ class GroundEngineState:
         if keep_global:
             self._loaded_ssb_files[0] = glob
 
-    @synchronized_now(ground_engine_lock)
     def serialize(self):
         """Convert the state (that's not directly tied to the game's memory) to a dict for saving."""
         return {
@@ -254,7 +236,6 @@ class GroundEngineState:
             'load_ssb_for': self._load_ssb_for
         }
 
-    @synchronized_now(ground_engine_lock)
     def deserialize(self, state: dict):
         """Load a saved state back from a dict"""
         self._running = state['running']
@@ -292,43 +273,35 @@ class GroundEngineState:
         self._loaded_ssx_files = [SsxFileInRam(fn, hng) if fn is not None else None for hng, fn in enumerate(state['ssxs'])]
 
         # Also update the load address for unionall
-        threadsafe_emu(self.emu_thread, lambda: self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr)))
+        emulator_unionall_load_address_update()
 
     def _print(self, string):
         if self.logging_enabled and not self._boost:
             self._print_callback(f"Ground Event >> {string}")
 
-    # >>> ALL CALLBACKS BELOW ARE RUNNING IN THE EMULATOR THREAD <<<
-
     def hook__ground_start(self, address, size):
-        if not self.overlay11_loaded():
+        if not emulator_ov11_loaded():
             return
         self._print("Ground Start")
-        threadsafe_gtk_nonblocking(lambda: self.reset())
-        ground_engine_lock.acquire()
+        self.reset()
         self._running = True
-        ground_engine_lock.release()
         self._inform_ground_engine_start_cb()
 
     def hook__ground_quit(self, address, size):
-        if not self.overlay11_loaded():
+        if not emulator_ov11_loaded():
             return
         self._print("Ground Quit")
-        ground_engine_lock.acquire()
         self._running = False
-        ground_engine_lock.release()
 
     def hook__ground_map_change(self, address, size):
-        if not self.overlay11_loaded():
+        if not emulator_ov11_loaded():
             return
         self._print("Ground Map Change")
         self.reset(keep_global=True)
 
-    @synchronized_now(ground_engine_lock)
-    def hook__ssb_load(self, address, size):
-        if not self.overlay11_loaded():
+    def hook__ssb_load(self, address, size, name: str):
+        if not emulator_ov11_loaded():
             return
-        name = self.emu_thread.emu.memory.read_string(self.emu_thread.emu.memory.register_arm9.r1)
         load_for = self._load_ssb_for if self._load_ssb_for is not None else 0
         self._print(f"SSB Load {name} for hanger {load_for}")
         self._load_ssb_for = None
@@ -336,15 +309,12 @@ class GroundEngineState:
         if load_for > MAX_SSB:
             warnings.warn(f"Ground Engine debugger: Invalid hanger ID for ssb: {load_for}")
             return
-        threadsafe_gtk_nonblocking(lambda: self.ssb_file_manager.open_in_ground_engine(name))
+        self.ssb_file_manager.open_in_ground_engine(name)
         self._loaded_ssb_files[load_for] = (SsbFileInRam(name, load_for))
 
-    @synchronized(ground_engine_lock)
-    def hook__ssx_load(self, address, size):
-        if not self.overlay11_loaded():
+    def hook__ssx_load(self, address, size, hanger: int, name: str):
+        if not emulator_ov11_loaded():
             return
-        hanger = self.emu_thread.emu.memory.register_arm9.r2
-        name = self.emu_thread.emu.memory.read_string(self.emu_thread.emu.memory.register_arm9.r3)
         self._print(f"SSX Load {name} for hanger {hanger}")
         self._load_ssb_for = hanger
         if hanger > MAX_SSX:
@@ -353,11 +323,9 @@ class GroundEngineState:
 
         self._loaded_ssx_files[hanger] = (SsxFileInRam(name, hanger))
 
-    @synchronized_now(ground_engine_lock)
-    def hook__talk_load(self, address, size):
-        if not self.overlay11_loaded():
+    def hook__talk_load(self, address, size, hanger):
+        if not emulator_ov11_loaded():
             return
-        hanger = self.emu_thread.emu.memory.register_arm9.r0
         # TODO:
         #    If the hanger is 1 - 3, this is a load for SSA/SSE/SSS.
         #    Otherwise just take the number. It's unknown what the exact mechanism / side effects are here.
@@ -366,18 +334,5 @@ class GroundEngineState:
         self._print(f"Talk Load for hanger {hanger}")
         self._load_ssb_for = hanger
 
-    @synchronized_now(ground_engine_lock)
-    def hook__write_unionall_address(self, address, size):
-        """Write the location of the unionall script into the container object for this"""
-        if not self.overlay11_loaded():
-            return
-        self.unionall_load_addr.set(self.emu_thread.emu.memory.unsigned.read_long(self.pnt_unionall_load_addr))
-
-    def overlay11_loaded(self):
-        """TODO: Replace with a proper check..."""
-        begin_offset = self.rom_data.bin_sections.overlay11.functions.GroundMainLoop.absolute_address
-        return self.emu_thread.emu.memory.unsigned[begin_offset:begin_offset+len(O11_BYTE_CHECK)] == O11_BYTE_CHECK
-
-    @synchronized(ground_engine_lock)
     def set_boost(self, state):
         self._boost = state

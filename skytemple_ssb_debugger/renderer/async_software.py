@@ -14,43 +14,54 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from threading import Lock
+from __future__ import annotations
+from math import radians
 from typing import Callable
 
 import cairo
 from gi.repository import Gtk, GLib
+from skytemple_ssb_emulator import *
 
-from desmume.emulator import SCREEN_PIXEL_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT
-from desmume.frontend.gtk_drawing_impl.software import SoftwareRenderer
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread, FRAMES_PER_SECOND
-from skytemple_ssb_debugger.threadsafe import synchronized
-
-image_lock = Lock()
+FRAMES_PER_SECOND = 60
 
 
-class AsyncSoftwareRenderer(SoftwareRenderer):
-    """Asynchronous, thread-safe implementation of the Software renderer."""
-
-    @synchronized(image_lock)
-    def __init__(self, emu_thread: EmulatorThread,
-                 top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
+class AsyncSoftwareRenderer:
+    def __init__(self, top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
                  after_render_hook: Callable[[cairo.Context, int], None] = None):
         self._boost = False
         self._upper_image = None
         self._lower_image = None
-        self.emu_thread = emu_thread
         self._after_render_hook = after_render_hook
         self.top_screen = top_screen
         self.bottom_screen = bottom_screen
-        super().__init__(None, after_render_hook)
+        self._screen_rotation_degrees = 0
+        self._scale = 1.0
+        self.decode_screen()
 
-    @synchronized(image_lock)
     def screen(self, base_w, base_h, ctx: cairo.Context, display_id: int):
         if self._upper_image is not None and self._lower_image is not None:
-            super().screen(base_w, base_h, ctx, display_id)
+            if display_id == 0:
+                self.decode_screen()
+
+            ctx.translate(base_w * self._scale / 2, base_h * self._scale / 2)
+            ctx.rotate(-radians(self._screen_rotation_degrees))
+            if self._screen_rotation_degrees == 90 or self._screen_rotation_degrees == 270:
+                ctx.translate(-base_h * self._scale / 2, -base_w * self._scale / 2)
+            else:
+                ctx.translate(-base_w * self._scale / 2, -base_h * self._scale / 2)
+            ctx.scale(self._scale, self._scale)
+            if display_id == 0:
+                ctx.set_source_surface(self._upper_image)
+            else:
+                ctx.set_source_surface(self._lower_image)
+            ctx.get_source().set_filter(cairo.Filter.NEAREST)
+            ctx.paint()
+
+            if self._after_render_hook:
+                self._after_render_hook(ctx, display_id)
 
     def decode_screen(self):
-        gpu_framebuffer = self.emu_thread.display_buffer_as_rgbx()
+        gpu_framebuffer = emulator_display_buffer_as_rgbx()
         self._upper_image = cairo.ImageSurface.create_for_data(
             gpu_framebuffer[:SCREEN_PIXEL_SIZE*4], cairo.FORMAT_RGB24, SCREEN_WIDTH, SCREEN_HEIGHT
         )
@@ -71,5 +82,20 @@ class AsyncSoftwareRenderer(SoftwareRenderer):
         self.bottom_screen.queue_draw()
         return True
 
+    def reshape(self, draw: Gtk.DrawingArea, display_id: int):
+        pass
+
     def set_boost(self, state):
         self._boost = state
+
+    def set_scale(self, value):
+        self._scale = value
+
+    def get_scale(self):
+        return self._scale
+
+    def get_screen_rotation(self):
+        return self._screen_rotation_degrees
+
+    def set_screen_rotation(self, value):
+        self._screen_rotation_degrees = value
