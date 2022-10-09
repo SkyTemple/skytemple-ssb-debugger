@@ -14,6 +14,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import logging
 import os
@@ -27,7 +28,6 @@ gi.require_version('Gtk', '3.0')
 from skytemple_icons import icons
 from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
 from skytemple_ssb_debugger.controller.main import MainController
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 
 from gi.repository import Gtk, GLib
 from gi.repository.Gtk import Window
@@ -58,8 +58,7 @@ def main():
 
         Gtk.main()
     finally:
-        if EmulatorThread.instance():
-            EmulatorThread.instance().stop()
+        emulator_shutdown()
 
 
 def get_debugger_builder() -> Gtk.Builder:

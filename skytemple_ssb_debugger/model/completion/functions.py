@@ -14,13 +14,14 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 from typing import List, Iterable, Tuple, Optional
 
 from gi.repository import GObject, GtkSource, Gtk
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
-from skytemple_files.common.i18n_util import f, _
+from skytemple_files.common.i18n_util import _
 
 
 class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvider):

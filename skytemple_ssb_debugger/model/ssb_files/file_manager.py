@@ -14,10 +14,10 @@
 # 
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import hashlib
 import logging
 import os
-from functools import partial
 from typing import TYPE_CHECKING, List, Tuple, Set
 
 from explorerscript.included_usage_map import IncludedUsageMap
@@ -26,7 +26,6 @@ from skytemple_files.common.util import open_utf8
 from skytemple_files.script.ssb.script_compiler import ScriptCompiler
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
-from skytemple_ssb_debugger.threadsafe import threadsafe_now_or_gtk_nonblocking
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.debugger import DebuggerController
@@ -216,7 +215,7 @@ class SsbFileManager:
         self.get(filename).opened_in_ground_engine = False
         self.get(filename).not_breakable = False
         if not self.get(filename).ram_state_up_to_date:
-            threadsafe_now_or_gtk_nonblocking(lambda: self.get(filename).signal_editor_reload())
+            self.get(filename).signal_editor_reload()
         self.get(filename).ram_state_up_to_date = True
         logger.debug(f"{filename}: Closed in Ground Engine")
         pass
@@ -230,11 +229,11 @@ class SsbFileManager:
             self.get(filename).ram_state_up_to_date = state
 
         if not self.get(filename).opened_in_ground_engine:
-            threadsafe_now_or_gtk_nonblocking(partial(set_ram_state, True))
+            set_ram_state(True)
             logger.debug(f"{filename}: Can be reloaded")
             return True
         else:
-            threadsafe_now_or_gtk_nonblocking(partial(set_ram_state, False))
+            set_ram_state(False)
 
         logger.debug(f"{filename}: Can NOT be reloaded")
         return False

@@ -14,14 +14,11 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from typing import List, Optional
+from __future__ import annotations
 
-from gi.repository import GtkSource, Gtk
+from gi.repository import GtkSource
 
-from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.completion.calltips.position_mark import PositionMarkEditorCalltip
-from skytemple_ssb_debugger.model.completion.util import backward_until_space
 
 
 class StringEventEmitter:

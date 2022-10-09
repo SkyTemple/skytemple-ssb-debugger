@@ -14,17 +14,15 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-import asyncio
-from threading import Lock
+from __future__ import annotations
 from typing import Iterable, List, Tuple
 
 import cairo
+from gi.repository import GLib
 
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
-from skytemple_ssb_debugger.emulator_thread import FRAMES_PER_SECOND
-from skytemple_ssb_debugger.threadsafe import synchronized, threadsafe_emu_nonblocking_coro
-from skytemple_files.common.i18n_util import f, _
+from skytemple_files.common.i18n_util import _
 
 ALPHA_T = 0.7
 COLOR_ACTOR = (1.0, 0, 1.0, ALPHA_T)
@@ -34,9 +32,7 @@ COLOR_EVENTS = (0, 0, 1.0, 0.4)
 COLOR_BLACK = (0, 0, 0, ALPHA_T)
 COLOR_POS_MARKERS = (0, 1.0, 0, ALPHA_T)
 REDRAW_DELAY = 2
-
-
-debug_overlay_lock = Lock()
+FRAMES_PER_SECOND = 60
 
 
 class DebugOverlayController:
@@ -59,7 +55,6 @@ class DebugOverlayController:
     def toggle(self, state):
         self.enabled = state
 
-    @synchronized(debug_overlay_lock)
     def draw(self, ctx: cairo.Context, display_id: int):
         if self._boost:
             self._draw_boost(ctx, display_id)
@@ -68,7 +63,7 @@ class DebugOverlayController:
         if display_id == 1 and self.enabled and self.debugger:
             if self._refresh_cache and not self._cache_redrawing_registered:
                 self._cache_redrawing_registered = True
-                threadsafe_emu_nonblocking_coro(self.debugger.emu_thread, self._update_cache())
+                self._update_cache()
 
             if self._cache_running:
                 # Draw
@@ -137,32 +132,31 @@ class DebugOverlayController:
         """The debugger is no longer stopped."""
         self._refresh_cache = True
 
-    async def _update_cache(self):
+    def _update_cache(self):
         # Refresh the cache
-        with debug_overlay_lock:
-            ges = self.debugger.ground_engine_state
-            if ges:
-                self._cache_running = ges.running
-                if self._cache_running:
-                    self._actor_bbox_cache = []
-                    self._object_bbox_cache = []
-                    self._perf_bbox_cache = []
-                    self._event_bbox_cache = []
-                    for actor in not_none(ges.actors):
-                        self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
-                    for object in not_none(ges.objects):
-                        self._object_bbox_cache.append(object.get_bounding_box_camera(ges.map))
-                    for performer in not_none(ges.performers):
-                        self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
-                    for event in not_none(ges.events):
-                        self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
-                    self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
+        ges = self.debugger.ground_engine_state
+        if ges:
+            self._cache_running = ges.running
+            if self._cache_running:
+                self._actor_bbox_cache = []
+                self._object_bbox_cache = []
+                self._perf_bbox_cache = []
+                self._event_bbox_cache = []
+                for actor in not_none(ges.actors):
+                    self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
+                for object in not_none(ges.objects):
+                    self._object_bbox_cache.append(object.get_bounding_box_camera(ges.map))
+                for performer in not_none(ges.performers):
+                    self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
+                for event in not_none(ges.events):
+                    self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
+                self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache and not self._boost:
-            await asyncio.sleep(1 / FRAMES_PER_SECOND * REDRAW_DELAY, loop=self.debugger.emu_thread.loop)
-            threadsafe_emu_nonblocking_coro(self.debugger.emu_thread, self._update_cache())
+            GLib.timeout_add(1 / FRAMES_PER_SECOND * REDRAW_DELAY, self._update_cache)
         else:
             self._cache_redrawing_registered = False
+        return False
 
     def set_boost(self, state):
         self._boost = state
@@ -172,7 +166,7 @@ class DebugOverlayController:
             ctx.set_source_rgb(1.0, 0, 0)
             ctx.move_to(10, 20)
             ctx.set_font_size(20)
-            ctx.show_text(_("BOOST"))  # TRANSLATORS: Shown in enulator when boosting / fast-forward
+            ctx.show_text(_("BOOST"))  # TRANSLATORS: Shown in emulator when boosting / fast-forward
             ctx.set_font_size(12)
             ctx.move_to(10, 30)
             ctx.show_text(_("Debugging disabled."))

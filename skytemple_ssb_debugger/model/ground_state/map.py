@@ -14,32 +14,27 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_debugger.emulator_thread import EmulatorThread
-from skytemple_ssb_debugger.threadsafe import threadsafe_emu, wrap_threadsafe_emu
 
 
 class Map:
-    def __init__(self, emu_thread: EmulatorThread, rom_data: Pmd2Data, pnt_to_block_start: int):
+    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int):
         super().__init__()
-        self.emu_thread = emu_thread
         self.rom_data = rom_data
         self.pnt_to_block_start = pnt_to_block_start
 
     @property
     def pnt(self):
-        return threadsafe_emu(
-            self.emu_thread, lambda: self.emu_thread.emu.memory.unsigned.read_long(self.pnt_to_block_start)
-        )
+        return emulator_read_long(self.pnt_to_block_start)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def camera_x_pos(self):
         """Returns the center position of the camera"""
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x200)
+        return emulator_read_long(self.pnt + 0x200)
 
-    @property  # type: ignore
-    @wrap_threadsafe_emu()
+    @property
     def camera_y_pos(self):
         """Returns the center position of the camera"""
-        return self.emu_thread.emu.memory.unsigned.read_long(self.pnt + 0x204)
+        return emulator_read_long(self.pnt + 0x204)

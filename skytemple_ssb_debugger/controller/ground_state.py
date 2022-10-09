@@ -14,8 +14,9 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import os
-from typing import Optional, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 import gi
 from gi.repository.Gtk import TreeViewColumn
@@ -25,7 +26,7 @@ from skytemple_ssb_debugger.model.constants import ICON_GLOBAL_SCRIPT, ICON_ACTO
     ICON_POSITION_MARKER, ICON_EVENTS
 from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
-from skytemple_files.common.i18n_util import f, _
+from skytemple_files.common.i18n_util import _
 
 GE_FILE_STORE_SCRIPT = _('Script')
 
@@ -33,7 +34,6 @@ gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk
 
-from desmume.emulator import DeSmuME
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 
 
@@ -43,8 +43,7 @@ def resizable(column):
 
 
 class GroundStateController:
-    def __init__(self, emu: Optional[DeSmuME], debugger_controller: DebuggerController, builder: Gtk.Builder):
-        self.emu = emu
+    def __init__(self, debugger_controller: DebuggerController, builder: Gtk.Builder):
         self.debugger = debugger_controller
         self.builder = builder
 

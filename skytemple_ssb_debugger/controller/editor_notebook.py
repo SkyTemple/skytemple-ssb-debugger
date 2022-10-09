@@ -15,6 +15,7 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 import os
 from typing import Dict, Optional, List, Tuple, TYPE_CHECKING
 
