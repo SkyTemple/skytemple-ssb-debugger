@@ -779,50 +779,52 @@ class MainController:
         elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY:
             # Right click!
             model = self._ssb_item_filter
-            treepath = tree.get_path_at_pos(int(event.x), int(event.y))[0]
-            if treepath is not None:
-                if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
-                    menu: Gtk.Menu = Gtk.Menu.new()
-                    open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scenes..."))
-                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[treepath][0]))
-                    menu.add(open_scene)
-                    menu.show_all()
-                    menu.popup_at_pointer(event)
-                if model[treepath][2] in ['map_sss_entry', 'ssb']:
-                    menu = Gtk.Menu.new()
-                    open_scene = Gtk.MenuItem.new_with_label(_("Open Scene..."))
-                    open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
-                        self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
-                    ))
-                    menu.add(open_scene)
-                    menu.show_all()
-                    menu.popup_at_pointer(event)
-                if model[treepath][2] == 'exps_macro_dir':
-                    menu = Gtk.Menu.new()
-                    create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
-                    create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
-                    create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
-                    create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))
-                    menu.attach_to_widget(tree, None)
-                    menu.add(create_dir)
-                    menu.add(create_file)
-                    if model[treepath][1] != _('Macros'):
-                        # prevent main dir from being deleted
-                        # todo: this is a bit lazy and obviously flawed...
-                        delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete directory..."))
-                        delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
-                        menu.add(Gtk.SeparatorMenuItem.new())
-                        menu.add(delete_dir)
-                    menu.show_all()
-                    menu.popup_at_pointer(event)
-                elif model[treepath][2] == 'exps_macro':
-                    menu = Gtk.Menu.new()
-                    delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
-                    delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
-                    menu.attach_to_widget(tree, None)
-                    menu.add(delete_file)
-                    menu.show_all()
-                    menu.popup_at_pointer(event)
+            paths = tree.get_path_at_pos(int(event.x), int(event.y))
+            if paths is not None:
+                treepath = paths[0]
+                if treepath is not None:
+                    if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
+                        menu: Gtk.Menu = Gtk.Menu.new()
+                        open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scenes..."))
+                        open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[treepath][0]))
+                        menu.add(open_scene)
+                        menu.show_all()
+                        menu.popup_at_pointer(event)
+                    if model[treepath][2] in ['map_sss_entry', 'ssb']:
+                        menu = Gtk.Menu.new()
+                        open_scene = Gtk.MenuItem.new_with_label(_("Open Scene..."))
+                        open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
+                            self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
+                        ))
+                        menu.add(open_scene)
+                        menu.show_all()
+                        menu.popup_at_pointer(event)
+                    if model[treepath][2] == 'exps_macro_dir':
+                        menu = Gtk.Menu.new()
+                        create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
+                        create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
+                        create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        menu.attach_to_widget(tree, None)
+                        menu.add(create_dir)
+                        menu.add(create_file)
+                        if model[treepath][1] != _('Macros'):
+                            # prevent main dir from being deleted
+                            # todo: this is a bit lazy and obviously flawed...
+                            delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete directory..."))
+                            delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                            menu.add(Gtk.SeparatorMenuItem.new())
+                            menu.add(delete_dir)
+                        menu.show_all()
+                        menu.popup_at_pointer(event)
+                    elif model[treepath][2] == 'exps_macro':
+                        menu = Gtk.Menu.new()
+                        delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
+                        delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        menu.attach_to_widget(tree, None)
+                        menu.add(delete_file)
+                        menu.show_all()
+                        menu.popup_at_pointer(event)
 
     def on_ssb_file_tree__menu_create_macro_dir(self, store: Gtk.TreeStore, treepath: Gtk.TreePath, *args):
         row = store[treepath]
