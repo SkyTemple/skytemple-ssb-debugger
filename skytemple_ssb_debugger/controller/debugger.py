@@ -106,10 +106,10 @@ class DebuggerController:
         ov11 = self.rom_data.bin_sections.overlay11
         ov29 = self.rom_data.bin_sections.overlay29
         self.register_exec(ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58, self.hook__breaking_point)
-        self.register_exec(arm9.functions.SetDebugFlag1.absolute_address, self.hook__get_debug_flag_get_input)
-        self.register_exec(arm9.functions.SetDebugFlag2.absolute_address, self.hook__get_debug_flag_get_input)
-        self.register_exec(arm9.functions.SetDebugFlag1.absolute_address+0x4, self.hook__get_debug_flag_1)
-        self.register_exec(arm9.functions.SetDebugFlag2.absolute_address+0x4, self.hook__get_debug_flag_2)
+        self.register_exec(arm9.functions.GetDebugFlag1.absolute_address, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions.GetDebugFlag2.absolute_address, self.hook__get_debug_flag_get_input)
+        self.register_exec(arm9.functions.GetDebugFlag1.absolute_address+0x4, self.hook__get_debug_flag_1)
+        self.register_exec(arm9.functions.GetDebugFlag2.absolute_address+0x4, self.hook__get_debug_flag_2)
         self.register_exec(arm9.functions.SetDebugFlag1.absolute_address, self.hook__set_debug_flag_1)
         self.register_exec(arm9.functions.SetDebugFlag2.absolute_address, self.hook__set_debug_flag_2)
         self.register_exec(arm9.functions.DebugPrint0.absolute_address, partial(self.hook__log_printfs, 0))
@@ -377,7 +377,7 @@ class DebuggerController:
         return current_opcode_addr_relative + len
 
     def _set_dungeon_debug_skip(self):
-        pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.bin_sections.overlay29.symbols['DUNGEON_PTR'].absolute_address)
+        pointer = self.emu_thread.emu.memory.unsigned.read_long(self.rom_data.bin_sections.overlay29.data.DUNGEON_PTR.absolute_address)
         if pointer != 0:
             self.emu_thread.emu.memory.write_byte(pointer + 6, 1 if self._debug_dungeon_skip else 0)
             self.emu_thread.emu.memory.write_byte(pointer + 8, 1 if self._debug_dungeon_skip else 0)
