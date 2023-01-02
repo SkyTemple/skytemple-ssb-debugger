@@ -1,5 +1,5 @@
 """Controller for a single SSB script editor (SSBScript + ExplorerScript)."""
-#  Copyright 2020-2022 Capypara and the SkyTemple Contributors
+#  Copyright 2020-2023 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
 #
