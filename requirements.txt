@@ -1,5 +1,5 @@
 ndspy==3.0.0
-pygobject==3.42.1
+pygobject==3.44.1
 pycairo==1.18.2
 py-desmume==0.0.5.post0
 explorerscript==0.1.1
