@@ -25,7 +25,7 @@ from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_debugger.emulator_thread import EmulatorThread
 from skytemple_ssb_debugger.threadsafe import threadsafe_emu, synchronized_now
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 from gi.repository import Gtk
 from ndspy.rom import NintendoDSRom
 

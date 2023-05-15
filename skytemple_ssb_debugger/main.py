@@ -22,7 +22,7 @@ import sys
 import gi
 import pkg_resources
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 
 from skytemple_icons import icons
 from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext

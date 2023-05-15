@@ -34,7 +34,7 @@ from skytemple_ssb_debugger.threadsafe import threadsafe_emu_nonblocking, thread
     threadsafe_emu
 from skytemple_files.common.i18n_util import f, _
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk
 

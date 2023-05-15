@@ -29,14 +29,13 @@ import gi
 
 from skytemple_files.common.util import open_utf8, add_extension_if_missing
 
-gi.require_version('GtkSource', '4')
+gi.require_version('GtkSource', '5')
 from gi.repository.GtkSource import StyleSchemeManager
 
 from desmume.controls import Keys, keymask
 from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
-from desmume.emulator import SCREEN_WIDTH, SCREEN_HEIGHT, Language
-from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
-from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
+#from desmume.frontend.control_ui.joystick_controls import JoystickControlsDialogController
+#from desmume.frontend.control_ui.keyboard_controls import KeyboardControlsDialogController
 from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.script_util import SCRIPT_DIR
@@ -60,7 +59,7 @@ from skytemple_ssb_debugger.threadsafe import threadsafe_emu, threadsafe_emu_non
     generate_emulator_proxy
 from skytemple_files.common.i18n_util import f, _
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk, Gdk, GLib
 
@@ -562,10 +561,11 @@ class MainController:
         self.on_emulator_controls_reset_clicked()
 
     def on_menu_emulator_keyboard_controls_activate(self, button: Gtk.CheckMenuItem, *args):
-        new_keyboard_cfg = KeyboardControlsDialogController(self.window).run(self._keyboard_cfg)
-        if new_keyboard_cfg is not None:
-            self._keyboard_cfg = new_keyboard_cfg
-            self.settings.set_emulator_keyboard_cfg(self._keyboard_cfg)
+        raise NotImplementedError("TODO")
+        #new_keyboard_cfg = KeyboardControlsDialogController(self.window).run(self._keyboard_cfg)
+        #if new_keyboard_cfg is not None:
+        #    self._keyboard_cfg = new_keyboard_cfg
+        #    self.settings.set_emulator_keyboard_cfg(self._keyboard_cfg)
 
     def on_menu_emulator_joystick_controls_activate(self, button: Gtk.CheckMenuItem, *args):
         if not supports_joystick():
@@ -574,11 +574,12 @@ class MainController:
                 _("Joypads are not supported on macOS. Sorry!"),
             )
             return
-        self._joystick_cfg = JoystickControlsDialogController(self.window).run(
-            self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),  # type: ignore
-            threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())  # type: ignore
-        )
-        self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
+        raise NotImplementedError("TODO")
+        #self._joystick_cfg = JoystickControlsDialogController(self.window).run(
+        #    self._joystick_cfg, generate_emulator_proxy(self.emu_thread, self.emu_thread.emu.input),  # type: ignore
+        #    threadsafe_emu(self.emu_thread, lambda: self.emu_thread.emu.is_running())  # type: ignore
+        #)
+        #self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
     def on_menu_emulator_language_jp_toggled(self, button: Gtk.RadioMenuItem):
         self.on_menu_emulator_language_XX_toggled(Language.JAPANESE)

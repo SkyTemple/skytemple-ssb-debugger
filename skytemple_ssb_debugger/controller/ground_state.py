@@ -29,7 +29,7 @@ from skytemple_files.common.i18n_util import f, _
 
 GE_FILE_STORE_SCRIPT = _('Script')
 
-gi.require_version('Gtk', '3.0')
+gi.require_version('Gtk', '4.0')
 
 from gi.repository import Gtk
 
