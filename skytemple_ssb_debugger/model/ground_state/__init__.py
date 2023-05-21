@@ -17,9 +17,10 @@
 from __future__ import annotations
 from abc import abstractmethod, ABC
 
-from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
+from skytemple_ssb_emulator import emulator_read_long
+
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
 

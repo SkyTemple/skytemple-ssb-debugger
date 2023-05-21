@@ -19,12 +19,16 @@ from typing import TYPE_CHECKING, Optional, Iterable
 
 from gi.repository import GLib
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_emulator import emulator_register_script_debug, emulator_register_debug_print, \
+    emulator_register_debug_flag, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
+    EmulatorRegisters, emulator_tick, EmulatorLogType, emulator_unregister_script_debug, \
+    emulator_unregister_debug_print, emulator_unregister_debug_flag
+
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-from skytemple_ssb_emulator import *
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.main import MainController
@@ -80,7 +84,7 @@ class DebuggerController:
         arm9 = self.rom_data.bin_sections.arm9
         ov11 = self.rom_data.bin_sections.overlay11
         emulator_register_script_debug(
-            ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58,
+            [ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58],
             self.hook__breaking_point__start,
             self.hook__breaking_point__resume
         )
@@ -95,7 +99,7 @@ class DebuggerController:
             arm9.functions.GetDebugFlag2.absolute_address,
             arm9.functions.SetDebugFlag1.absolute_address,
             arm9.functions.SetDebugFlag2.absolute_address,
-            ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8,
+            [ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8],
             self.hook__set_debug_flag
         )
 
@@ -137,7 +141,7 @@ class DebuggerController:
             self.ground_engine_state.logging_enabled = value
 
     def hook__breaking_point__start(self, registers: EmulatorRegisters):
-        """MAIN DEBUGGER HOOK. The emulator pauses here and publishes it's state via BreakpointState."""
+        """MAIN DEBUGGER HOOK. The emulator pauses here and publishes its state via BreakpointState."""
         if self._boost:
             return
         srs = ScriptRuntimeStruct(
@@ -210,7 +214,6 @@ class DebuggerController:
                 is_in_unionall=srs.is_in_unionall,
                 opcode_addr=state.manual_step_opcode_offset
             )
-        return True
 
     def hook__log_msg(self, log_type: EmulatorLogType, msg: str):
         if log_type == EmulatorLogType.Printfs and not self._log_printfs:
@@ -219,7 +222,7 @@ class DebuggerController:
             return
         self._print_callback_fn(msg)
 
-    def hook__set_debug_flag_1(self, var_id: int, flag_id: int, value: int):
+    def hook__set_debug_flag(self, var_id: int, flag_id: int, value: int):
         GLib.idle_add(lambda: self.parent.set_check_debug_flag(var_id, flag_id, value))
 
     def set_boost(self, state):

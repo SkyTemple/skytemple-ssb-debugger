@@ -15,8 +15,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_emulator import emulator_read_long, emulator_read_short_signed, emulator_read_short, \
+    emulator_read_byte
+
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, pos_in_map_coord
 from skytemple_ssb_debugger.model.ground_state.map import Map
 

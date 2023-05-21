@@ -19,8 +19,9 @@ import os
 from typing import Optional, List
 
 from gi.repository import Gtk, Gdk
-from skytemple_ssb_emulator import *
 from skytemple_files.common.i18n_util import _
+from skytemple_ssb_emulator import emulator_get_joy_number_connected, emulator_get_key_names, EmulatorKeys, \
+    emulator_joy_get_set_key
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import widget_to_primitive, key_names_localized
 

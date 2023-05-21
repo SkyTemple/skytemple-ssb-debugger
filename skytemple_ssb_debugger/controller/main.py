@@ -29,6 +29,13 @@ import gi
 from PIL import Image
 
 from skytemple_files.common.util import open_utf8, add_extension_if_missing
+from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_controls, Language, emulator_poll, \
+    emulator_get_kbcfg, emulator_set_kbcfg, emulator_get_jscfg, emulator_set_jscfg, emulator_keypad_add_key, \
+    emulator_keymask, EmulatorKeys, emulator_keypad_rm_key, emulator_touch_release, emulator_supports_joystick, \
+    emulator_is_running, SCREEN_HEIGHT_BOTH, emulator_screenshot, emulator_volume_set, emulator_savestate_load_file, \
+    emulator_savestate_save_file, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
+    emulator_start, emulator_joy_init, emulator_touch_set_pos, emulator_resume, emulator_unpress_all_keys, \
+    emulator_reset, emulator_pause, emulator_shutdown, emulator_set_boost, emulator_set_language, emulator_open_rom
 
 from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
 from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
@@ -38,7 +45,6 @@ from gi.repository.GtkSource import StyleSchemeManager
 
 from explorerscript import EXPLORERSCRIPT_EXT
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
-from skytemple_ssb_emulator import *
 from skytemple_files.common.script_util import SCRIPT_DIR
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.controller.debug_overlay import DebugOverlayController

@@ -21,7 +21,6 @@ from typing import Optional, List
 from gi.repository import Gtk, Gdk
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import key_names_localized, widget_to_primitive
-from skytemple_ssb_emulator import *
 
 
 class KeyboardControlsDialogController:
