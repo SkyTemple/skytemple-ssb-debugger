@@ -19,7 +19,7 @@ from typing import Optional
 
 
 class SsbFileInRam:
-    def __init__(self, file_name: str, hanger: int, hash: str = None):
+    def __init__(self, file_name: str, hanger: int, hash: Optional[str] = None):
         self.file_name = file_name
         self.hanger = hanger
         # If true, the debugger is currently breaking at this file.

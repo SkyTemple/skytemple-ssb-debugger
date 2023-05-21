@@ -1135,7 +1135,7 @@ class MainController:
         self._set_sensitve("macro_variables_sw", on_off)
         self._set_sensitve("local_variables_sw", on_off)
 
-    def load_debugger_state(self, breaked_for: ScriptRuntimeStruct = None, file_state: BreakpointFileState = None):
+    def load_debugger_state(self, breaked_for: Optional[ScriptRuntimeStruct] = None, file_state: Optional[BreakpointFileState] = None):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
         self.ground_state_controller.sync(self.editor_notebook, breaked_for)

@@ -66,7 +66,7 @@ class LocalVariableController:
             if var.is_local:
                 self._local_vars_specs.append(var)
 
-    def sync(self, breaked_for: ScriptRuntimeStruct, file_state: BreakpointFileState = None):
+    def sync(self, breaked_for: ScriptRuntimeStruct, file_state: Optional[BreakpointFileState] = None):
         if not self.debugger or not self.debugger.ground_engine_state or not self._local_vars_specs:
             return self.disable()
 

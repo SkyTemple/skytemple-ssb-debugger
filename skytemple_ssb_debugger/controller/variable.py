@@ -180,7 +180,7 @@ class VariableController:
 
         emulator_unregister_script_variable_set()
 
-    def create_var_form_element(self, var: Pmd2ScriptGameVar, offset: int, label: str = None, no_label=False):
+    def create_var_form_element(self, var: Pmd2ScriptGameVar, offset: int, label: Optional[str] = None, no_label=False):
         box: Gtk.ButtonBox = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         box.set_margin_bottom(2)
         box.set_halign(Gtk.Align.END)

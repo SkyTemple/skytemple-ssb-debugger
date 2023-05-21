@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import os
-from typing import Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple
 
 import gi
 from gi.repository.Gtk import TreeViewColumn
@@ -105,7 +105,7 @@ class GroundStateController:
                 else:
                     self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = ''
 
-    def sync(self, code_editor=None, breaked_for: ScriptRuntimeStruct = None):
+    def sync(self, code_editor=None, breaked_for: Optional[ScriptRuntimeStruct] = None):
         """
         Synchronize the ground engine state to the UI. If code_editor is set, send the opcodes that currently being
         run by the engine to the editor.
