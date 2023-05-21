@@ -17,6 +17,7 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable
 
+from gi.repository import GLib
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
@@ -90,9 +91,12 @@ class DebuggerController:
             self.hook__log_msg
         )
         emulator_register_debug_flag(
+            arm9.functions.GetDebugFlag1.absolute_address,
+            arm9.functions.GetDebugFlag2.absolute_address,
             arm9.functions.SetDebugFlag1.absolute_address,
             arm9.functions.SetDebugFlag2.absolute_address,
-            ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8
+            ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8,
+            self.hook__set_debug_flag
         )
 
         # Send current debug flags and debug mode flag to emulator
@@ -214,6 +218,9 @@ class DebuggerController:
         if log_type == EmulatorLogType.DebugPrint and not self._log_debug_print:
             return
         self._print_callback_fn(msg)
+
+    def hook__set_debug_flag_1(self, var_id: int, flag_id: int, value: int):
+        GLib.idle_add(lambda: self.parent.set_check_debug_flag(var_id, flag_id, value))
 
     def set_boost(self, state):
         self._boost = state

@@ -1355,6 +1355,9 @@ class MainController:
     def on_chk_debug_flag_2_toggled(self, w):
         emulator_set_debug_flag_2(int(w.get_name()[len("chk_debug_flag_2_"):]), w.get_active())
 
+    def set_check_debug_flag(self, var_id, flag_id, value):
+        self.builder.get_object(f"chk_debug_flag_{var_id}_{flag_id}").set_active(bool(value))
+
     def break_pulled(self, state: BreakpointState):
         """
         The DebuggerController has paused at an instruction.
