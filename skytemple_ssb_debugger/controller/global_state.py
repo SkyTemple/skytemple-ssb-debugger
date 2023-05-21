@@ -76,7 +76,7 @@ class GlobalStateController:
             table = self._tables[self._current_table]
             for e in table.entries:
                 line = [
-                    MemAllocType(e.type_alloc).description,
+                    MemAllocType(e.type_alloc).description,  # type: ignore
                     e.unk1,
                     e.unk2,
                     hex(e.start_address),
