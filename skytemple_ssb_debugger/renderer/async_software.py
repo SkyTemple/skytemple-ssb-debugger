@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from math import radians
-from typing import Callable
+from typing import Optional, Callable
 
 import cairo
 from gi.repository import Gtk, GLib
@@ -27,7 +27,7 @@ FRAMES_PER_SECOND = 60
 
 class AsyncSoftwareRenderer:
     def __init__(self, top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
-                 after_render_hook: Callable[[cairo.Context, int], None] = None):
+                 after_render_hook: Optional[Callable[[cairo.Context, int], None]] = None):
         self._boost = False
         self._upper_image = None
         self._lower_image = None

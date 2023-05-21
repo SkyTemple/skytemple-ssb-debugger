@@ -87,7 +87,7 @@ class EditorNotebookController:
         )
         return self._open_common(abs_path, context)
 
-    def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: str = None):
+    def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: Optional[str] = None):
         assert self.file_manager
         if self.file_manager:
             if registered_fname in self._open_editors:
