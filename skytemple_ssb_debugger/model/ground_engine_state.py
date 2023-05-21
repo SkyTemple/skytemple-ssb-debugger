@@ -21,8 +21,12 @@ from typing import Optional, List, Tuple
 
 from gi.repository import Gtk, GLib
 
-from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_emulator import emulator_ov11_loaded, emulator_register_exec, emulator_register_ssb_load, \
+    emulator_register_ssx_load, emulator_register_talk_load, emulator_register_unionall_load_addr_change, \
+    emulator_unregister_ssb_load, emulator_unregister_ssx_load, emulator_unregister_talk_load, \
+    emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update
+
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
@@ -195,7 +199,7 @@ class GroundEngineState:
         emulator_register_ssb_load([
             ov11.functions.SsbLoad1.absolute_address, ov11.functions.SsbLoad2.absolute_address
         ], self.hook__ssb_load)
-        emulator_register_ssx_load(ov11.functions.StationLoadHanger.absolute_address + 0xC0, self.hook__ssx_load)
+        emulator_register_ssx_load([ov11.functions.StationLoadHanger.absolute_address + 0xC0], self.hook__ssx_load)
         emulator_register_talk_load(ov11.functions.ScriptStationLoadTalk.absolute_address, self.hook__talk_load)
         emulator_register_unionall_load_addr_change(self.pnt_unionall_load_addr)
 
@@ -279,7 +283,7 @@ class GroundEngineState:
         if self.logging_enabled and not self._boost:
             self._print_callback(f"Ground Event >> {string}")
 
-    def hook__ground_start(self, address, size):
+    def hook__ground_start(self):
         if not emulator_ov11_loaded():
             return
         self._print("Ground Start")
@@ -287,19 +291,19 @@ class GroundEngineState:
         self._running = True
         self._inform_ground_engine_start_cb()
 
-    def hook__ground_quit(self, address, size):
+    def hook__ground_quit(self):
         if not emulator_ov11_loaded():
             return
         self._print("Ground Quit")
         self._running = False
 
-    def hook__ground_map_change(self, address, size):
+    def hook__ground_map_change(self):
         if not emulator_ov11_loaded():
             return
         self._print("Ground Map Change")
         self.reset(keep_global=True)
 
-    def hook__ssb_load(self, address, size, name: str):
+    def hook__ssb_load(self, name: str):
         if not emulator_ov11_loaded():
             return
         load_for = self._load_ssb_for if self._load_ssb_for is not None else 0
@@ -312,7 +316,7 @@ class GroundEngineState:
         self.ssb_file_manager.open_in_ground_engine(name)
         self._loaded_ssb_files[load_for] = (SsbFileInRam(name, load_for))
 
-    def hook__ssx_load(self, address, size, hanger: int, name: str):
+    def hook__ssx_load(self, hanger: int, name: str):
         if not emulator_ov11_loaded():
             return
         self._print(f"SSX Load {name} for hanger {hanger}")
@@ -323,7 +327,7 @@ class GroundEngineState:
 
         self._loaded_ssx_files[hanger] = (SsxFileInRam(name, hanger))
 
-    def hook__talk_load(self, address, size, hanger):
+    def hook__talk_load(self, hanger):
         if not emulator_ov11_loaded():
             return
         # TODO:

@@ -19,10 +19,10 @@ from enum import Enum
 from typing import Optional, List
 
 import gi
-from skytemple_ssb_emulator import *
 from skytemple_files.common.i18n_util import _
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_emulator import EmulatorMemTable, emulator_sync_tables
 
 gi.require_version('Gtk', '3.0')
 

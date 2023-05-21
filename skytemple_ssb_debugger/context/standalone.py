@@ -23,12 +23,12 @@ import gi
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.script.ssb.constants import SsbConstant
+from skytemple_ssb_emulator import emulator_shutdown
 
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
 from ndspy.rom import NintendoDSRom
 
-from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR

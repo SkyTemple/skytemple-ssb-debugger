@@ -22,11 +22,12 @@ from gi.repository import Gtk
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar
+from skytemple_ssb_emulator import emulator_sync_local_vars
+
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import resizable
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
-from skytemple_ssb_emulator import *
 from skytemple_files.common.i18n_util import _
 
 

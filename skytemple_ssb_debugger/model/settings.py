@@ -20,9 +20,9 @@ import logging
 import os
 from typing import Optional, Tuple, List
 
-from skytemple_ssb_emulator import *
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.util import open_utf8
+from skytemple_ssb_emulator import emulator_get_key_names, Language
 
 CONFIG_DIR_NAME = 'debugger'
 CONFIG_FILE_NAME = 'config.ini'

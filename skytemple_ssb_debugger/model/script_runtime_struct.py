@@ -18,9 +18,10 @@ from __future__ import annotations
 from typing import Callable, Union
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
-from skytemple_ssb_emulator import *
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
+from skytemple_ssb_emulator import emulator_read_long, emulator_read_short, emulator_read_short_signed, \
+    emulator_unionall_load_address
 
 
 class ScriptRuntimeStruct:

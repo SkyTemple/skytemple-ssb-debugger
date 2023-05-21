@@ -20,7 +20,7 @@ from typing import Callable
 
 import cairo
 from gi.repository import Gtk, GLib
-from skytemple_ssb_emulator import *
+from skytemple_ssb_emulator import SCREEN_PIXEL_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, emulator_display_buffer_as_rgbx
 
 FRAMES_PER_SECOND = 60
 
@@ -61,6 +61,7 @@ class AsyncSoftwareRenderer:
                 self._after_render_hook(ctx, display_id)
 
     def decode_screen(self):
+        # TODO: Performance?
         gpu_framebuffer = emulator_display_buffer_as_rgbx()
         self._upper_image = cairo.ImageSurface.create_for_data(
             gpu_framebuffer[:SCREEN_PIXEL_SIZE*4], cairo.FORMAT_RGB24, SCREEN_WIDTH, SCREEN_HEIGHT
