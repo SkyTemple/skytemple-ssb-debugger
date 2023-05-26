@@ -98,6 +98,7 @@ class GroundStateController:
         The views must be built already.
         """
         ground_state = self.debugger.ground_engine_state
+        assert ground_state is not None
         for ssb in ground_state.loaded_ssb_files:
             if ssb is not None and ssb.hanger in self._ssb_tree_store_iters:
                 if ssb.breaked:

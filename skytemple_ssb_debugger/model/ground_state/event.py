@@ -15,62 +15,57 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_emulator import emulator_read_long, emulator_read_short_signed, emulator_read_short, \
-    emulator_read_byte
 
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, pos_in_map_coord
+from range_typed_integers import u32
+from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
+
+from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, pos_in_map_coord, AbstractEntity
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
 EVENT_EXISTS_CHECK_OFFSET = 0x02
 
 
-class Event:
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
-        super().__init__()
-        self.rom_data = rom_data
-        self.pnt_to_block_start = pnt_to_block_start
-        self.offset = offset
-
+class Event(AbstractEntity):
     @property
-    def pnt(self):
-        return emulator_read_long(self.pnt_to_block_start) + self.offset
+    def _block_size(self):
+        # This is not the actual size, increase this if we need to read more!
+        return u32(0x20)
 
     @property
     def valid(self):
-        return emulator_read_short_signed(self.pnt + EVENT_EXISTS_CHECK_OFFSET) > 0
+        return read_i16(self.buffer, EVENT_EXISTS_CHECK_OFFSET) > 0
 
     @property
     def id(self):
-        return emulator_read_short(self.pnt + 0x00)
+        return read_u16(self.buffer, 0x00)
 
     @property
     def kind(self):
-        return emulator_read_short(self.pnt + 0x02)
+        return read_u16(self.buffer, 0x02)
 
     @property
     def hanger(self):
-        return emulator_read_short(self.pnt + 0x04)
+        return read_u16(self.buffer, 0x04)
 
     @property
     def sector(self):
-        return emulator_read_byte(self.pnt + 0x06)
+        return read_u8(self.buffer, 0x06)
 
     @property
     def x_north(self):
-        return emulator_read_long(self.pnt + 0x10)
+        return read_u32(self.buffer, 0x10)
 
     @property
     def y_west(self):
-        return emulator_read_long(self.pnt + 0x14)
+        return read_u32(self.buffer, 0x14)
 
     @property
     def x_south(self):
-        return emulator_read_long(self.pnt + 0x18)
+        return read_u32(self.buffer, 0x18)
 
     @property
     def y_east(self):
-        return emulator_read_long(self.pnt + 0x1C)
+        return read_u32(self.buffer, 0x1C)
 
     @property
     def x_map(self):

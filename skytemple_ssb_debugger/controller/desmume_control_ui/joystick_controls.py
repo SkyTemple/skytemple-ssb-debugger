@@ -92,7 +92,7 @@ class JoystickControlsDialogController:
 
         joykey = emulator_joy_get_set_key(key)
 
-        self._joystick_cfg[key] = joykey
+        self._joystick_cfg[key] = joykey  # type: ignore
 
         self.builder.get_object(f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
 

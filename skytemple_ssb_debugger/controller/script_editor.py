@@ -21,7 +21,7 @@ import os
 import re
 import webbrowser
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict
+from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, Iterable
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
@@ -103,8 +103,8 @@ class ScriptEditorController:
         self._saving_dialog: Optional[Gtk.Dialog] = None
 
         self._still_loading = True
-        self._foucs_opcode_after_load = None
-        self._on_break_pulled_after_load = None
+        self._foucs_opcode_after_load: Optional[Tuple[str, int]] = None
+        self._on_break_pulled_after_load: Optional[Tuple[str, int, bool]] = None
         self._hanger_halt_lines_after_load: Optional[Tuple[str, List[Tuple[SsbRoutineType, int, int]]]] = None
         self._spellchecker_loaded = False
 
@@ -244,22 +244,22 @@ class ScriptEditorController:
         Save the script file. As a constraint only the ssbs or exps views should be editable, so in theory only one can
         have changes... - we save that one!
         """
-        modified_buffer = None
+        modified_buffer: GtkSource.Buffer
         save_exps = False
         save_text = None
 
         if not self._explorerscript_active and self._ssb_script_view.get_buffer().get_modified():
-            modified_buffer: GtkSource.Buffer = self._ssb_script_view.get_buffer()
+            modified_buffer = self._ssb_script_view.get_buffer()
             save_exps = False
             save_text = modified_buffer.props.text
         elif self._explorerscript_view.get_buffer().get_modified():
-            modified_buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+            modified_buffer = self._explorerscript_view.get_buffer()
             save_exps = True
             save_text = modified_buffer.props.text
         if not save_text:
             return
 
-        self._saving_dialog: Gtk.Dialog = self.builder.get_object('file_saving_dialog')
+        self._saving_dialog = self.builder.get_object('file_saving_dialog')
         self._saving_dialog.set_transient_for(self._main_window)
         self.builder.get_object('file_saving_dialog_label').set_label(
             f(_('Compiling script "{self.filename}"...'))
@@ -410,6 +410,7 @@ class ScriptEditorController:
         self.file_context.breakpoint_manager.remove(ssb_filename, opcode_offset)
 
     def on_breakpoint_added(self, ssb_filename, opcode_offset, also_update_explorerscript=True):
+        view_list: Iterable[GtkSource.View]
         if also_update_explorerscript:
             view_list = (self._ssb_script_view, self._explorerscript_view)
         else:
@@ -458,7 +459,7 @@ class ScriptEditorController:
         """Fully rebuild the active info bar message based on the current state of the SSB."""
         info_bar: Gtk.InfoBar = self.builder.get_object('code_editor_box_ssbscript_bar')
         if self._explorerscript_active:
-            info_bar: Gtk.InfoBar = self.builder.get_object('code_editor_box_es_bar')
+            info_bar = self.builder.get_object('code_editor_box_es_bar')
 
         if not breakable:
             self._refill_info_bar(
@@ -747,7 +748,7 @@ class ScriptEditorController:
             if widget == self._ssb_script_view:
                 self._active_search_context = self._ssb_script_search_context
             search_settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
-            self._loaded_search_window: Gtk.Dialog = self.builder.get_object('sr_dialog')
+            self._loaded_search_window = self.builder.get_object('sr_dialog')
             self.builder.get_object('sr_search_setting_case_sensitive').set_active(
                 search_settings.get_case_sensitive())
             self.builder.get_object('sr_search_setting_match_words').set_active(
@@ -880,8 +881,14 @@ class ScriptEditorController:
 
         completion.add_provider(GtkSourceCompletionSsbConstants(self.rom_data))
         completion.add_provider(GtkSourceCompletionSsbFunctions(self.rom_data.script_data.op_codes))
-        CalltipEmitter(self._ssb_script_view, self.rom_data.script_data.op_codes,
-                       self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context(), is_ssbs=True)
+        CalltipEmitter(
+            self._ssb_script_view,
+            self.rom_data.script_data.op_codes,
+            self.mapname,  # type: ignore
+            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.parent.get_context(),
+            is_ssbs=True
+        )
         StringEventEmitter(self._ssb_script_view, self.parent.get_context())
 
     def _load_explorerscript_completion(self):
@@ -893,8 +900,13 @@ class ScriptEditorController:
             filter_special_exps_opcodes(self.rom_data.script_data.op_codes)
         ))
         completion.add_provider(GtkSourceCompletionExplorerScriptStatements())
-        CalltipEmitter(self._explorerscript_view, self.rom_data.script_data.op_codes,
-                       self.mapname, *self.file_context.get_scene_name_and_type(), self.parent.get_context())
+        CalltipEmitter(
+            self._explorerscript_view,
+            self.rom_data.script_data.op_codes,
+            self.mapname,  # type: ignore
+            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.parent.get_context()
+        )
         StringEventEmitter(self._explorerscript_view, self.parent.get_context())
 
     def _update_view_editable_state(self):

@@ -20,8 +20,9 @@ from skytemple_ssb_debugger.model.ground_state import AbstractEntityWithScriptSt
 
 
 class GlobalScript(AbstractEntityWithScriptStruct):
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int):
-        super().__init__(pnt_to_block_start, rom_data)
+    @property
+    def _block_size(self):
+        return 0
 
     @property
     def _script_struct_offset(self):

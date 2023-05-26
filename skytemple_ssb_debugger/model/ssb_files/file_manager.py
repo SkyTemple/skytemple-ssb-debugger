@@ -18,7 +18,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-from typing import TYPE_CHECKING, List, Tuple, Set
+from typing import TYPE_CHECKING, List, Tuple, Set, Optional
 
 from explorerscript.included_usage_map import IncludedUsageMap
 from skytemple_files.common.types.file_types import FileType
@@ -34,8 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class SsbFileManager:
-    def __init__(self, context: AbstractDebuggerControlContext, debugger: 'DebuggerController'):
-        self.debugger = debugger
+    def __init__(self, context: AbstractDebuggerControlContext):
         self.context: AbstractDebuggerControlContext = context
 
     @property

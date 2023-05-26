@@ -15,20 +15,22 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-import typing
 import warnings
-from typing import Optional, List, Tuple
+from itertools import chain
+from typing import Optional, List, Tuple, no_type_check, Iterable, Callable
 
 from gi.repository import Gtk, GLib
+from range_typed_integers import u32
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_ov11_loaded, emulator_register_exec, emulator_register_ssb_load, \
     emulator_register_ssx_load, emulator_register_talk_load, emulator_register_unionall_load_addr_change, \
     emulator_unregister_ssb_load, emulator_unregister_ssx_load, emulator_unregister_talk_load, \
-    emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update
+    emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update, emulator_wait_one_cycle
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+from skytemple_ssb_debugger.model.ground_state import AbstractEntity
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
 from skytemple_ssb_debugger.model.ground_state.event import Event
 from skytemple_ssb_debugger.model.ground_state.global_script import GlobalScript
@@ -46,8 +48,15 @@ O11_BYTE_CHECK = bytes([0xf0, 0x4f, 0x2d, 0xe9, 0x34, 0xd0, 0x4d, 0xe2, 0x64, 0x
 
 
 class GroundEngineState:
-    def __init__(self, rom_data: Pmd2Data, print_callback, inform_ground_engine_start_cb,
-                 ssb_file_manager: SsbFileManager, context: AbstractDebuggerControlContext):
+    def __init__(
+            self,
+            rom_data: Pmd2Data,
+            print_callback: Callable[[str], None],
+            inform_ground_engine_start_cb: Callable[[], None],
+            poll_emulator: Callable[[], None],
+            ssb_file_manager: SsbFileManager,
+            context: AbstractDebuggerControlContext
+    ):
         super().__init__()
         self.rom_data = rom_data
         self.ssb_file_manager = ssb_file_manager
@@ -69,43 +78,44 @@ class GroundEngineState:
 
         self._running = False
         self._print_callback = print_callback
+        self._poll_emulator = poll_emulator
         self._inform_ground_engine_start_cb = inform_ground_engine_start_cb
 
-        self._global_script = GlobalScript(self.rom_data, self.pnt_main_script_struct)
-        self._map = Map(self.rom_data, self.pnt_map)
+        self._global_script = GlobalScript(self.pnt_main_script_struct, u32(0), self.rom_data)
+        self._map = Map(self.pnt_map, u32(0), self.rom_data)
 
         self._actors = []
         info = self.rom_data.script_data.ground_state_structs['Actors']
         for i in range(0, info.maxentries):
-            self._actors.append(Actor(self.rom_data, self.pnt_actors, i * info.entrylength))
+            self._actors.append(Actor(self.pnt_actors, u32(i * info.entrylength), self.rom_data))
 
         self._objects = []
         info = self.rom_data.script_data.ground_state_structs['Objects']
         for i in range(0, info.maxentries):
-            self._objects.append(Object(self.rom_data, self.pnt_objects, i * info.entrylength))
+            self._objects.append(Object(self.pnt_objects, u32(i * info.entrylength), self.rom_data))
 
         self._performers = []
         info = self.rom_data.script_data.ground_state_structs['Performers']
         for i in range(0, info.maxentries):
-            self._performers.append(Performer(self.rom_data, self.pnt_performers, i * info.entrylength))
+            self._performers.append(Performer(self.pnt_performers, u32(i * info.entrylength), self.rom_data))
 
         self._events = []
         info = self.rom_data.script_data.ground_state_structs['Events']
         for i in range(0, info.maxentries):
-            self._events.append(Event(self.rom_data, self.pnt_events, i * info.entrylength))
+            self._events.append(Event(self.pnt_events, u32(i * info.entrylength), self.rom_data))
 
         self._loaded_ssx_files: List[Optional[SsxFileInRam]] = []
         self._loaded_ssb_files: List[Optional[SsbFileInRam]] = []
         self.reset()
 
-    @typing.no_type_check
+    @no_type_check
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
         self._loaded_ssb_files[state.hanger_id].breaked = True
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
         state.add_release_hook(self.break_released)
 
-    @typing.no_type_check
+    @no_type_check
     def step_into_macro_call(self, state: BreakpointState):
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
 
@@ -187,6 +197,16 @@ class GroundEngineState:
         objects = [x for x in self.objects if x is not None]
         performers = [x for x in self.performers if x is not None]
         events = [x for x in self.events if x is not None]
+
+        all_entities: Iterable[AbstractEntity] = chain(
+            actors, objects, performers, events, (self.global_script, )
+        )
+
+        for obj in all_entities:
+            obj.refresh()
+
+        emulator_wait_one_cycle()
+        self._poll_emulator()
 
         return self.global_script, loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events
 

@@ -32,10 +32,11 @@ from skytemple_files.common.util import open_utf8, add_extension_if_missing
 from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_controls, Language, emulator_poll, \
     emulator_get_kbcfg, emulator_set_kbcfg, emulator_get_jscfg, emulator_set_jscfg, emulator_keypad_add_key, \
     emulator_keymask, EmulatorKeys, emulator_keypad_rm_key, emulator_touch_release, emulator_supports_joystick, \
-    emulator_is_running, SCREEN_HEIGHT_BOTH, emulator_screenshot, emulator_volume_set, emulator_savestate_load_file, \
+    emulator_is_running, SCREEN_HEIGHT_BOTH, emulator_volume_set, emulator_savestate_load_file, \
     emulator_savestate_save_file, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
     emulator_start, emulator_joy_init, emulator_touch_set_pos, emulator_resume, emulator_unpress_all_keys, \
-    emulator_reset, emulator_pause, emulator_shutdown, emulator_set_boost, emulator_set_language, emulator_open_rom
+    emulator_reset, emulator_pause, emulator_shutdown, emulator_set_boost, emulator_set_language, emulator_open_rom, \
+    emulator_display_buffer_as_rgbx
 
 from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
 from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
@@ -160,6 +161,8 @@ class MainController:
         self._filter_any.set_name(_("All files"))
         self._filter_any.add_pattern("*")
 
+        self._poll_emulator_event_id = None
+
         self.main_draw = builder.get_object("draw_main")
         self.main_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
         self.main_draw.show()
@@ -184,17 +187,17 @@ class MainController:
         lang = self.settings.get_emulator_language()
         if lang:
             self._suppress_event = True
-            if lang == Language.JAPANESE:
+            if lang == Language.Japanese:
                 self.builder.get_object('menu_emulator_language_jp').set_active(True)
-            elif lang == Language.ENGLISH:
+            elif lang == Language.English:
                 self.builder.get_object('menu_emulator_language_en').set_active(True)
-            elif lang == Language.FRENCH:
+            elif lang == Language.French:
                 self.builder.get_object('menu_emulator_language_fr').set_active(True)
-            elif lang == Language.GERMAN:
+            elif lang == Language.German:
                 self.builder.get_object('menu_emulator_language_de').set_active(True)
-            elif lang == Language.ITALIAN:
+            elif lang == Language.Italian:
                 self.builder.get_object('menu_emulator_language_it').set_active(True)
-            elif lang == Language.SPANISH:
+            elif lang == Language.Spanish:
                 self.builder.get_object('menu_emulator_language_es').set_active(True)
             self._suppress_event = False
 
@@ -303,6 +306,9 @@ class MainController:
 
             # Init joysticks
             emulator_joy_init()
+
+            # Poll the emulator for events periodically
+            self.install_poll_emulator()
         except BaseException as ex:
             self.context.display_error(
                 sys.exc_info(),
@@ -312,6 +318,26 @@ class MainController:
                 _("Error loading the emulator!")
             )
             return
+
+    def install_poll_emulator(self):
+        # 30 FPS
+        self._poll_emulator_event_id = GLib.timeout_add(1000 // 30, self._poll_emulator_event_id)
+
+    def uninstall_poll_emulator(self):
+        if self._poll_emulator_event_id is not None:
+            GLib.source_remove(self._poll_emulator_event_id)
+
+    def do_poll_emulator(self):
+        errs = []
+        emulator_poll(lambda err: errs.append(err))
+        if len(errs) > 0:
+            # noinspection PyUnusedLocal
+            errs_as_str = "\n".join(errs)
+            self.context.display_error(
+                None,
+                f(_("The emulator reported an error:\n\n{errs_as_str}")),
+                _("Emulator Error")
+            )
 
     def on_main_window_delete_event(self, *args):
         if not self.editor_notebook.close_all_tabs() or not self.context.before_quit():
@@ -329,6 +355,7 @@ class MainController:
             self.breakpoint_state.fail_hard()
         if not self._stopped:
             self.emu_stop()
+        self.uninstall_poll_emulator()
         emulator_shutdown()
         self.context.on_quit()
 
@@ -569,22 +596,22 @@ class MainController:
         self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
     def on_menu_emulator_language_jp_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.JAPANESE)
+        self.on_menu_emulator_language_XX_toggled(Language.Japanese)
 
     def on_menu_emulator_language_en_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.ENGLISH)
+        self.on_menu_emulator_language_XX_toggled(Language.English)
 
     def on_menu_emulator_language_fr_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.FRENCH)
+        self.on_menu_emulator_language_XX_toggled(Language.French)
 
     def on_menu_emulator_language_de_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.GERMAN)
+        self.on_menu_emulator_language_XX_toggled(Language.German)
 
     def on_menu_emulator_language_it_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.ITALIAN)
+        self.on_menu_emulator_language_XX_toggled(Language.Italian)
 
     def on_menu_emulator_language_es_toggled(self, button: Gtk.RadioMenuItem):
-        self.on_menu_emulator_language_XX_toggled(Language.SPANISH)
+        self.on_menu_emulator_language_XX_toggled(Language.Spanish)
 
     def on_menu_emulator_language_XX_toggled(self, lang: Language):
         if self._suppress_event:
@@ -625,7 +652,7 @@ class MainController:
             Image.frombuffer(
                 'RGBA',
                 (SCREEN_WIDTH, SCREEN_HEIGHT_BOTH),
-                emulator_screenshot(), 'raw', 'RGBA', 0, 1
+                emulator_display_buffer_as_rgbx(), 'raw', 'RGBA', 0, 1
             ).save(fn)
 
     # MENU HELP
@@ -847,6 +874,7 @@ class MainController:
         if not self._ssb_item_filter:
             self._ssb_item_filter = ssb_file_tree_store.filter_new()
             self.builder.get_object('ssb_file_tree').set_model(self._ssb_item_filter)
+            assert self._ssb_item_filter is not None
             self._ssb_item_filter.set_visible_column(COL_VISIBLE)
 
         self._set_sensitve('ssb_file_search', True)
@@ -1052,7 +1080,7 @@ class MainController:
             # Unload old ROM first
             if self.rom_was_loaded:
                 self.uninit_project()
-            self.ssb_fm = SsbFileManager(self.context, self.debugger)
+            self.ssb_fm = SsbFileManager(self.context)
             fn = self.context.get_rom_filename()
             self.breakpoint_manager = BreakpointManager(
                 os.path.join(self.context.get_project_debugger_dir(), f'{os.path.basename(fn)}.breakpoints.json'),
@@ -1236,15 +1264,15 @@ class MainController:
         key = False
         for i in range(0, EmulatorKeys.NB_KEYS):
             if keyval == self._keyboard_cfg[i]:
-                key = emulator_keymask(i + 1)
+                key = emulator_keymask(i + 1) > 0
                 break
         return key
 
     def emu_reset(self):
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
-        if self.debugger.ground_engine_state:
-            self.debugger.ground_engine_state.reset(fully=True)
+        if self.debugger and self.debugger.ground_engine_state:
+                self.debugger.ground_engine_state.reset(fully=True)
         try:
             lang = self.settings.get_emulator_language()
             if lang:
@@ -1466,6 +1494,7 @@ class MainController:
             self.builder.get_object('ssb_file_tree').collapse_all()
             item_store.foreach(self._filter__reset_row, False)
             item_store.foreach(self._filter__show_matches)
+            assert self._ssb_item_filter is not None
             self._ssb_item_filter.foreach(self._filter__expand_all_visible)
 
     def _filter__reset_row(self, model, path, iter, make_visible):
@@ -1577,7 +1606,7 @@ class MainController:
         if self.builder.get_object('img_play').get_parent():
             btn.remove(self.builder.get_object('img_play'))
             btn.add(self.builder.get_object('img_stop'))
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_pause')
+        btn = self.builder.get_object('emulator_controls_pause')
         if self.builder.get_object('img_play2').get_parent():
             btn.remove(self.builder.get_object('img_play2'))
             btn.add(self.builder.get_object('img_pause'))
@@ -1587,7 +1616,7 @@ class MainController:
         if self.builder.get_object('img_stop').get_parent():
             btn.remove(self.builder.get_object('img_stop'))
             btn.add(self.builder.get_object('img_play'))
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_pause')
+        btn = self.builder.get_object('emulator_controls_pause')
         if self.builder.get_object('img_play2').get_parent():
             btn.remove(self.builder.get_object('img_play2'))
             btn.add(self.builder.get_object('img_pause'))
@@ -1597,7 +1626,7 @@ class MainController:
         if self.builder.get_object('img_pause').get_parent():
             btn.remove(self.builder.get_object('img_pause'))
             btn.add(self.builder.get_object('img_play2'))
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_playstop')
+        btn = self.builder.get_object('emulator_controls_playstop')
         if self.builder.get_object('img_play').get_parent():
             btn.remove(self.builder.get_object('img_play'))
             btn.add(self.builder.get_object('img_stop'))

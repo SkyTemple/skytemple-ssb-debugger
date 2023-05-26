@@ -28,7 +28,7 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar, GameVariableType
 from skytemple_files.common.util import open_utf8
 from skytemple_ssb_emulator import emulator_register_script_variable_set, emulator_unregister_script_variable_set, \
-    emulator_write_game_variable
+    emulator_write_game_variable, emulator_sync_vars
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_files.common.i18n_util import f, _
@@ -99,6 +99,7 @@ class VariableController:
 
     def _apply_sync(self):
         self._suppress_events = True
+        assert self.var_form_elements is not None and self.rom_data is not None
         for i, sub in enumerate(self.var_form_elements):
             if sub is not None:
                 for offset, el in enumerate(sub):
@@ -304,6 +305,7 @@ class VariableController:
                 break
 
     def hook__variable_set(self, var_id, var_offset, value):
+        assert self.rom_data is not None and self.var_form_elements is not None
         self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value
         self._suppress_events = True
         entry_list = self.var_form_elements[var_id]

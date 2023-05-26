@@ -17,9 +17,10 @@
 from __future__ import annotations
 from abc import abstractmethod, ABC
 
+from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
-from skytemple_ssb_emulator import emulator_read_long
+from skytemple_ssb_emulator import emulator_read_mem_from_ptr
 
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
@@ -41,17 +42,33 @@ def pos_in_map_coord(low_coord: int, high_coord: int):
     return round(center / 0x100 / TILE_SIZE, 1)
 
 
-class AbstractEntityWithScriptStruct(ABC):
-    """An entity that has a script struct embedded into it's data struct."""
-    def __init__(self, pnt_to_block_start: int, rom_data: Pmd2Data):
+class AbstractEntity(ABC):
+    """An entity"""
+    def __init__(self, pnt_to_block_start: u32, offset: u32, rom_data: Pmd2Data):
         super().__init__()
         self.pnt_to_block_start = pnt_to_block_start
         self.rom_data = rom_data
+        self.offset = offset
+        self.buffer = bytes(self._block_size)
+        self.refresh()
+
+    def refresh(self):
+        def set_val(val):
+            self.buffer = val
+
+        if self._block_size != 0:
+            emulator_read_mem_from_ptr(self.pnt_to_block_start, self.offset, self._block_size, set_val)
+        else:
+            self.buffer = bytes()
 
     @property
-    def pnt(self):
-        return emulator_read_long(self.pnt_to_block_start)
+    @abstractmethod
+    def _block_size(self):
+        pass
 
+
+class AbstractEntityWithScriptStruct(AbstractEntity, ABC):
+    """An entity that has a script struct embedded into it's data struct."""
     @property
     @abstractmethod
     def _script_struct_offset(self):
@@ -60,5 +77,5 @@ class AbstractEntityWithScriptStruct(ABC):
     @property
     def script_struct(self):
         return ScriptRuntimeStruct(
-            self.rom_data, lambda: self.pnt + self._script_struct_offset, self
+            self.rom_data, self.pnt_to_block_start, self.offset + self._script_struct_offset, self
         )
