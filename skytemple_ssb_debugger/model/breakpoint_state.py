@@ -82,38 +82,38 @@ class BreakpointState:
 
     def fail_hard(self):
         """Immediately abort debugging and don't break again it this tick."""
-        self.state = BreakpointStateType.FAIL_HARD
+        self._state = BreakpointStateType.FAIL_HARD
         self._wakeup()
 
     def resume(self):
         """Resume normal code execution."""
-        self.state = BreakpointStateType.RESUME
+        self._state = BreakpointStateType.RESUME
         self._wakeup()
 
     def step_into(self):
         """Step into the current call (if it's a call that creates a call stack), otherwise same as step over."""
-        self.state = BreakpointStateType.STEP_INTO
+        self._state = BreakpointStateType.STEP_INTO
         self._wakeup()
         self._wakeup()
 
     def step_over(self):
         """Step over the current call (remain in the current script file + skip debugging any calls to subroutines)."""
-        self.state = BreakpointStateType.STEP_OVER
+        self._state = BreakpointStateType.STEP_OVER
         self._wakeup()
 
     def step_out(self):
         """Step out of the current routine, if there's a call stack, otherwise same as resume."""
-        self.state = BreakpointStateType.STEP_OUT
+        self._state = BreakpointStateType.STEP_OUT
         self._wakeup()
 
     def step_next(self):
         """Break at the next opcode, even if it's for a different script target."""
-        self.state = BreakpointStateType.STEP_NEXT
+        self._state = BreakpointStateType.STEP_NEXT
         self._wakeup()
 
     def step_manual(self, opcode_offset: int):
         """Transition to the STEP_MANUAL state and set the opcode to halt at."""
-        self.state = BreakpointStateType.STEP_MANUAL  # type: ignore
+        self._state = BreakpointStateType.STEP_MANUAL
         self.manual_step_opcode_offset = opcode_offset  # type: ignore
         self._wakeup()
 
@@ -121,15 +121,9 @@ class BreakpointState:
         """Transition to the specified state. Can not transition to STOPPED."""
         if state_type == BreakpointStateType.STOPPED:
             raise ValueError("Can not transition breakpoint state to stopped.")
-        self.state = state_type  # type: ignore
+        self._state = state_type
         self._wakeup()
 
     def _wakeup(self):
         for hook in self._release_hooks:
             hook(self)
-
-    # INTERNAL ONLY, should not be set from outside.
-
-    @state.setter  # type: ignore
-    def state(self, value):
-        self._state = value

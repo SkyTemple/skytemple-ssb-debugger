@@ -17,11 +17,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, Iterable
 
-from gi.repository import GLib
+from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_register_script_debug, emulator_register_debug_print, \
     emulator_register_debug_flag, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
-    EmulatorRegisters, emulator_tick, EmulatorLogType, emulator_unregister_script_debug, \
+    emulator_tick, EmulatorLogType, emulator_unregister_script_debug, \
     emulator_unregister_debug_print, emulator_unregister_debug_flag
 
 from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
@@ -40,12 +40,11 @@ NB_DEBUG_FLAGS_2 = 0x10
 
 class DebuggerController:
     def __init__(self, print_callback, parent: 'MainController'):
-        self.is_active = False
-        self.rom_data: Pmd2Data = None  # type: ignore
+        self.rom_data: Optional[Pmd2Data] = None
         self._print_callback_fn = print_callback
-        self.ground_engine_state: GroundEngineState = None  # type: ignore
+        self.ground_engine_state: Optional[GroundEngineState] = None
         self.parent: 'MainController' = parent
-        self.breakpoint_manager: BreakpointManager = None  # type: ignore
+        self.breakpoint_manager: Optional[BreakpointManager] = None
 
         # Flag to completely disable breaking
         self._breakpoints_disabled = False
@@ -111,7 +110,7 @@ class DebuggerController:
             emulator_set_debug_flag_2(j, jv)
 
         self.ground_engine_state = GroundEngineState(
-            self.rom_data, self._print_callback_fn, inform_ground_engine_start_cb, ssb_file_manager,
+            self.rom_data, self._print_callback_fn, self.parent.do_poll_emulator, inform_ground_engine_start_cb, ssb_file_manager,
             self.parent.context
         )
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
@@ -121,10 +120,10 @@ class DebuggerController:
         emulator_unregister_script_debug()
         emulator_unregister_debug_print()
         emulator_unregister_debug_flag()
-        self.is_active = False
         self.rom_data = None
-        self.ground_engine_state.remove_watches()
-        self.ground_engine_state = None
+        if self.ground_engine_state:
+            self.ground_engine_state.remove_watches()
+            self.ground_engine_state = None
 
     def log_operations(self, value: bool):
         self._log_operations = value
@@ -140,15 +139,17 @@ class DebuggerController:
         if self.ground_engine_state:
             self.ground_engine_state.logging_enabled = value
 
-    def hook__breaking_point__start(self, registers: EmulatorRegisters):
+    def hook__breaking_point__start(self, script_runtime_struct_mem: bytes, script_target_slot_id: u32, current_opcode: u32):
         """MAIN DEBUGGER HOOK. The emulator pauses here and publishes its state via BreakpointState."""
         if self._boost:
             return
-        srs = ScriptRuntimeStruct(
-            self.rom_data, registers.r6
+        assert self.rom_data is not None and self.ground_engine_state is not None
+        srs = ScriptRuntimeStruct.from_data(
+            self.rom_data, script_runtime_struct_mem, script_target_slot_id
         )
         if self._log_operations:
-            self._print_callback_fn(f"> {srs.target_type.name}({srs.target_id}): {srs.current_opcode.name} @{srs.current_opcode_addr:0x}")
+            current_opcode_obj = self.rom_data.script_data.op_codes__by_id[current_opcode]
+            self._print_callback_fn(f"> {srs.target_type.name}({srs.script_target_slot_id}): {current_opcode_obj.name} @{srs.current_opcode_addr:0x}")
 
         if self.breakpoint_manager:
             if not self._breakpoints_disabled and self._breakpoints_disabled_for_tick != emulator_tick():
@@ -167,6 +168,7 @@ class DebuggerController:
                     self.parent.break_pulled(self._breakpoint_state)
 
     def hook__breaking_point__resume(self):
+        assert self._breakpoint_state is not None and self.breakpoint_manager is not None
         state = self._breakpoint_state
         srs = state.script_struct
 
@@ -223,8 +225,9 @@ class DebuggerController:
         self._print_callback_fn(msg)
 
     def hook__set_debug_flag(self, var_id: int, flag_id: int, value: int):
-        GLib.idle_add(lambda: self.parent.set_check_debug_flag(var_id, flag_id, value))
+        self.parent.set_check_debug_flag(var_id, flag_id, value)
 
     def set_boost(self, state):
         self._boost = state
-        self.ground_engine_state.set_boost(state)
+        if self.ground_engine_state:
+            self.ground_engine_state.set_boost(state)

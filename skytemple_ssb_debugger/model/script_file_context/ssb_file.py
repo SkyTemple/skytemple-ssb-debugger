@@ -75,6 +75,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
     def request_ssbs_state(self):
         logger.debug(f"State requested.")
+        assert self._on_ssbs_state_change is not None and self._on_ssbs_reload is not None
         self._on_ssbs_state_change(not self._ssb_file.not_breakable, self._ssb_file.ram_state_up_to_date)
         self._on_ssbs_reload(self._ssb_file.filename)
 
@@ -169,6 +170,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
         def save_thread():
             try:
+                assert self._ssb_file is not None and self._ssb_file.file_manager is not None
                 included_exps_files = None
                 if save_exps:
                     ready_to_reload, included_exps_files = self._ssb_file.file_manager.save_from_explorerscript(

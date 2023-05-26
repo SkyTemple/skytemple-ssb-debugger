@@ -82,14 +82,16 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
     def request_ssbs_state(self):
         logger.debug(f"State requested.")
         self._inform_ssbs_state_change()
-        for ssb_file in self._registered_ssbs:
-            self._on_ssbs_reload(ssb_file.filename)
+        if self._on_ssbs_reload is not None:
+            for ssb_file in self._registered_ssbs:
+                self._on_ssbs_reload(ssb_file.filename)
 
     def _inform_ssbs_state_change(self):
         if len(self._ssbs_states) < 1:
             return
         breakables, ram_states = zip(*self._ssbs_states.values())
-        self._on_ssbs_state_change(all(breakables), all(ram_states))
+        if self._on_ssbs_state_change is not None:
+            self._on_ssbs_state_change(all(breakables), all(ram_states))
 
     def load(
         self,

@@ -22,6 +22,7 @@ import sys
 
 import gi
 import pkg_resources
+from skytemple_ssb_emulator import emulator_shutdown
 
 gi.require_version('Gtk', '3.0')
 

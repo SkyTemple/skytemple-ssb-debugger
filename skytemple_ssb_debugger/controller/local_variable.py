@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import Optional, List
+from typing import Optional, List, Sequence
 
 from gi.overrides.Gtk import TreeViewColumn
 from gi.repository import Gtk
@@ -55,7 +55,7 @@ class LocalVariableController:
         self._macro__tree.append_column(resizable(TreeViewColumn(_("Value"), Gtk.CellRendererText(), text=1)))
 
         self._local_vars_specs: Optional[List[Pmd2ScriptGameVar]] = None
-        self._local_vars_values: List[int] = []
+        self._local_vars_values: Sequence[int] = []
         self._rom_data: Optional[Pmd2Data] = None
         self._was_disabled = True
 
@@ -79,7 +79,7 @@ class LocalVariableController:
 
         # Local variables
         self._local__list_store.clear()
-        self._local_vars_values = emulator_sync_local_vars(breaked_for.pnt)
+        self._local_vars_values = emulator_sync_local_vars(breaked_for.pnt_to_block_start)
 
         # Macro variables
         self._macro__list_store.clear()
@@ -88,9 +88,10 @@ class LocalVariableController:
                 self._macro__list_store.append([name, str(value)])
 
     def _do_sync_gtk(self):
-        for i, var in enumerate(self._local_vars_specs):
-            value = self._local_vars_values[i]
-            self._local__list_store.append([var.name, value])
+        if self._local_vars_specs is not None:
+            for i, var in enumerate(self._local_vars_specs):
+                value = self._local_vars_values[i]
+                self._local__list_store.append([var.name, value])
 
     def disable(self):
         if not self._was_disabled:

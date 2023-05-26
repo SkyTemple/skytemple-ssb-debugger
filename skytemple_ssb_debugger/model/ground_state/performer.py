@@ -15,8 +15,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_emulator import emulator_read_short, emulator_read_byte, emulator_read_long
+
+from range_typed_integers import u32
+from skytemple_files.common.util import read_u16, read_u8, read_u32
 
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
     pos_in_map_coord
@@ -26,13 +27,10 @@ PERFORMER_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
 class Performer(AbstractEntityWithScriptStruct):
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
-        super().__init__(pnt_to_block_start, rom_data)
-        self.offset = offset
-
     @property
-    def pnt(self):
-        return super().pnt + self.offset
+    def _block_size(self):
+        # This is not the actual size, increase this if we need to read more!
+        return u32(0x140)
 
     @property
     def _script_struct_offset(self):
@@ -40,23 +38,23 @@ class Performer(AbstractEntityWithScriptStruct):
 
     @property
     def valid(self):
-        return emulator_read_short(self.pnt + self._script_struct_offset) > 0
+        return read_u16(self.buffer, self._script_struct_offset) > 0
 
     @property
     def id(self):
-        return emulator_read_short(self.pnt + 0x04)
+        return read_u16(self.buffer, 0x04)
 
     @property
     def kind(self):
-        return emulator_read_short(self.pnt + 0x06)
+        return read_u16(self.buffer, 0x06)
 
     @property
     def hanger(self):
-        return emulator_read_short(self.pnt + 0x0A)
+        return read_u16(self.buffer, 0x0A)
 
     @property
     def sector(self):
-        return emulator_read_byte(self.pnt + 0x0E)
+        return read_u8(self.buffer, 0x0E)
 
     @property
     def direction(self):
@@ -64,19 +62,19 @@ class Performer(AbstractEntityWithScriptStruct):
 
     @property
     def x_north(self):
-        return emulator_read_long(self.pnt + 0x130)
+        return read_u32(self.buffer, 0x130)
 
     @property
     def y_west(self):
-        return emulator_read_long(self.pnt + 0x134)
+        return read_u32(self.buffer, 0x134)
 
     @property
     def x_south(self):
-        return emulator_read_long(self.pnt + 0x138)
+        return read_u32(self.buffer, 0x138)
 
     @property
     def y_east(self):
-        return emulator_read_long(self.pnt + 0x13C)
+        return read_u32(self.buffer, 0x13C)
 
     @property
     def x_map(self):

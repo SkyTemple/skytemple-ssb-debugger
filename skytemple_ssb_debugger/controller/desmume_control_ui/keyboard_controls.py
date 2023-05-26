@@ -19,6 +19,7 @@ import os
 from typing import Optional, List
 
 from gi.repository import Gtk, Gdk
+from skytemple_ssb_emulator import emulator_get_key_names, EmulatorKeys
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import key_names_localized, widget_to_primitive
 
@@ -66,10 +67,11 @@ class KeyboardControlsDialogController:
         key = widget_to_primitive(w)
         dlg = self.builder.get_object("wKeyDlg")
         key -= 1  # key = bit position, start with
+        assert self._keyboard_cfg is not None
         self._tmp_key = self._keyboard_cfg[key]
         self.builder.get_object("label_key").set_text(Gdk.keyval_name(self._tmp_key))
         if dlg.run() == Gtk.ResponseType.OK:
-            self._keyboard_cfg[key] = self._tmp_key
+            self._keyboard_cfg[key] = self._tmp_key  # type: ignore
             self.builder.get_object(f"button_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {Gdk.keyval_name(self._tmp_key)}")
 
         dlg.hide()

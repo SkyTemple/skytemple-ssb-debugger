@@ -98,7 +98,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def save_rom(self):
         self._check_loaded()
-        self._rom.saveToFile(self._rom_filename, updateDeviceCapacity=True)
+        self._rom.saveToFile(self._rom_filename, updateDeviceCapacity=True)  # type: ignore
 
     def get_static_data(self) -> Pmd2Data:
         self._check_loaded()

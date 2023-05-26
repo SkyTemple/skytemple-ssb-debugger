@@ -15,12 +15,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from range_typed_integers import u16, u8
+from range_typed_integers import u16, u8, u32
 
-from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptObject
-from skytemple_ssb_emulator import emulator_read_short_signed, emulator_read_short, emulator_read_byte_signed, \
-    emulator_read_long
+from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
     pos_in_map_coord
@@ -30,13 +28,10 @@ OBJECT_BEGIN_SCRIPT_STRUCT = 0x3C
 
 
 class Object(AbstractEntityWithScriptStruct):
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: int, offset: int):
-        super().__init__(pnt_to_block_start, rom_data)
-        self.offset = offset
-
     @property
-    def pnt(self):
-        return super().pnt + self.offset
+    def _block_size(self):
+        # This is not the actual size, increase this if we need to read more!
+        return u32(0x144)
 
     @property
     def _script_struct_offset(self):
@@ -44,15 +39,15 @@ class Object(AbstractEntityWithScriptStruct):
 
     @property
     def valid(self):
-        return emulator_read_short_signed(self.pnt + self._script_struct_offset) > 0
+        return read_i16(self.buffer, self._script_struct_offset) > 0
 
     @property
     def id(self):
-        return emulator_read_short(self.pnt + 0x04)
+        return read_u16(self.buffer, 0x04)
 
     @property
     def kind(self) -> Pmd2ScriptObject:
-        kind_id = emulator_read_short(self.pnt + 0x06)
+        kind_id = read_u16(self.buffer, 0x06)
         try:
             return self.rom_data.script_data.objects__by_id[kind_id]
         except KeyError:
@@ -60,11 +55,11 @@ class Object(AbstractEntityWithScriptStruct):
 
     @property
     def hanger(self):
-        return emulator_read_short_signed(self.pnt + 0x0A)
+        return read_i16(self.buffer, 0x0A)
 
     @property
     def sector(self):
-        return emulator_read_byte_signed(self.pnt + 0x0C)
+        return read_u8(self.buffer, 0x0C)
 
     @property
     def direction(self):
@@ -72,19 +67,19 @@ class Object(AbstractEntityWithScriptStruct):
 
     @property
     def x_north(self):
-        return emulator_read_long(self.pnt + 0x134)
+        return read_u32(self.buffer, 0x134)
 
     @property
     def y_west(self):
-        return emulator_read_long(self.pnt + 0x138)
+        return read_u32(self.buffer, 0x138)
 
     @property
     def x_south(self):
-        return emulator_read_long(self.pnt + 0x13C)
+        return read_u32(self.buffer, 0x13C)
 
     @property
     def y_east(self):
-        return emulator_read_long(self.pnt + 0x140)
+        return read_u32(self.buffer, 0x140)
 
     @property
     def x_map(self):
