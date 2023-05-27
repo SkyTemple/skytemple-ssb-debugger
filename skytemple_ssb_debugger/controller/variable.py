@@ -20,7 +20,7 @@ import math
 import os
 import sys
 from functools import partial
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Mapping, Sequence
 
 import gi
 
@@ -47,19 +47,21 @@ class VariableController:
                         'SCENARIO_BALANCE_DEBUG'],
         _('Init'): ['SCENARIO_SELECT', 'GROUND_ENTER', 'GROUND_ENTER_LINK', 'GROUND_GETOUT', 'GROUND_MAP',
                     'GROUND_PLACE', 'GROUND_START_MODE'],
-        _('Dungeon Progress'): ['DUNGEON_OPEN_LIST', 'DUNGEON_ENTER_LIST', 'DUNGEON_ARRIVE_LIST', 'DUNGEON_CONQUEST_LIST',
+        _('Dungeon Progress'): ['DUNGEON_OPEN_LIST', 'DUNGEON_ENTER_LIST', 'DUNGEON_ARRIVE_LIST',
+                                'DUNGEON_CONQUEST_LIST',
                                 'DUNGEON_PRESENT_LIST', 'DUNGEON_REQUEST_LIST'],
         _('Dungeon Init'): ['DUNGEON_SELECT', 'DUNGEON_ENTER', 'DUNGEON_ENTER_MODE', 'DUNGEON_ENTER_INDEX',
                             'DUNGEON_ENTER_FREQUENCY', 'DUNGEON_RESULT'],
         _('World Map'): ['WORLD_MAP_MARK_LIST_NORMAL', 'WORLD_MAP_MARK_LIST_SPECIAL', 'WORLD_MAP_LEVEL'],
         _('Specific'): ['SIDE02_TALK', 'SIDE06_ROOM', 'SIDE08_BOSS2ND', 'SIDE01_BOSS2ND',
-                        'CRYSTAL_COLOR_01', 'CRYSTAL_COLOR_02', 'CRYSTAL_COLOR_03', 'EVENT_LOCAL', 'DUNGEON_EVENT_LOCAL',
+                        'CRYSTAL_COLOR_01', 'CRYSTAL_COLOR_02', 'CRYSTAL_COLOR_03', 'EVENT_LOCAL',
+                        'DUNGEON_EVENT_LOCAL',
                         'BIT_FUWARANTE_LOCAL', 'LOTTERY_RESULT', 'SUB30_TREASURE_DISCOVER', 'SUB30_SPOT_DISCOVER',
                         'SUB30_SPOT_LEVEL', 'SUB30_PROJECTP'],
         _('Player'): ['PLAYER_KIND', 'ATTENDANT1_KIND', 'ATTENDANT2_KIND', 'CARRY_GOLD', 'BANK_GOLD',
                       'HERO_FIRST_KIND', 'HERO_FIRST_NAME', 'PARTNER_FIRST_KIND', 'PARTNER_FIRST_NAME',
                       'HERO_TALK_KIND', 'PARTNER_TALK_KIND', 'RANDOM_REQUEST_NPC03_KIND', 'CONFIG_COLOR_KIND',
-                     ],
+                      ],
         _('Mode'): ['GAME_MODE', 'EXECUTE_SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_TYPE', 'SPECIAL_EPISODE_OPEN',
                     'SPECIAL_EPISODE_OPEN_OLD', 'SPECIAL_EPISODE_CONQUEST'],
         _('Backup'): ['SCENARIO_SELECT_BACKUP', 'SCENARIO_MAIN_BIT_FLAG_BACKUP', 'GROUND_ENTER_BACKUP',
@@ -67,13 +69,13 @@ class VariableController:
                       'DUNGEON_ENTER_BACKUP', 'DUNGEON_ENTER_MODE_BACKUP', 'DUNGEON_ENTER_INDEX_BACKUP',
                       'DUNGEON_ENTER_FREQUENCY_BACKUP', 'DUNGEON_RESULT_BACKUP', 'GROUND_START_MODE_BACKUP',
                       'PLAYER_KIND_BACKUP', 'ATTENDANT1_KIND_BACKUP', 'ATTENDANT2_KIND_BACKUP',
-                     'ITEM_BACKUP', 'ITEM_BACKUP_KUREKURE', 'ITEM_BACKUP_TAKE', 'ITEM_BACKUP_GET'],
+                      'ITEM_BACKUP', 'ITEM_BACKUP_KUREKURE', 'ITEM_BACKUP_TAKE', 'ITEM_BACKUP_GET'],
         _('Misc'): ['VERSION', 'CONDITION', 'ROM_VARIATION', 'LANGUAGE_TYPE',
-                 'FRIEND_SUM', 'UNIT_SUM',
-                 'POSITION_X', 'POSITION_Y', 'POSITION_HEIGHT', 'POSITION_DIRECTION',
-                 'STATION_ITEM_STATIC', 'STATION_ITEM_TEMP', 'DELIVER_ITEM_STATIC', 'DELIVER_ITEM_TEMP',
-                 'REQUEST_CLEAR_COUNT', 'REQUEST_THANKS_RESULT_KIND', 'REQUEST_THANKS_RESULT_VARIATION',
-                 'RECYCLE_COUNT', 'TEAM_RANK_EVENT_LEVEL', 'PLAY_OLD_GAME', 'NOTE_MODIFY_FLAG'],
+                    'FRIEND_SUM', 'UNIT_SUM',
+                    'POSITION_X', 'POSITION_Y', 'POSITION_HEIGHT', 'POSITION_DIRECTION',
+                    'STATION_ITEM_STATIC', 'STATION_ITEM_TEMP', 'DELIVER_ITEM_STATIC', 'DELIVER_ITEM_TEMP',
+                    'REQUEST_CLEAR_COUNT', 'REQUEST_THANKS_RESULT_KIND', 'REQUEST_THANKS_RESULT_VARIATION',
+                    'RECYCLE_COUNT', 'TEAM_RANK_EVENT_LEVEL', 'PLAY_OLD_GAME', 'NOTE_MODIFY_FLAG'],
     }
 
     def __init__(self, builder: Gtk.Builder, context: AbstractDebuggerControlContext):
@@ -91,11 +93,17 @@ class VariableController:
 
     def sync(self):
         """Manual force sync of all variables"""
+
+        def update(vals: Mapping[int, Sequence[int]]):
+            assert self.rom_data is not None
+            self._variable_cache = {
+                self.rom_data.script_data.game_variables__by_id[k]: list(v) for k, v in vals.items()
+            }
+            self._apply_sync()
+
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
         notebook.set_sensitive(False)
-        raise NotImplementedError("TODO: map keys of emulator_sync_vars() to Pmd2ScriptGameVar.")
-        self._variable_cache = emulator_sync_vars()
-        self._apply_sync()
+        emulator_sync_vars(update)
 
     def _apply_sync(self):
         self._suppress_events = True
@@ -252,7 +260,8 @@ class VariableController:
         except ValueError as err:
             md = self.context.message_dialog_cls()(self.builder.get_object('main_window'),
                                                    Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                                   Gtk.ButtonsType.OK, f(_("Invalid variable value:\n{err}\nThe value was not written to RAM.")),
+                                                   Gtk.ButtonsType.OK,
+                                                   f(_("Invalid variable value:\n{err}\nThe value was not written to RAM.")),
                                                    title=_("Error!"))
             md.set_position(Gtk.WindowPosition.CENTER)
             md.run()

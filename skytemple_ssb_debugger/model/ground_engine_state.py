@@ -23,7 +23,7 @@ from gi.repository import Gtk, GLib
 from range_typed_integers import u32
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_emulator import emulator_ov11_loaded, emulator_register_exec, emulator_register_ssb_load, \
+from skytemple_ssb_emulator import emulator_register_exec_ground, emulator_register_ssb_load, \
     emulator_register_ssx_load, emulator_register_talk_load, emulator_register_unionall_load_addr_change, \
     emulator_unregister_ssb_load, emulator_unregister_ssx_load, emulator_unregister_talk_load, \
     emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update, emulator_wait_one_cycle
@@ -213,9 +213,9 @@ class GroundEngineState:
     def watch(self):
         ov11 = self.rom_data.bin_sections.overlay11
 
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, self.hook__ground_start)
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, self.hook__ground_quit)
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, self.hook__ground_map_change)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x3C, self.hook__ground_start)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x210, self.hook__ground_quit)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x598, self.hook__ground_map_change)
         emulator_register_ssb_load([
             ov11.functions.SsbLoad1.absolute_address, ov11.functions.SsbLoad2.absolute_address
         ], self.hook__ssb_load)
@@ -226,9 +226,9 @@ class GroundEngineState:
     def remove_watches(self):
         ov11 = self.rom_data.bin_sections.overlay11
 
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x3C, None)
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x210, None)
-        emulator_register_exec(ov11.functions.GroundMainLoop.absolute_address + 0x598, None)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x3C, None)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x210, None)
+        emulator_register_exec_ground(ov11.functions.GroundMainLoop.absolute_address + 0x598, None)
         emulator_unregister_ssb_load()
         emulator_unregister_ssx_load()
         emulator_unregister_talk_load()
@@ -304,28 +304,20 @@ class GroundEngineState:
             self._print_callback(f"Ground Event >> {string}")
 
     def hook__ground_start(self):
-        if not emulator_ov11_loaded():
-            return
         self._print("Ground Start")
         self.reset()
         self._running = True
         self._inform_ground_engine_start_cb()
 
     def hook__ground_quit(self):
-        if not emulator_ov11_loaded():
-            return
         self._print("Ground Quit")
         self._running = False
 
     def hook__ground_map_change(self):
-        if not emulator_ov11_loaded():
-            return
         self._print("Ground Map Change")
         self.reset(keep_global=True)
 
     def hook__ssb_load(self, name: str):
-        if not emulator_ov11_loaded():
-            return
         load_for = self._load_ssb_for if self._load_ssb_for is not None else 0
         self._print(f"SSB Load {name} for hanger {load_for}")
         self._load_ssb_for = None
@@ -337,8 +329,6 @@ class GroundEngineState:
         self._loaded_ssb_files[load_for] = (SsbFileInRam(name, load_for))
 
     def hook__ssx_load(self, hanger: int, name: str):
-        if not emulator_ov11_loaded():
-            return
         self._print(f"SSX Load {name} for hanger {hanger}")
         self._load_ssb_for = hanger
         if hanger > MAX_SSX:
@@ -348,8 +338,6 @@ class GroundEngineState:
         self._loaded_ssx_files[hanger] = (SsxFileInRam(name, hanger))
 
     def hook__talk_load(self, hanger):
-        if not emulator_ov11_loaded():
-            return
         # TODO:
         #    If the hanger is 1 - 3, this is a load for SSA/SSE/SSS.
         #    Otherwise just take the number. It's unknown what the exact mechanism / side effects are here.

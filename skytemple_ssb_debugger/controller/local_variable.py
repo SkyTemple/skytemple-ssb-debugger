@@ -77,15 +77,20 @@ class LocalVariableController:
             self._macro__sw.add(self._macro__tree)
             self._was_disabled = False
 
-        # Local variables
-        self._local__list_store.clear()
-        self._local_vars_values = emulator_sync_local_vars(breaked_for.pnt_to_block_start)
-
         # Macro variables
         self._macro__list_store.clear()
         if file_state and file_state.current_macro_variables:
             for name, value in file_state.current_macro_variables.items():
                 self._macro__list_store.append([name, str(value)])
+
+        # Local variables
+        self._local__list_store.clear()
+
+        def update(vals):
+            self._local_vars_values = vals
+            self._do_sync_gtk()
+
+        emulator_sync_local_vars(breaked_for.pnt_to_block_start, update)
 
     def _do_sync_gtk(self):
         if self._local_vars_specs is not None:
