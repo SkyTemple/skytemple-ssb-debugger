@@ -66,8 +66,11 @@ class GlobalStateController:
 
     def sync(self):
         """Manual force sync of global state"""
-        self._tables = emulator_sync_tables()
-        self._apply_sync()
+        def update(vals):
+            self._tables = list(vals)
+            self._apply_sync()
+
+        emulator_sync_tables(update)
 
     def _apply_sync(self):
         store = self.builder.get_object('global_state_alloc_store')

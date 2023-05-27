@@ -283,7 +283,7 @@ class MainController:
 
     @_joystick_cfg.setter
     def _joystick_cfg(self, value):
-        emulator_set_jscfg(value)
+        emulator_set_jscfg(value, False)
 
     @property
     def global_state__breaks_disabled(self):
@@ -590,10 +590,14 @@ class MainController:
             )
             return
 
-        self._joystick_cfg = JoystickControlsDialogController(self.window).run(
-            self._joystick_cfg, emulator_is_running()
+        def update(jscfg):
+            self._joystick_cfg = jscfg
+            self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
+
+        JoystickControlsDialogController(self.window).run(
+            self._joystick_cfg, emulator_is_running(), update
         )
-        self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
+
 
     def on_menu_emulator_language_jp_toggled(self, button: Gtk.RadioMenuItem):
         self.on_menu_emulator_language_XX_toggled(Language.Japanese)

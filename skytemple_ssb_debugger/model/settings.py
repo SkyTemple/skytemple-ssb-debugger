@@ -18,7 +18,7 @@ from __future__ import annotations
 import configparser
 import logging
 import os
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Sequence
 
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.util import open_utf8
@@ -132,7 +132,7 @@ class DebuggerSettingsStore:
             return cfg
         return None
 
-    def set_emulator_joystick_cfg(self, keys: List[int]):
+    def set_emulator_joystick_cfg(self, keys: Sequence[int]):
         if SECT_JOYKEYS not in self.loaded_config:
             self.loaded_config[SECT_JOYKEYS] = {}
         for key_name, key_value in zip(emulator_get_key_names(), keys):
