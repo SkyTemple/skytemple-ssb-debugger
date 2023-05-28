@@ -19,7 +19,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional, Callable, Tuple, Any
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 
@@ -59,11 +58,6 @@ class AbstractScriptFileContext(ABC):
     @property
     @abstractmethod
     def exps_filepath(self) -> str:
-        pass
-
-    @property
-    @abstractmethod
-    def breakpoint_manager(self) -> BreakpointManager:
         pass
         
     @abstractmethod

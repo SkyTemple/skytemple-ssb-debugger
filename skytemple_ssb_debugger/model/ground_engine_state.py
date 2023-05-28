@@ -17,7 +17,7 @@
 from __future__ import annotations
 import warnings
 from itertools import chain
-from typing import Optional, List, Tuple, no_type_check, Iterable, Callable
+from typing import Optional, List, Tuple, Iterable, Callable, cast, no_type_check
 
 from gi.repository import Gtk, GLib
 from range_typed_integers import u32
@@ -26,10 +26,13 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_register_exec_ground, emulator_register_ssb_load, \
     emulator_register_ssx_load, emulator_register_talk_load, emulator_register_unionall_load_addr_change, \
     emulator_unregister_ssb_load, emulator_unregister_ssx_load, emulator_unregister_talk_load, \
-    emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update, emulator_wait_one_cycle
+    emulator_unregister_unionall_load_addr_change, emulator_unionall_load_address_update, emulator_wait_one_cycle, \
+    emulator_breakpoints_set_loaded_ssb_files, emulator_breakpoints_set_load_ssb_for
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+from skytemple_ssb_emulator import BreakpointState
+
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
 from skytemple_ssb_debugger.model.ground_state import AbstractEntity
 from skytemple_ssb_debugger.model.ground_state.actor import Actor
 from skytemple_ssb_debugger.model.ground_state.event import Event
@@ -112,12 +115,13 @@ class GroundEngineState:
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
         self._loaded_ssb_files[state.hanger_id].breaked = True
-        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
+        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = cast(BreakpointFileState, state.file_state).handler_filename
         state.add_release_hook(self.break_released)
 
     @no_type_check
     def step_into_macro_call(self, state: BreakpointState):
-        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = state.get_file_state().handler_filename
+        assert self._loaded_ssb_files[state.hanger_id] is not None
+        self._loaded_ssb_files[state.hanger_id].breaked__handler_file = cast(BreakpointFileState, state.file_state).handler_filename
 
     def break_released(self, state: BreakpointState):
         """Reset the breaked property of loaded ssb files again."""
@@ -244,8 +248,12 @@ class GroundEngineState:
             if (i != 0 or not keep_global) and ssb is not None:
                 self.ssb_file_manager.close_in_ground_engine(ssb.file_name)
         self._loaded_ssb_files = [None for _ in range(0, MAX_SSB + 1)]
+        glob_fn = None
         if keep_global:
             self._loaded_ssb_files[0] = glob
+            glob_fn = glob.file_name if glob is not None else None
+
+        emulator_breakpoints_set_loaded_ssb_files(glob_fn, None, None, None, None, None, None)
 
     def serialize(self):
         """Convert the state (that's not directly tied to the game's memory) to a dict for saving."""
@@ -269,6 +277,10 @@ class GroundEngineState:
             if fn_and_hash is not None else None
             for hng, fn_and_hash in enumerate(state['ssbs'])
         ]
+        emulator_breakpoints_set_load_ssb_for(int(self._load_ssb_for) if self._load_ssb_for is not None else None)
+        emulator_breakpoints_set_loaded_ssb_files(
+            *((x.file_name if x is not None else None) for x in self._loaded_ssb_files)
+        )
         # - Load SSB file hashes from ground state file, if the hashes don't match on reload with the saved
         #   files, mark them as not up to date in RAM and show warning for affected files.
         were_invalid = []

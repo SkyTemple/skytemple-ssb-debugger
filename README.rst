@@ -7,7 +7,7 @@ SkyTemple Script Engine Debugger
 
 .. |logo| image:: https://raw.githubusercontent.com/SkyTemple/skytemple-ssb-debugger/master/skytemple_ssb_debugger/data/icons/hicolor/256x256/apps/skytemple-debugger.png
 
-.. |build| image:: https://img.shields.io/github/workflow/status/SkyTemple/skytemple-ssb-debugger/Build,%20test%20and%20publish
+.. |build| image:: https://img.shields.io/github/actions/workflow/status/SkyTemple/skytemple-ssb-debugger/build-test-publish.yml
     :target: https://pypi.org/project/skytemple-ssb-debugger/
     :alt: Build Status
 
