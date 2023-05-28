@@ -30,6 +30,9 @@ from gtkspellcheck import SpellChecker
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_ssb_emulator import emulator_debug_breakpoints_resync, emulator_debug_breakpoint_add, \
+    emulator_debug_breakpoint_remove, emulator_breakpoints_get_saved_in_ram_for
+
 from skytemple_ssb_debugger.model.completion.calltips.calltip_emitter import CalltipEmitter
 from skytemple_ssb_debugger.model.completion.calltips.string_event_emitter import StringEventEmitter
 from skytemple_ssb_debugger.model.completion.constants import GtkSourceCompletionSsbConstants
@@ -309,7 +312,8 @@ class ScriptEditorController:
                     breakpoints_to_resync[ssb_filename].append(opcode_offset)
 
         for ssb_filename, b_points in breakpoints_to_resync.items():
-            self.file_context.breakpoint_manager.resync(ssb_filename, b_points)
+            assert self.parent.file_manager is not None
+            emulator_debug_breakpoints_resync(ssb_filename, b_points, self.parent.file_manager.get(ssb_filename))
 
     def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Optional[Gtk.Box]):
         self._activate_spinner(ssbs_bx)
@@ -403,11 +407,11 @@ class ScriptEditorController:
     def add_breakpoint(self, line_number: int, view: GtkSource.View):
         buffer: Gtk.TextBuffer = view.get_buffer()
         for ssb_filename, opcode_offset in EditorTextMarkUtil.get_opcodes_in_line(buffer, line_number - 1):
-            self.file_context.breakpoint_manager.add(ssb_filename, opcode_offset)
+            emulator_debug_breakpoint_add(ssb_filename, opcode_offset)
 
     def remove_breakpoint(self, mark: GtkSource.Mark):
         ssb_filename, opcode_offset = EditorTextMarkUtil.extract_opcode_data_from_line_mark(mark)
-        self.file_context.breakpoint_manager.remove(ssb_filename, opcode_offset)
+        emulator_debug_breakpoint_remove(ssb_filename, opcode_offset)
 
     def on_breakpoint_added(self, ssb_filename, opcode_offset, also_update_explorerscript=True):
         view_list: Iterable[GtkSource.View]
@@ -442,7 +446,7 @@ class ScriptEditorController:
                 EditorTextMarkUtil.switch_to_new_op_marks(buffer, ssb_filename)
 
         # Re-add all breakpoints
-        for opcode_offset in self.file_context.breakpoint_manager.saved_in_rom_get_for(ssb_filename):
+        for opcode_offset in emulator_breakpoints_get_saved_in_ram_for(ssb_filename):
             self.on_breakpoint_added(ssb_filename, opcode_offset)
 
     def insert_opcode_text_mark(self, is_exps: bool, ssb_filename: str,

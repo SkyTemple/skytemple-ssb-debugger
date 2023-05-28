@@ -25,7 +25,6 @@ from gi.repository import GLib
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import SsbHashError
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
@@ -39,13 +38,12 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     """Context for a script file that directly represents a single compiled SSB script."""
 
     def __init__(self, ssb_loaded_file: SsbLoadedFile, scene_type: str, scene_name: str,
-                 breakpoint_manager: BreakpointManager, editor_notebook_controller: 'EditorNotebookController'):
+                 editor_notebook_controller: 'EditorNotebookController'):
         super().__init__()
         self._ssb_file = ssb_loaded_file
         self.scene_type = scene_type
         self.scene_name = scene_name
         self._register_ssb_handler(ssb_loaded_file)
-        self._breakpoint_manager = breakpoint_manager
         self._editor_notebook_controller = editor_notebook_controller
 
     def destroy(self):
@@ -58,10 +56,6 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     @property
     def exps_filepath(self) -> str:
         return self._ssb_file.exps.full_path
-
-    @property
-    def breakpoint_manager(self) -> BreakpointManager:
-        return self._breakpoint_manager
 
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         logger.debug(f"{loaded_ssb.filename}: Reloaded")

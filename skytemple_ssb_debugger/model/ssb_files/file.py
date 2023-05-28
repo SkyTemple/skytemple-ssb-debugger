@@ -21,6 +21,8 @@ from typing import TYPE_CHECKING, List, Optional, Callable
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.script.ssb.model import Ssb
+from skytemple_ssb_emulator import emulator_debug_set_loaded_ssb_breakable
+
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
 
@@ -48,12 +50,15 @@ class SsbLoadedFile:
         self._opened_in_ground_engine = False
         # The state in RAM differs from the currently saved SSB to ROM.
         self._ram_state_up_to_date = True
-        # The file is not debuggable at the moment, because an old state is
+        # A file is not debuggable at the moment, if an old state is
         # loaded in RAM and old breakpoint mappings
         # are not available (because the source view for it was closed).
-        self._not_breakable = False
+        self._not_breakable_cache = False
+        emulator_debug_set_loaded_ssb_breakable(self.filename, True)
 
+        # Called once, then removed.
         self._event_handlers_manager: List[Callable] = []
+        # Called once, kept.
         self._event_handlers_editor: List[Callable] = []
 
         self._event_handlers_property_change: List[Callable] = []
@@ -102,23 +107,20 @@ class SsbLoadedFile:
 
     @property
     def not_breakable(self):
-        return self._not_breakable
+        return self._not_breakable_cache
 
     @not_breakable.setter
     def not_breakable(self, value):
-        self._not_breakable = value
+        self._not_breakable_cache = value
+        emulator_debug_set_loaded_ssb_breakable(self.filename, not value)
         self._trigger_property_change('not_breakable', value)
 
     def register_reload_event_manager(self, on_ssb_reload):
+        """Called once, then removed."""
         self._event_handlers_manager.append(on_ssb_reload)
 
-    def unregister_reload_event_manager(self, on_ssb_reload):
-        try:
-            self._event_handlers_manager.remove(on_ssb_reload)
-        except ValueError:
-            pass
-
     def register_reload_event_editor(self, on_ssb_reload):
+        """Called once, kept. Remove with unregister_reload_event_editor"""
         self._event_handlers_editor.append(on_ssb_reload)
 
     def unregister_reload_event_editor(self, on_ssb_reload):
@@ -132,6 +134,7 @@ class SsbLoadedFile:
         # Breakpoint manager update it's breakpoint
         for handler in self._event_handlers_manager:
             handler(self)
+        self._event_handlers_manager = []
         # Editors updates it's marks and uses the updated breakpoints.
         for handler in self._event_handlers_editor:
             handler(self)

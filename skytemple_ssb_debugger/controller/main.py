@@ -36,7 +36,7 @@ from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_co
     emulator_savestate_save_file, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
     emulator_start, emulator_joy_init, emulator_touch_set_pos, emulator_resume, emulator_unpress_all_keys, \
     emulator_reset, emulator_pause, emulator_shutdown, emulator_set_boost, emulator_set_language, emulator_open_rom, \
-    emulator_display_buffer_as_rgbx
+    emulator_display_buffer_as_rgbx, emulator_debug_init_breakpoint_manager
 
 from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
 from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
@@ -56,8 +56,7 @@ from skytemple_ssb_debugger.controller.local_variable import LocalVariableContro
 from skytemple_ssb_debugger.controller.global_state import GlobalStateController
 from skytemple_ssb_debugger.controller.variable import VariableController
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
+from skytemple_ssb_emulator import BreakpointState, BreakpointStateType
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore, TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -84,7 +83,6 @@ class MainController:
         self.context: AbstractDebuggerControlContext = control_context
         self.settings = DebuggerSettingsStore()
         self.ssb_fm: Optional[SsbFileManager] = None
-        self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_was_loaded = False
         self._emu_is_running = False
 
@@ -1086,9 +1084,8 @@ class MainController:
                 self.uninit_project()
             self.ssb_fm = SsbFileManager(self.context)
             fn = self.context.get_rom_filename()
-            self.breakpoint_manager = BreakpointManager(
-                os.path.join(self.context.get_project_debugger_dir(), f'{os.path.basename(fn)}.breakpoints.json'),
-                self.ssb_fm
+            emulator_debug_init_breakpoint_manager(
+                os.path.join(self.context.get_project_debugger_dir(), f'{os.path.basename(fn)}.breakpoints.json')
             )
             # Immediately save, because the module packs the ROM differently.
             self.context.save_rom()
@@ -1101,7 +1098,7 @@ class MainController:
                 for j in range(0, 16):
                     fl2.append(self.builder.get_object(f"chk_debug_flag_2_{j}").get_active())
                 self.debugger.enable(
-                    rom_data, self.ssb_fm, self.breakpoint_manager, self.on_ground_engine_start,
+                    rom_data, self.ssb_fm, self.on_ground_engine_start,
                     debug_mode=self.builder.get_object('debug_settings_debug_mode').get_active(),
                     debug_flag_1=fl1, debug_flag_2=fl2
                 )
@@ -1109,7 +1106,7 @@ class MainController:
             self.global_state_controller.init(rom_data)
             self.variable_controller.init(rom_data)
             self.local_variable_controller.init(rom_data)
-            self.editor_notebook.init(self.ssb_fm, self.breakpoint_manager, rom_data)
+            self.editor_notebook.init(self.ssb_fm, rom_data)
             self.rom_was_loaded = True
         except BaseException as ex:
             self.context.display_error(
@@ -1117,7 +1114,6 @@ class MainController:
                 f"Unable to load: {self.context.get_rom_filename()}\n{ex}"
             )
             self.ssb_fm = None
-            self.breakpoint_manager = None
         else:
             self.enable_editing_features()
             self.enable_debugging_features()
@@ -1289,7 +1285,7 @@ class MainController:
                 f"Emulator failed to load: {self.context.get_rom_filename()}"
             )
 
-    def emu_resume(self, state_type=BreakpointStateType.RESUME, step_manual_addr=None):
+    def emu_resume(self, state_type=BreakpointStateType.Resume, step_manual_addr=None):
         """Resume the emulator. If the debugger is currently breaked, the state will transition to state_type."""
         self._stopped = False
         self.toggle_paused_debugging_features(False)
@@ -1297,7 +1293,7 @@ class MainController:
         self._set_buttons_running()
         if not self._emu_is_running:
             emulator_resume()
-        if self.breakpoint_state and state_type == BreakpointStateType.STEP_MANUAL:
+        if self.breakpoint_state and state_type == BreakpointStateType.StepManual:
             self.breakpoint_state.step_manual(step_manual_addr)
         elif self.breakpoint_state:
             self.breakpoint_state.transition(state_type)
@@ -1406,7 +1402,10 @@ class MainController:
         - Add release hook.
         """
         assert self.ssb_fm
-        srs = state.script_struct
+        assert self.debugger and self.debugger.rom_data
+        srs = ScriptRuntimeStruct.from_data(
+            self.debugger.rom_data, state.script_runtime_struct_mem, state.script_target_slot_id
+        )
         emulator_volume_set(0)
 
         ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]  # type: ignore
@@ -1421,7 +1420,7 @@ class MainController:
             self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript,
             self.context.get_project_filemanager()
         )
-        state.set_file_state(breakpoint_file_state)
+        state.file_state = breakpoint_file_state
 
         self.write_info_bar(Gtk.MessageType.WARNING, f(_("The debugger is halted at {ssb.file_name}.")))
         # This will mark the hanger as being breaked:
@@ -1438,12 +1437,18 @@ class MainController:
         """Step into a macro call, by simulating it via the BreakpointFileState."""
         assert self.debugger
         file_state.step_into_macro_call()
-        self.debugger.ground_engine_state.step_into_macro_call(file_state.parent)  # type: ignore
+        assert file_state.parent is not None
+        assert self.debugger.ground_engine_state is not None
+        assert self.debugger.rom_data is not None
+        self.debugger.ground_engine_state.step_into_macro_call(file_state.parent)
         self.editor_notebook.step_into_macro_call(file_state)
         self.editor_notebook.focus_by_opcode_addr(file_state.ssb_filename, file_state.opcode_addr)
-        self.load_debugger_state(
-            file_state.parent.script_struct, file_state  # type: ignore
+        srs = ScriptRuntimeStruct.from_data(
+            self.debugger.rom_data,
+            file_state.parent.script_runtime_struct_mem,
+            file_state.parent.script_target_slot_id
         )
+        self.load_debugger_state(srs, file_state)
 
     def break_released(self, state: BreakpointState):
         """

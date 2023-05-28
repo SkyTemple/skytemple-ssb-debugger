@@ -17,15 +17,14 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import os
-from typing import Dict, Optional, List, Tuple, TYPE_CHECKING
+from typing import Dict, Optional, List, Tuple, TYPE_CHECKING, cast
 
 from gi.repository import Gtk, Pango
 
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.controller.script_editor import ScriptEditorController
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
-from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState, BreakpointStateType
+from skytemple_ssb_emulator import BreakpointState, BreakpointStateType, emulator_debug_register_breakpoint_callbacks
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from ..context.abstract import AbstractDebuggerControlContext
 from ..model.breakpoint_file_state import BreakpointFileState
@@ -44,7 +43,6 @@ class EditorNotebookController:
         self.builder = builder
         self.parent = parent
         self.file_manager: Optional[SsbFileManager] = None
-        self.breakpoint_manager: Optional[BreakpointManager] = None
         self.rom_data: Optional[Pmd2Data] = None
         self._open_editors: Dict[str, ScriptEditorController] = {}
         self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
@@ -53,11 +51,10 @@ class EditorNotebookController:
         self.enable_explorerscript = enable_explorerscript
         self._main_window = main_window
 
-    def init(self, file_manager: SsbFileManager, breakpoint_manager: BreakpointManager, rom_data: Pmd2Data):
+    def init(self, file_manager: SsbFileManager, rom_data: Pmd2Data):
         self.file_manager = file_manager
         self.rom_data = rom_data
-        self.breakpoint_manager = breakpoint_manager
-        self.breakpoint_manager.register_callbacks(self.on_breakpoint_added, self.on_breakpoint_removed)
+        emulator_debug_register_breakpoint_callbacks(self.on_breakpoint_added, self.on_breakpoint_removed)
 
     @property
     def currently_open(self) -> Optional[ScriptEditorController]:
@@ -70,20 +67,18 @@ class EditorNotebookController:
 
     def open_ssb(self, ssb_rom_path: str):
         assert self.file_manager
-        assert self.breakpoint_manager
         context = SsbFileScriptFileContext(
             self.file_manager.open_in_editor(ssb_rom_path),
             self.parent.get_scene_type_for(ssb_rom_path),
             self.parent.get_scene_name_for(ssb_rom_path),
-            self.breakpoint_manager, self
+            self
         )
         return self._open_common(ssb_rom_path, context, mapname=ssb_rom_path.split('/')[1])
 
     def open_exps_macro(self, abs_path: str):
         assert self.file_manager
-        assert self.breakpoint_manager
         context = ExpsMacroFileScriptFileContext(
-            abs_path, self.file_manager, self.breakpoint_manager, self
+            abs_path, self.file_manager, self
         )
         return self._open_common(abs_path, context)
 
@@ -198,7 +193,7 @@ class EditorNotebookController:
 
     def break_pulled(self, state: BreakpointState):
         """The debugger paused. Enable debugger controls for file_name."""
-        file_state = state.get_file_state()
+        file_state = cast(BreakpointFileState, state.file_state)
         assert file_state
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
@@ -271,26 +266,26 @@ class EditorNotebookController:
             editor.on_exps_macro_ssb_changed(exps_abs_path, ssb_filename)
 
     def pull_break__resume(self):
-        self.parent.emu_resume(BreakpointStateType.RESUME)
+        self.parent.emu_resume(BreakpointStateType.Resume)
 
     def pull_break__step_into(self):
         if self._cached_file_bpnt_state and self._cached_file_bpnt_state.halted_on_call:
             self.parent.step_into_macro_call(self._cached_file_bpnt_state)
             return
-        self.parent.emu_resume(BreakpointStateType.STEP_INTO)
+        self.parent.emu_resume(BreakpointStateType.StepInto)
 
     def pull_break__step_over(self):
         if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_over_addr:
-            return self.parent.emu_resume(BreakpointStateType.STEP_MANUAL, self._cached_file_bpnt_state.step_over_addr)
-        self.parent.emu_resume(BreakpointStateType.STEP_OVER)
+            return self.parent.emu_resume(BreakpointStateType.StepManual, self._cached_file_bpnt_state.step_over_addr)
+        self.parent.emu_resume(BreakpointStateType.StepOver)
 
     def pull_break__step_out(self):
         if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_out_addr:
-            return self.parent.emu_resume(BreakpointStateType.STEP_MANUAL, self._cached_file_bpnt_state.step_out_addr)
-        self.parent.emu_resume(BreakpointStateType.STEP_OUT)
+            return self.parent.emu_resume(BreakpointStateType.StepManual, self._cached_file_bpnt_state.step_out_addr)
+        self.parent.emu_resume(BreakpointStateType.StepOut)
 
     def pull_break__step_next(self):
-        self.parent.emu_resume(BreakpointStateType.STEP_NEXT)
+        self.parent.emu_resume(BreakpointStateType.StepNext)
 
     def toggle_breaks_disabled(self, value):
         for editor in self._open_editors.values():

@@ -23,7 +23,7 @@ from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
-    from skytemple_ssb_debugger.model.breakpoint_state import BreakpointState
+    from skytemple_ssb_emulator import BreakpointState
 
 
 class BreakpointFileState:

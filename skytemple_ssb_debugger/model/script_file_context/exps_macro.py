@@ -29,7 +29,6 @@ from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import EXPLORERSCRIPT_INCLUSION_MAP_SUFFIX
 from skytemple_files.common.util import open_utf8
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.breakpoint_manager import BreakpointManager
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -43,7 +42,7 @@ logger = logging.getLogger(__name__)
 class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
     """A file context for an exps macro file. Keeps track of all macros that use the file."""
     def __init__(self, absolute_path: str, ssb_fm: SsbFileManager,
-                 breakpoint_manager: BreakpointManager, editor_notebook_controller: 'EditorNotebookController'):
+                 editor_notebook_controller: 'EditorNotebookController'):
         super().__init__()
         self._ssb_fm = ssb_fm
         self._absolute_path = absolute_path
@@ -52,7 +51,6 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
             # You gotta love path handling!
             self._relative_path = absolute_path.replace(self._ssb_fm.project_fm.dir().replace('\\', '/') + '/', "")
             assert self._absolute_path != self._relative_path
-        self._breakpoint_manager = breakpoint_manager
         self._editor_notebook_controller = editor_notebook_controller
         # A map of all managed ssb states (breakable, ram_state_up_to_date)
         self._ssbs_states: Dict[str, Tuple[bool, bool]] = {}
@@ -65,10 +63,6 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
     @property
     def exps_filepath(self) -> str:
         return self._absolute_path
-
-    @property
-    def breakpoint_manager(self) -> BreakpointManager:
-        return self._breakpoint_manager
 
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         logger.debug(f"{loaded_ssb.filename}: Reloaded")

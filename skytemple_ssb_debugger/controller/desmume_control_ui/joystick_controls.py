@@ -49,7 +49,7 @@ class JoystickControlsDialogController:
             callback: Callable[[List[int]], None]
         ):
         """Configure the joystick configuration provided using the dialog,
-        is is immediately changed in the debugger The new/old (if canceled) config is also returned."""
+        is immediately changed in the debugger The new/old (if canceled) config is also returned."""
         def do_run(joy_number_connected):
             self._joystick_cfg = joystick_cfg
             if joy_number_connected < 1 or emulator_is_running:
