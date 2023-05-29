@@ -176,8 +176,8 @@ class VariableController:
         self.sync()
 
         emulator_register_script_variable_set(
-            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValue.absolute_address,
-            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValueAtIndex.absolute_address,
+            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValue.absolute_addresses,
+            self.rom_data.bin_sections.arm9.functions.SaveScriptVariableValueAtIndex.absolute_addresses,
             self.hook__variable_set
         )
 

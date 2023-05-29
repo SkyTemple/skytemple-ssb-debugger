@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from enum import Enum
-from typing import Optional, List
+from typing import Optional, List, Callable
 
 import gi
 from skytemple_files.common.i18n_util import _
@@ -60,17 +60,19 @@ class GlobalStateController:
         self._current_table = max(0, min(current_table, len(self._tables)))
         self._apply_sync()
 
-    def dump(self, file_id) -> bytes:
+    def dump(self, file_id, cb: Callable[[bytes], None]):
         """Dump one file from the rom"""
-        return self._tables[self._current_table].entries[file_id].dump()
+        return self._tables[self._current_table].entries[file_id].dump(cb)
 
     def sync(self):
         """Manual force sync of global state"""
+        self._current_table = 0
         def update(vals):
             self._tables = list(vals)
             self._apply_sync()
 
-        emulator_sync_tables(update)
+        assert self.rom_data is not None
+        emulator_sync_tables(self.rom_data.bin_sections.itcm.data.MEMORY_ALLOCATION_TABLE.absolute_address, update)
 
     def _apply_sync(self):
         store = self.builder.get_object('global_state_alloc_store')
@@ -79,7 +81,7 @@ class GlobalStateController:
             table = self._tables[self._current_table]
             for e in table.entries:
                 line = [
-                    MemAllocType(e.type_alloc).description,  # type: ignore
+                    MemAllocType(int(e.type_alloc)).description,  # type: ignore
                     e.unk1,
                     e.unk2,
                     hex(e.start_address),

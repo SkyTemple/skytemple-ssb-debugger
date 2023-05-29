@@ -248,9 +248,6 @@ class MainController:
                 if Gtk.Buildable.get_name(child) in ['menu_open', 'menu_open_sep']:
                     menu_file.remove(child)
 
-        # Run the emulator thread polling 10x per frame.
-        GLib.timeout_add(GLib.PRIORITY_LOW, 100, emulator_poll)
-
     def get_context(self) -> AbstractDebuggerControlContext:
         return self.context
 
@@ -320,23 +317,31 @@ class MainController:
 
     def install_poll_emulator(self):
         # 30 FPS
-        self._poll_emulator_event_id = GLib.timeout_add(1000 // 30, self._poll_emulator_event_id)
+        self._poll_emulator_event_id = GLib.timeout_add(1000 // 30, self.do_poll_emulator)
 
     def uninstall_poll_emulator(self):
         if self._poll_emulator_event_id is not None:
             GLib.source_remove(self._poll_emulator_event_id)
 
     def do_poll_emulator(self):
-        errs = []
-        emulator_poll(lambda err: errs.append(err))
-        if len(errs) > 0:
-            # noinspection PyUnusedLocal
-            errs_as_str = "\n".join(errs)
+        try:
+            errs = []
+            emulator_poll(lambda err: errs.append(err))
+            if len(errs) > 0:
+                # noinspection PyUnusedLocal
+                errs_as_str = "\n".join(errs)
+                self.context.display_error(
+                    None,
+                    f(_("The emulator reported an error:\n\n{errs_as_str}")),
+                    _("Emulator Error")
+                )
+        except Exception as ex:
             self.context.display_error(
-                None,
-                f(_("The emulator reported an error:\n\n{errs_as_str}")),
+                sys.exc_info(),
+                f(_("The emulator reported an internal error:\n\n")),
                 _("Emulator Error")
             )
+        return True
 
     def on_main_window_delete_event(self, *args):
         if not self.editor_notebook.close_all_tabs() or not self.context.before_quit():
@@ -969,21 +974,23 @@ class MainController:
     def on_global_state_alloc_dump_clicked(self, *args):
         active_rows: List[Gtk.TreePath] = self.builder.get_object('global_state_alloc_treeview').get_selection().get_selected_rows()[1]
         if len(active_rows) >= 1:
-            data = self.global_state_controller.dump(active_rows[0].get_indices()[0])
-            dialog = Gtk.FileChooserNative.new(
-                _("Save dumped block..."),
-                self.window,
-                Gtk.FileChooserAction.SAVE,
-                _('_Save'), None
-            )
+            def do_dump(data):
+                dialog = Gtk.FileChooserNative.new(
+                    _("Save dumped block..."),
+                    self.window,
+                    Gtk.FileChooserAction.SAVE,
+                    _('_Save'), None
+                )
 
-            response = dialog.run()
-            fn = dialog.get_filename()
-            dialog.destroy()
+                response = dialog.run()
+                fn = dialog.get_filename()
+                dialog.destroy()
 
-            if response == Gtk.ResponseType.ACCEPT:
-                with open(fn, 'wb') as f:
-                    f.write(data)
+                if response == Gtk.ResponseType.ACCEPT:
+                    with open(fn, 'wb') as f:
+                        f.write(data)
+
+            self.global_state_controller.dump(active_rows[0].get_indices()[0], do_dump)
 
     # VARIABLES VIEW
 
@@ -1275,21 +1282,43 @@ class MainController:
         loaded_overl_grp1_addr = 0
         script_vars_addr = 0
         script_vars_local_addr = 0
+        global_script_var_values = 0
+        game_state_values = 0
+        language_info_data = 0
+        game_mode = 0
+        debug_special_episode_number = 0
+        notify_note = 0
         if self.debugger and self.debugger.ground_engine_state:
             self.debugger.ground_engine_state.reset(fully=True)
             assert self.debugger.rom_data is not None
-            loaded_overl_grp1_addr = self.debugger.rom_data.bin_sections.arm9.data.LOADED_OVERLAY_GROUP_1.absolute_address
-            script_vars_addr = self.debugger.rom_data.bin_sections.arm9.data.SCRIPT_VARS.absolute_address
-            script_vars_local_addr = self.debugger.rom_data.bin_sections.arm9.data.SCRIPT_VARS_LOCALS.absolute_address
+            arm9data = self.debugger.rom_data.bin_sections.arm9.data
+            ramdata = self.debugger.rom_data.bin_sections.ram.data
+            loaded_overl_grp1_addr = arm9data.LOADED_OVERLAY_GROUP_1.absolute_address
+            script_vars_addr = arm9data.SCRIPT_VARS.absolute_address
+            script_vars_local_addr = arm9data.SCRIPT_VARS_LOCALS.absolute_address
+
+            global_script_var_values = ramdata.SCRIPT_VARS_VALUES.absolute_address
+            game_state_values = arm9data.GAME_STATE_VALUES.absolute_address
+            language_info_data = arm9data.LANGUAGE_INFO_DATA.absolute_address
+            game_mode = arm9data.GAME_MODE.absolute_address
+            debug_special_episode_number = ramdata.DEBUG_SPECIAL_EPISODE_NUMBER.absolute_address
+            notify_note = arm9data.NOTIFY_NOTE.absolute_address
         try:
             lang = self.settings.get_emulator_language()
             if lang:
                 emulator_set_language(lang)
             emulator_open_rom(
                 self.context.get_rom_filename(),
-                u32(loaded_overl_grp1_addr),
-                u32(script_vars_addr),
-                u32(script_vars_local_addr)
+
+                address_loaded_overlay_group_1=u32(loaded_overl_grp1_addr),
+                global_variable_table_start_addr=u32(script_vars_addr),
+                local_variable_table_start_addr=u32(script_vars_local_addr),
+                global_script_var_values=u32(global_script_var_values),
+                game_state_values=u32(game_state_values),
+                language_info_data=u32(language_info_data),
+                game_mode=u32(game_mode),
+                debug_special_episode_number=u32(debug_special_episode_number),
+                notify_note=u32(notify_note),
             )
             self.emu_is_running = emulator_is_running()
         except RuntimeError:
@@ -1585,7 +1614,7 @@ class MainController:
 
     def _debugger_print_callback(self, string):
         textview: Gtk.TextView = self.builder.get_object('debug_log_textview')
-        textview.get_buffer().insert(textview.get_buffer().get_end_iter(), string + '\n')
+        textview.get_buffer().insert(textview.get_buffer().get_end_iter(), string)
 
         if self._debug_log_scroll_to_bottom:
             self._suppress_event = True
