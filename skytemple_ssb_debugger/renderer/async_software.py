@@ -61,7 +61,7 @@ class AsyncSoftwareRenderer:
                 self._after_render_hook(ctx, display_id)
 
     def decode_screen(self):
-        gpu_framebuffer: memoryview = emulator_display_buffer_as_rgbx()  # type: ignore
+        gpu_framebuffer = memoryview(bytearray(emulator_display_buffer_as_rgbx()))
         self._upper_image = cairo.ImageSurface.create_for_data(
             gpu_framebuffer[:SCREEN_PIXEL_SIZE*4], cairo.FORMAT_RGB24, SCREEN_WIDTH, SCREEN_HEIGHT
         )

@@ -224,7 +224,7 @@ class GroundEngineState:
             ov11.functions.SsbLoad1.absolute_address, ov11.functions.SsbLoad2.absolute_address
         ], self.hook__ssb_load)
         emulator_register_ssx_load([ov11.functions.StationLoadHanger.absolute_address + 0xC0], self.hook__ssx_load)
-        emulator_register_talk_load(ov11.functions.ScriptStationLoadTalk.absolute_address, self.hook__talk_load)
+        emulator_register_talk_load(ov11.functions.ScriptStationLoadTalk.absolute_addresses, self.hook__talk_load)
         emulator_register_unionall_load_addr_change(self.pnt_unionall_load_addr)
 
     def remove_watches(self):
