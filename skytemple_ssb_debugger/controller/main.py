@@ -1273,17 +1273,23 @@ class MainController:
         if self.breakpoint_state:
             self.breakpoint_state.fail_hard()
         loaded_overl_grp1_addr = 0
+        script_vars_addr = 0
+        script_vars_local_addr = 0
         if self.debugger and self.debugger.ground_engine_state:
             self.debugger.ground_engine_state.reset(fully=True)
             assert self.debugger.rom_data is not None
             loaded_overl_grp1_addr = self.debugger.rom_data.bin_sections.arm9.data.LOADED_OVERLAY_GROUP_1.absolute_address
+            script_vars_addr = self.debugger.rom_data.bin_sections.arm9.data.SCRIPT_VARS.absolute_address
+            script_vars_local_addr = self.debugger.rom_data.bin_sections.arm9.data.SCRIPT_VARS_LOCALS.absolute_address
         try:
             lang = self.settings.get_emulator_language()
             if lang:
                 emulator_set_language(lang)
             emulator_open_rom(
                 self.context.get_rom_filename(),
-                u32(loaded_overl_grp1_addr)
+                u32(loaded_overl_grp1_addr),
+                u32(script_vars_addr),
+                u32(script_vars_local_addr)
             )
             self.emu_is_running = emulator_is_running()
         except RuntimeError:
