@@ -66,6 +66,7 @@ class GroundEngineState:
         self.context = context
         self.logging_enabled = False
         self._boost = False
+        self._breaked = False
 
         self.pnt_map = rom_data.bin_sections.overlay11.data.GROUND_STATE_MAP.absolute_address
         base_pnt = rom_data.bin_sections.overlay11.data.GROUND_STATE_PTRS.absolute_address
@@ -114,6 +115,7 @@ class GroundEngineState:
     @no_type_check
     def break_pulled(self, state: BreakpointState):
         """Set the breaked property of the SSB file in the state's hanger."""
+        self._breaked = True
         self._loaded_ssb_files[state.hanger_id].breaked = True
         self._loaded_ssb_files[state.hanger_id].breaked__handler_file = cast(BreakpointFileState, state.file_state).handler_filename
         state.add_release_hook(self.break_released)
@@ -125,6 +127,7 @@ class GroundEngineState:
 
     def break_released(self, state: BreakpointState):
         """Reset the breaked property of loaded ssb files again."""
+        self._breaked = False
         for x in self._loaded_ssb_files:
             if x is not None:
                 x.breaked = False
@@ -194,25 +197,32 @@ class GroundEngineState:
             return evt
         return None
 
-    def collect(self) -> Tuple[GlobalScript, List[SsbFileInRam], List[SsxFileInRam], List[Actor], List[Object], List[Performer], List[Event]]:
-        loaded_ssb_files = self.loaded_ssb_files
-        loaded_ssx_files = self.loaded_ssx_files
-        actors = [x for x in self.actors if x is not None]
-        objects = [x for x in self.objects if x is not None]
-        performers = [x for x in self.performers if x is not None]
-        events = [x for x in self.events if x is not None]
-
+    def force_reload_ground_objects(self):
         all_entities: Iterable[AbstractEntity] = chain(
-            actors, objects, performers, events, (self.global_script, )
+            self._actors, self._objects, self._performers, self._events, (self._global_script, self._map)
         )
 
         for obj in all_entities:
             obj.refresh()
 
-        emulator_wait_one_cycle()
+        if not self._breaked:
+            emulator_wait_one_cycle()
+            emulator_wait_one_cycle()
         self._poll_emulator()
 
-        return self.global_script, loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events
+
+    def collect(self) -> Tuple[GlobalScript, List[SsbFileInRam], List[SsxFileInRam], List[Actor], List[Object], List[Performer], List[Event], Map]:
+        loaded_ssb_files = self.loaded_ssb_files
+        loaded_ssx_files = self.loaded_ssx_files
+
+        self.force_reload_ground_objects()
+
+        actors = [x for x in self.actors if x is not None]
+        objects = [x for x in self.objects if x is not None]
+        performers = [x for x in self.performers if x is not None]
+        events = [x for x in self.events if x is not None]
+
+        return self.global_script, loaded_ssb_files, loaded_ssx_files, actors, objects, performers, events, self.map
 
     def watch(self):
         ov11 = self.rom_data.bin_sections.overlay11

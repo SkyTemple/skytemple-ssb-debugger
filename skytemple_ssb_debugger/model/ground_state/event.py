@@ -16,6 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import Optional, cast
+
 from range_typed_integers import u32
 from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 
@@ -32,8 +34,12 @@ class Event(AbstractEntity):
         return u32(0x20)
 
     @property
+    def _validity_offset(self) -> Optional[u32]:
+        return EVENT_EXISTS_CHECK_OFFSET  # type: ignore
+
+    @property
     def valid(self):
-        return read_i16(self.buffer, EVENT_EXISTS_CHECK_OFFSET) > 0
+        return read_i16(self.buffer, cast(u32, self._validity_offset)) > 0
 
     @property
     def id(self):

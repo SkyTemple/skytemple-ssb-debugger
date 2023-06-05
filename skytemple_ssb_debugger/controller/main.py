@@ -22,7 +22,7 @@ import shutil
 import sys
 import webbrowser
 from functools import partial
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Sequence
 
 import cairo
 import gi
@@ -326,7 +326,8 @@ class MainController:
     def do_poll_emulator(self):
         try:
             errs = []
-            emulator_poll(lambda err: errs.append(err))
+            while emulator_poll(lambda err: errs.append(err)):
+                pass
             if len(errs) > 0:
                 # noinspection PyUnusedLocal
                 errs_as_str = "\n".join(errs)
@@ -756,6 +757,9 @@ class MainController:
     def on_debug_settings_debug_mode_toggled(btn: Gtk.Widget):
         emulator_set_debug_mode(btn.get_active())
 
+    def on_debug_settings_debug_dungeon_skip_toggled(self, btn: Gtk.Widget):
+        raise NotImplementedError("todo")
+
     def on_debug_settings_overlay_toggled(self, btn: Gtk.Widget):
         if self.debug_overlay:
             self.debug_overlay.toggle(btn.get_active())
@@ -1171,13 +1175,18 @@ class MainController:
         self._set_sensitve("macro_variables_sw", on_off)
         self._set_sensitve("local_variables_sw", on_off)
 
-    def load_debugger_state(self, breaked_for: Optional[ScriptRuntimeStruct] = None, file_state: Optional[BreakpointFileState] = None):
+    def load_debugger_state(
+            self,
+            breaked_for: Optional[ScriptRuntimeStruct] = None,
+            file_state: Optional[BreakpointFileState] = None,
+            local_vars_values: Optional[Sequence[int]] = None
+    ):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
         self.ground_state_controller.sync(self.editor_notebook, breaked_for)
         # This will show the local and macro variables
-        if breaked_for and file_state:
-            self.local_variable_controller.sync(breaked_for, file_state)
+        if local_vars_values and file_state:
+            self.local_variable_controller.sync(local_vars_values, file_state)
         else:
             self.local_variable_controller.disable()
 
@@ -1269,10 +1278,10 @@ class MainController:
         emulator_touch_set_pos(int(emu_x), int(emu_y))
 
     def lookup_key(self, keyval):
-        key = False
+        key = 0
         for i in range(0, EmulatorKeys.NB_KEYS):
             if keyval == self._keyboard_cfg[i]:
-                key = emulator_keymask(i + 1) > 0
+                key = emulator_keymask(i + 1)
                 break
         return key
 
@@ -1446,7 +1455,10 @@ class MainController:
         assert self.ssb_fm
         assert self.debugger and self.debugger.rom_data
         srs = ScriptRuntimeStruct.from_data(
-            self.debugger.rom_data, state.script_runtime_struct_mem, state.script_target_slot_id
+            self.debugger.rom_data,
+            state.script_runtime_struct_addr,
+            state.script_runtime_struct_mem,
+            state.script_target_slot_id
         )
         emulator_volume_set(0)
 
@@ -1470,7 +1482,7 @@ class MainController:
         # This will tell the code editor to refresh the debugger controls for all open editors
         self.editor_notebook.break_pulled(state)
         self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
-        self.load_debugger_state(srs, breakpoint_file_state)
+        self.load_debugger_state(srs, breakpoint_file_state, state.local_vars_values)
         self.debug_overlay.break_pulled()  # type: ignore
 
         state.add_release_hook(self.break_released)
@@ -1487,10 +1499,11 @@ class MainController:
         self.editor_notebook.focus_by_opcode_addr(file_state.ssb_filename, file_state.opcode_addr)
         srs = ScriptRuntimeStruct.from_data(
             self.debugger.rom_data,
+            file_state.parent.script_runtime_struct_addr,
             file_state.parent.script_runtime_struct_mem,
             file_state.parent.script_target_slot_id
         )
-        self.load_debugger_state(srs, file_state)
+        self.load_debugger_state(srs, file_state, file_state.parent.local_vars_values)
 
     def break_released(self, state: BreakpointState):
         """
@@ -1614,7 +1627,7 @@ class MainController:
 
     def _debugger_print_callback(self, string):
         textview: Gtk.TextView = self.builder.get_object('debug_log_textview')
-        textview.get_buffer().insert(textview.get_buffer().get_end_iter(), string)
+        textview.get_buffer().insert(textview.get_buffer().get_end_iter(), string + '\n')
 
         if self._debug_log_scroll_to_bottom:
             self._suppress_event = True

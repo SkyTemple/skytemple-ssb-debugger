@@ -88,6 +88,7 @@ class VariableController:
         self._boost = False
         # Cached variable values
         self._variable_cache: Dict[Pmd2ScriptGameVar, List[int]] = {}
+        self._pending_sync = False
 
         self.variables_changed_but_not_saved = False
 
@@ -95,12 +96,14 @@ class VariableController:
         """Manual force sync of all variables"""
 
         def update(vals: Mapping[int, Sequence[int]]):
+            self._pending_sync = False
             assert self.rom_data is not None
             self._variable_cache = {
                 self.rom_data.script_data.game_variables__by_id[k]: list(v) for k, v in vals.items()
             }
             self._apply_sync()
 
+        self._pending_sync = True
         notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
         notebook.set_sensitive(False)
         emulator_sync_vars(update)
@@ -315,7 +318,11 @@ class VariableController:
 
     def hook__variable_set(self, var_id, var_offset, value):
         assert self.rom_data is not None and self.var_form_elements is not None
-        self._variable_cache[self.rom_data.script_data.game_variables__by_id[var_id]][var_offset] = value
+        var = self.rom_data.script_data.game_variables__by_id[var_id]
+        if var not in self._variable_cache:
+            if not self._pending_sync:
+                self.sync()
+            return
         self._suppress_events = True
         entry_list = self.var_form_elements[var_id]
         if entry_list is not None:

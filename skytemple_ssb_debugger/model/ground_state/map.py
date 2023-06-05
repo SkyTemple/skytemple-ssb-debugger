@@ -16,6 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import Optional
+
 from range_typed_integers import u32
 from skytemple_files.common.util import read_u32
 
@@ -27,6 +29,10 @@ class Map(AbstractEntity):
     def _block_size(self):
         # This is not the actual size, increase this if we need to read more!
         return u32(0x208)
+
+    @property
+    def _validity_offset(self) -> Optional[u32]:
+        return None
 
     @property
     def camera_x_pos(self):
