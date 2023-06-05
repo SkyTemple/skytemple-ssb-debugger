@@ -27,21 +27,22 @@ STRUCT_SIZE = u32(0x34)
 
 
 class ScriptRuntimeStruct:
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: u32, script_struct_offset_from_start: u32, parent=None):
+    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: u32, script_struct_offset_from_start: u32, parent=None, *, _do_not_refresh=False):
         super().__init__()
         self.rom_data = rom_data
         self.pnt_to_block_start = pnt_to_block_start
         self.script_struct_offset_from_start = script_struct_offset_from_start
         self.buffer = bytes(STRUCT_SIZE)
         self._cached_target_id: int = 0
+        self._do_not_refresh = _do_not_refresh
         self.refresh()
         
         # for debugging
         self._parent = parent
 
     @classmethod
-    def from_data(cls, rom_data: Pmd2Data, data: bytes, target_slot_id: u32):
-        slf = cls(rom_data, None, None)  # type: ignore
+    def from_data(cls, rom_data: Pmd2Data, pnt_to_block_start: u32, data: bytes, target_slot_id: u32):
+        slf = cls(rom_data, pnt_to_block_start, None, _do_not_refresh=True)  # type: ignore
         slf.buffer = data
         slf._cached_target_id = target_slot_id
         return slf
@@ -51,8 +52,9 @@ class ScriptRuntimeStruct:
             self.buffer = val
             self.refresh_target_id()
 
-        self._cached_target_id = 0
-        emulator_read_mem_from_ptr(self.pnt_to_block_start, self.script_struct_offset_from_start, STRUCT_SIZE, set_val)
+        if self.pnt_to_block_start is not None and not self._do_not_refresh:
+            self._cached_target_id = 0
+            emulator_read_mem_from_ptr(self.pnt_to_block_start, self.script_struct_offset_from_start, STRUCT_SIZE, set_val)
 
     def refresh_target_id(self):
         def set_cached_target_id(val: bytes):
@@ -150,6 +152,6 @@ class ScriptRuntimeStruct:
     def __eq__(self, other):
         if not isinstance(other, ScriptRuntimeStruct):
             return False
-        if self.pnt_to_block_start == -1 or other.pnt_to_block_start == -1:
+        if self.pnt_to_block_start is None or other.pnt_to_block_start is None:
             return self.buffer == other.buffer
         return self.pnt_to_block_start == other.pnt_to_block_start and self.script_struct_offset_from_start == other.script_struct_offset_from_start

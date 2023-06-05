@@ -31,8 +31,6 @@ COLOR_PERFORMER = (0, 1.0, 1.0, ALPHA_T)
 COLOR_EVENTS = (0, 0, 1.0, 0.4)
 COLOR_BLACK = (0, 0, 0, ALPHA_T)
 COLOR_POS_MARKERS = (0, 1.0, 0, ALPHA_T)
-REDRAW_DELAY = 2
-FRAMES_PER_SECOND = 60
 
 
 class DebugOverlayController:
@@ -142,6 +140,7 @@ class DebugOverlayController:
                 self._object_bbox_cache = []
                 self._perf_bbox_cache = []
                 self._event_bbox_cache = []
+                ges.force_reload_ground_objects()
                 for actor in not_none(ges.actors):
                     self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
                 for object in not_none(ges.objects):
@@ -153,7 +152,7 @@ class DebugOverlayController:
                 self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache and not self._boost:
-            GLib.timeout_add(1 / FRAMES_PER_SECOND * REDRAW_DELAY, self._update_cache)
+            GLib.timeout_add(2000, self._update_cache)
         else:
             self._cache_redrawing_registered = False
         return False

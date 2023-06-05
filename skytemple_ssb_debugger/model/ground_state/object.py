@@ -15,6 +15,9 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
+
+from typing import cast, Optional
+
 from range_typed_integers import u16, u8, u32
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptObject
@@ -34,12 +37,16 @@ class Object(AbstractEntityWithScriptStruct):
         return u32(0x144)
 
     @property
+    def _validity_offset(self) -> Optional[u32]:
+        return self._script_struct_offset  # type: ignore
+
+    @property
     def _script_struct_offset(self):
         return OBJECT_BEGIN_SCRIPT_STRUCT
 
     @property
     def valid(self):
-        return read_i16(self.buffer, self._script_struct_offset) > 0
+        return read_i16(self.buffer, cast(u32, self._validity_offset)) > 0
 
     @property
     def id(self):

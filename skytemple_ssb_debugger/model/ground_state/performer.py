@@ -16,6 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+from typing import Optional, cast
+
 from range_typed_integers import u32
 from skytemple_files.common.util import read_u16, read_u8, read_u32
 
@@ -33,12 +35,16 @@ class Performer(AbstractEntityWithScriptStruct):
         return u32(0x140)
 
     @property
+    def _validity_offset(self) -> Optional[u32]:
+        return self._script_struct_offset  # type: ignore
+
+    @property
     def _script_struct_offset(self):
         return PERFORMER_BEGIN_SCRIPT_STRUCT
 
     @property
     def valid(self):
-        return read_u16(self.buffer, self._script_struct_offset) > 0
+        return read_u16(self.buffer, cast(u32, self._validity_offset)) > 0
 
     @property
     def id(self):

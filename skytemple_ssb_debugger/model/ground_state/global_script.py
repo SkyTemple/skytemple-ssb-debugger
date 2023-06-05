@@ -15,6 +15,10 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
+
+from typing import Optional
+
+from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.model.ground_state import AbstractEntityWithScriptStruct
 
@@ -23,6 +27,10 @@ class GlobalScript(AbstractEntityWithScriptStruct):
     @property
     def _block_size(self):
         return 0
+
+    @property
+    def _validity_offset(self) -> Optional[u32]:
+        return None
 
     @property
     def _script_struct_offset(self):

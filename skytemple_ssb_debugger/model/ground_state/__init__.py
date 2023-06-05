@@ -16,11 +16,12 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from abc import abstractmethod, ABC
+from typing import Optional
 
 from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
-from skytemple_ssb_emulator import emulator_read_mem_from_ptr
+from skytemple_ssb_emulator import emulator_read_mem_from_ptr, emulator_read_mem_from_ptr_with_validity_check
 
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
@@ -53,18 +54,25 @@ class AbstractEntity(ABC):
         self.refresh()
 
     def refresh(self):
+        self.buffer = bytes(self._block_size)
         def set_val(val):
             self.buffer = val
 
         if self._block_size != 0:
-            emulator_read_mem_from_ptr(self.pnt_to_block_start, self.offset, self._block_size, set_val)
-        else:
-            self.buffer = bytes()
+            if self._validity_offset is not None:
+                emulator_read_mem_from_ptr_with_validity_check(self.pnt_to_block_start, self.offset, self._block_size, self._validity_offset, set_val)
+            else:
+                emulator_read_mem_from_ptr(self.pnt_to_block_start, self.offset, self._block_size, set_val)
 
     @property
     @abstractmethod
     def _block_size(self):
         pass
+
+    @property
+    @abstractmethod
+    def _validity_offset(self) -> Optional[u32]:
+        """If defined, only refresh the memory if the i16 at the given offset starting at the block start is > 0."""
 
 
 class AbstractEntityWithScriptStruct(AbstractEntity, ABC):

@@ -130,7 +130,7 @@ class GroundStateController:
 
             if ground_state.running:
                 # Is runningues
-                global_script, ssb, ssx, actors, objects, performers, events = ground_state.collect()
+                global_script, ssb, ssx, actors, objects, performers, events, themap = ground_state.collect()
 
                 if code_editor:
                     # Sync the code editor execution lines
@@ -233,7 +233,8 @@ class GroundStateController:
                 self._entities__tree_store.append(None, [
                     _('<Global>'), '0', '',
                     self.get_short_sname(ssb, breaked, global_script.script_struct.hanger_ssb), None, '',
-                    'skytemple-media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT, '', '', SsbRoutineType.GENERIC.value
+                    'skytemple-media-playback-pause-symbolic' if breaked else '', ICON_GLOBAL_SCRIPT,
+                    f'{themap.camera_x_pos}', f'{themap.camera_y_pos}', SsbRoutineType.GENERIC.value
                 ])
                 actors_node = self._entities__tree_store.append(None, [
                     _('Actors'), '', '', '', None, '', '', ICON_ACTOR, '', '', -1

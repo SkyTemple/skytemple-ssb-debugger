@@ -66,7 +66,7 @@ class LocalVariableController:
             if var.is_local:
                 self._local_vars_specs.append(var)
 
-    def sync(self, breaked_for: ScriptRuntimeStruct, file_state: Optional[BreakpointFileState] = None):
+    def sync(self, local_vars_values: Sequence[int], file_state: Optional[BreakpointFileState] = None):
         if not self.debugger or not self.debugger.ground_engine_state or not self._local_vars_specs:
             return self.disable()
 
@@ -86,11 +86,8 @@ class LocalVariableController:
         # Local variables
         self._local__list_store.clear()
 
-        def update(vals):
-            self._local_vars_values = vals
-            self._do_sync_gtk()
-
-        emulator_sync_local_vars(breaked_for.pnt_to_block_start, update)
+        self._local_vars_values = local_vars_values
+        self._do_sync_gtk()
 
     def _do_sync_gtk(self):
         if self._local_vars_specs is not None:

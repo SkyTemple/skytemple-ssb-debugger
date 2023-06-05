@@ -16,6 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import logging
+import traceback
 from threading import Lock
 from typing import Optional, TYPE_CHECKING, Dict, List, Iterable
 
@@ -171,10 +172,13 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             *, context: Optional[Dict[str, Capturable]] = None
     ):
         logger.error(error_message, exc_info=exc_info)
+        exc_info_str = ''
+        if exc_info:
+            exc_info_str = '\n' + ''.join(traceback.format_exception(exc_info[0], value=exc_info[1], tb=exc_info[2]))
         md = self.message_dialog_cls()(self._main_window,
                                        Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
                                        Gtk.ButtonsType.OK,
-                                       error_message,
+                                       f"{error_message}{exc_info_str}",
                                        title=error_title)
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()

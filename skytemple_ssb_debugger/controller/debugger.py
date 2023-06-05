@@ -98,7 +98,7 @@ class DebuggerController:
             emulator_set_debug_flag_2(j, jv)
 
         self.ground_engine_state = GroundEngineState(
-            self.rom_data, self._print_callback_fn, self.parent.do_poll_emulator, inform_ground_engine_start_cb, ssb_file_manager,
+            self.rom_data, self._print_callback_fn, inform_ground_engine_start_cb, self.parent.do_poll_emulator, ssb_file_manager,
             self.parent.context
         )
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
@@ -127,12 +127,18 @@ class DebuggerController:
         if self.ground_engine_state:
             self.ground_engine_state.logging_enabled = value
 
-    def hook__breaking_point(self, break_state: Optional[BreakpointState], script_runtime_struct_mem: bytes, script_target_slot_id: u32, current_opcode: u32):
+    def hook__breaking_point(
+        self,
+        break_state: Optional[BreakpointState],
+        srs_mem: bytes,
+        script_target_slot_id: u32,
+        current_opcode: u32
+    ):
         if not self._boost:
             assert self.rom_data is not None and self.ground_engine_state is not None
             if self._log_operations:
                 srs = ScriptRuntimeStruct.from_data(
-                    self.rom_data, script_runtime_struct_mem, script_target_slot_id
+                    self.rom_data, u32(0), srs_mem, script_target_slot_id
                 )
                 current_opcode_obj = self.rom_data.script_data.op_codes__by_id[current_opcode]
                 self._print_callback_fn(f"> {srs.target_type.name}({srs.script_target_slot_id}): {current_opcode_obj.name} @{srs.current_opcode_addr:0x}")
