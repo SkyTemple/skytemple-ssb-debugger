@@ -16,9 +16,10 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import os
-from typing import Optional, List, Callable
+from time import sleep
+from typing import Optional, List, Callable, Any
 
-from gi.repository import Gtk, Gdk
+from gi.repository import Gtk, Gdk, GLib
 from skytemple_files.common.i18n_util import _
 from skytemple_ssb_emulator import emulator_get_joy_number_connected, emulator_get_key_names, EmulatorKeys, \
     emulator_joy_get_set_key
@@ -44,6 +45,7 @@ class JoystickControlsDialogController:
         self.builder.connect_signals(self)
 
     def run(self,
+            poll_emulator: Callable[[], Any],
             joystick_cfg: List[int],
             emulator_is_running: bool,
             callback: Callable[[List[int]], None]
@@ -71,7 +73,10 @@ class JoystickControlsDialogController:
                 for i in range(0, EmulatorKeys.NB_KEYS):
                     b = self.builder.get_object(f"button_joy_{key_names[i]}")
                     b.set_label(f"{key_names_localized[i]} : {self._joystick_cfg[i]}")
+                # todo: a bit of a hack since Gtk.Dialog.run starts a new loop and temporarily "disables" the emulator polling.
+                source_id = GLib.timeout_add(1000 // 45, poll_emulator)
                 self.window.run()
+                GLib.source_remove(source_id)
                 self.window.hide()
 
             callback(self._joystick_cfg)
@@ -90,18 +95,15 @@ class JoystickControlsDialogController:
         key = widget_to_primitive(w)
         dlg = self.builder.get_object("wJoyDlg")
         key -= 1  # key = bit position, start with
+
+        def cb(joykey):
+            self._joystick_cfg[key] = joykey  # type: ignore
+            self.builder.get_object(f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
+            dlg.hide()
+
+        emulator_joy_get_set_key(key, cb)
+        sleep(0.3)
         dlg.show_now()
-        # Need to force event processing. Otherwise, popup won't show up.
-        while Gtk.events_pending():
-            Gtk.main_iteration()
-
-        joykey = emulator_joy_get_set_key(key)
-
-        self._joystick_cfg[key] = joykey  # type: ignore
-
-        self.builder.get_object(f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
-
-        dlg.hide()
 
     def gtk_widget_hide_on_delete(self, w: Gtk.Widget, *args):
         w.hide_on_delete()
