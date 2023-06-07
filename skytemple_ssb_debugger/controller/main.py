@@ -600,7 +600,7 @@ class MainController:
             self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
         JoystickControlsDialogController(self.window).run(
-            self._joystick_cfg, emulator_is_running(), update
+            self.do_poll_emulator, self._joystick_cfg, emulator_is_running(), update
         )
 
 
