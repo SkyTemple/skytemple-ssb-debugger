@@ -16,6 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import json
+import logging
 import math
 import os
 import sys
@@ -36,6 +37,8 @@ from skytemple_files.common.i18n_util import f, _
 gi.require_version('Gtk', '3.0')
 
 from gi.repository import Gtk
+
+logger = logging.getLogger(__name__)
 
 
 class VariableController:
@@ -308,7 +311,11 @@ class VariableController:
             json.dump(vars, f)
 
     def _queue_variable_write(self, var_id: int, offset: int, value: int):
-        emulator_write_game_variable(var_id, offset, value)
+        try:
+            emulator_write_game_variable(var_id, offset, value)
+        except:
+            logger.error(f"failed writing game var: {var_id}@{offset} = {value}")
+            raise
 
         # Also update the cached values
         for var in self._variable_cache.keys():
