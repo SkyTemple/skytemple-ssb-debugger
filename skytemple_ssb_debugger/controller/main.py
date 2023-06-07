@@ -1005,14 +1005,17 @@ class MainController:
     def on_variables_load1_clicked(self, *args):
         if self.context.is_project_loaded():
             self.variable_controller.load(1, self.context.get_project_debugger_dir())
+            self.variable_controller.sync()
 
     def on_variables_load2_clicked(self, *args):
         if self.context.is_project_loaded():
             self.variable_controller.load(2, self.context.get_project_debugger_dir())
+            self.variable_controller.sync()
 
     def on_variables_load3_clicked(self, *args):
         if self.context.is_project_loaded():
             self.variable_controller.load(3, self.context.get_project_debugger_dir())
+            self.variable_controller.sync()
 
     def on_variables_save1_clicked(self, *args):
         if self.context.is_project_loaded():
