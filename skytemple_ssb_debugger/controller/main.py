@@ -758,7 +758,8 @@ class MainController:
         emulator_set_debug_mode(btn.get_active())
 
     def on_debug_settings_debug_dungeon_skip_toggled(self, btn: Gtk.Widget):
-        raise NotImplementedError("todo")
+        if self.debugger:
+            self.debugger.debug_dungeon_skip(btn.get_active())
 
     def on_debug_settings_overlay_toggled(self, btn: Gtk.Widget):
         if self.debug_overlay:

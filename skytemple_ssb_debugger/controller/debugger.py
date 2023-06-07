@@ -23,7 +23,7 @@ from skytemple_ssb_emulator import emulator_register_script_debug, emulator_regi
     emulator_register_debug_flag, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
     EmulatorLogType, emulator_unregister_script_debug, \
     emulator_unregister_debug_print, emulator_unregister_debug_flag, emulator_debug_breakpoints_disabled_get, \
-    emulator_debug_breakpoints_disabled_set, BreakpointState
+    emulator_debug_breakpoints_disabled_set, BreakpointState, emulator_set_debug_dungeon_skip
 
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
@@ -159,3 +159,7 @@ class DebuggerController:
         self._boost = state
         if self.ground_engine_state:
             self.ground_engine_state.set_boost(state)
+
+    def debug_dungeon_skip(self, value: bool):
+        if self.rom_data:
+            emulator_set_debug_dungeon_skip(self.rom_data.bin_sections.overlay29.data.DUNGEON_PTR.absolute_address, value)
