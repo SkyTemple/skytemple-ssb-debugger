@@ -1,4 +1,4 @@
-__version__ = '1.6.0'
+__version__ = '1.6.0a1'
 from setuptools import setup, find_packages
 
 # README read-in
@@ -18,13 +18,13 @@ setup(
     url='https://github.com/SkyTemple/skytemple-ssb-debugger',
     install_requires=[
         'ndspy >= 3.0.0',
-        'skytemple-files >= 1.4.2',
+        'skytemple-files >= 1.6.0a1',
         'pmdsky-debug-py',  #  Whatever version skytemple-files requires.
         'skytemple-icons >= 0.1.0',
         'range-typed-integers >= 1.0.0',
         'pygobject >= 3.26.0',
         'pycairo >= 1.16.0',
-        'skytemple-ssb-emulator >= 1.6.0',
+        'skytemple-ssb-emulator >= 1.6.0a1',
         'explorerscript >= 0.1.2',
         'nest-asyncio >= 1.4.1',
         'pygtkspellcheck >= 5.0'
