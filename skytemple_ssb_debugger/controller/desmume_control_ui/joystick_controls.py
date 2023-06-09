@@ -33,8 +33,8 @@ class JoystickControlsDialogController:
         path = os.path.abspath(os.path.dirname(__file__))
         # SkyTemple translation support
         try:
-            from skytemple.core.ui_utils import make_builder
-            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))
+            from skytemple.core.ui_utils import make_builder  # type: ignore
+            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))  # type: ignore
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
