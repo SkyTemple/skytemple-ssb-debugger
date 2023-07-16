@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.38.2 -->
+<!-- Generated with glade 3.40.0 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkNotebook" id="code_editor_notebook">
@@ -1590,7 +1590,7 @@ not halting.</property>
                                                 <property name="halign">start</property>
                                                 <property name="margin-top">10</property>
                                                 <property name="margin-bottom">5</property>
-                                                <property name="label" translatable="yes">Debug Flags 1</property>
+                                                <property name="label" translatable="yes">Debug Flags</property>
                                               </object>
                                               <packing>
                                                 <property name="expand">False</property>
@@ -1621,7 +1621,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_1">
-                                                    <property name="label" translatable="yes">No Screen Fade</property>
+                                                    <property name="label" translatable="yes">Disable Screen Fade</property>
                                                     <property name="name">chk_debug_flag_1_1</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1637,7 +1637,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_2">
-                                                    <property name="label" translatable="yes">Sound OFF</property>
+                                                    <property name="label" translatable="yes">Disable Sound</property>
                                                     <property name="name">chk_debug_flag_1_2</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1653,7 +1653,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_3">
-                                                    <property name="label" translatable="yes">BGM OFF</property>
+                                                    <property name="label" translatable="yes">Disable Background Music</property>
                                                     <property name="name">chk_debug_flag_1_3</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1669,7 +1669,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_4">
-                                                    <property name="label" translatable="yes">SE OFF</property>
+                                                    <property name="label" translatable="yes">Disable Sound Effects</property>
                                                     <property name="name">chk_debug_flag_1_4</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1685,13 +1685,22 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_5">
-                                                    <property name="label" translatable="yes">Stage NPC Dummy</property>
                                                     <property name="name">chk_debug_flag_1_5</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="receives-default">False</property>
                                                     <property name="draw-indicator">True</property>
                                                     <signal name="toggled" handler="on_chk_debug_flag_1_toggled" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkLabel" id="debug_flag_1_5_text">
+                                                        <property name="visible">True</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="label" translatable="yes">Stage NPC Dummy (?)</property>
+                                                        <attributes>
+                                                          <attribute name="style" value="italic"/>
+                                                        </attributes>
+                                                      </object>
+                                                    </child>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -1701,7 +1710,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_6">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Text Overflow Check (does nothing)</property>
                                                     <property name="name">chk_debug_flag_1_6</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1717,13 +1726,22 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_7">
-                                                    <property name="label" translatable="yes">???</property>
                                                     <property name="name">chk_debug_flag_1_7</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="receives-default">False</property>
                                                     <property name="draw-indicator">True</property>
                                                     <signal name="toggled" handler="on_chk_debug_flag_1_toggled" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkLabel" id="debug_flag_1_7_text">
+                                                        <property name="visible">True</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="label" translatable="yes">No cheat-check (?)</property>
+                                                        <attributes>
+                                                          <attribute name="style" value="italic"/>
+                                                        </attributes>
+                                                      </object>
+                                                    </child>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -1733,13 +1751,22 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_8">
-                                                    <property name="label" translatable="yes">???</property>
                                                     <property name="name">chk_debug_flag_1_8</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="receives-default">False</property>
                                                     <property name="draw-indicator">True</property>
                                                     <signal name="toggled" handler="on_chk_debug_flag_1_toggled" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkLabel" id="debug_flag_1_8_text">
+                                                        <property name="visible">True</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="label" translatable="yes">No plunge-check (?)</property>
+                                                        <attributes>
+                                                          <attribute name="style" value="italic"/>
+                                                        </attributes>
+                                                      </object>
+                                                    </child>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -1749,13 +1776,22 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_9">
-                                                    <property name="label" translatable="yes">???</property>
                                                     <property name="name">chk_debug_flag_1_9</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
                                                     <property name="receives-default">False</property>
                                                     <property name="draw-indicator">True</property>
                                                     <signal name="toggled" handler="on_chk_debug_flag_1_toggled" swapped="no"/>
+                                                    <child>
+                                                      <object class="GtkLabel" id="debug_flag_1_9_text">
+                                                        <property name="visible">True</property>
+                                                        <property name="can-focus">False</property>
+                                                        <property name="label" translatable="yes">Dungeon Infinite Comeback (?)</property>
+                                                        <attributes>
+                                                          <attribute name="style" value="italic"/>
+                                                        </attributes>
+                                                      </object>
+                                                    </child>
                                                   </object>
                                                   <packing>
                                                     <property name="expand">False</property>
@@ -1765,7 +1801,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_10">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Enable Debug Menus (does nothing)</property>
                                                     <property name="name">chk_debug_flag_1_10</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1781,7 +1817,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_1_11">
-                                                    <property name="label" translatable="yes">Debug Menus</property>
+                                                    <property name="label" translatable="yes">Override Dungeon Result</property>
                                                     <property name="name">chk_debug_flag_1_11</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1809,7 +1845,7 @@ not halting.</property>
                                                 <property name="halign">start</property>
                                                 <property name="margin-top">10</property>
                                                 <property name="margin-bottom">5</property>
-                                                <property name="label" translatable="yes">Debug Flags 2</property>
+                                                <property name="label" translatable="yes">Debug Log Flags</property>
                                               </object>
                                               <packing>
                                                 <property name="expand">False</property>
@@ -1824,7 +1860,7 @@ not halting.</property>
                                                 <property name="orientation">vertical</property>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_0">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Dungeon</property>
                                                     <property name="name">chk_debug_flag_2_0</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1840,7 +1876,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_1">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Ground</property>
                                                     <property name="name">chk_debug_flag_2_1</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1856,7 +1892,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_2">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Script</property>
                                                     <property name="name">chk_debug_flag_2_2</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1872,7 +1908,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_3">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Script Debug</property>
                                                     <property name="name">chk_debug_flag_2_3</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1888,7 +1924,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_4">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Script Supervision</property>
                                                     <property name="name">chk_debug_flag_2_4</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1904,7 +1940,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_5">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Script command</property>
                                                     <property name="name">chk_debug_flag_2_5</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1920,7 +1956,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_6">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Sound</property>
                                                     <property name="name">chk_debug_flag_2_6</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1936,7 +1972,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_7">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">BGM</property>
                                                     <property name="name">chk_debug_flag_2_7</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1952,7 +1988,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_8">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">SE</property>
                                                     <property name="name">chk_debug_flag_2_8</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1968,7 +2004,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_9">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Flag</property>
                                                     <property name="name">chk_debug_flag_2_9</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -1984,7 +2020,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_10">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">File</property>
                                                     <property name="name">chk_debug_flag_2_10</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -2000,7 +2036,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_11">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Memory</property>
                                                     <property name="name">chk_debug_flag_2_11</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -2016,7 +2052,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_12">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Backup</property>
                                                     <property name="name">chk_debug_flag_2_12</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -2032,7 +2068,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_13">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Thread</property>
                                                     <property name="name">chk_debug_flag_2_13</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -2048,7 +2084,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_14">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Kernel</property>
                                                     <property name="name">chk_debug_flag_2_14</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
@@ -2064,7 +2100,7 @@ not halting.</property>
                                                 </child>
                                                 <child>
                                                   <object class="GtkCheckButton" id="chk_debug_flag_2_15">
-                                                    <property name="label" translatable="yes">???</property>
+                                                    <property name="label" translatable="yes">Performance</property>
                                                     <property name="name">chk_debug_flag_2_15</property>
                                                     <property name="visible">True</property>
                                                     <property name="can-focus">True</property>
