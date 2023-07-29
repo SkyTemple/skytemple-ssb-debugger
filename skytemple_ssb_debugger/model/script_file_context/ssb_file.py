@@ -163,6 +163,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         logger.debug(f"Saving SSB. From exps? {save_exps}")
 
         def save_thread():
+            logger.debug(f"Saving SSB: In thread.")
             try:
                 assert self._ssb_file is not None and self._ssb_file.file_manager is not None
                 included_exps_files = None
@@ -180,6 +181,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 GLib.idle_add(partial(error_callback, exc_info, err))
                 return
             else:
+                logger.debug(f"Saving SSB: Success.")
                 GLib.idle_add(partial(self._after_save, ready_to_reload, included_exps_files, success_callback))
 
         threading.Thread(target=save_thread).start()
