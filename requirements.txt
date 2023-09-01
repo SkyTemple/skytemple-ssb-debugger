@@ -4,7 +4,7 @@ pycairo==1.18.2
 skytemple-ssb-emulator==1.6.0a1
 explorerscript==0.1.3
 range-typed-integers >= 1.0.0
-nest-asyncio==1.5.5
+nest-asyncio==1.5.7
 pygtkspellcheck==5.0.2
 git+https://github.com/skytemple/skytemple-files@master#egg=skytemple_files
 pmdsky-debug-py
