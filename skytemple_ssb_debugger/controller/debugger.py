@@ -82,10 +82,10 @@ class DebuggerController:
             self.hook__log_msg
         )
         emulator_register_debug_flag(
-            arm9.functions.GetDebugFlag1.absolute_addresses,
-            arm9.functions.GetDebugFlag2.absolute_addresses,
-            arm9.functions.SetDebugFlag1.absolute_addresses,
-            arm9.functions.SetDebugFlag2.absolute_addresses,
+            arm9.functions.GetDebugFlag.absolute_addresses,
+            arm9.functions.GetDebugLogFlag.absolute_addresses,
+            arm9.functions.SetDebugFlag.absolute_addresses,
+            arm9.functions.SetDebugLogFlag.absolute_addresses,
             [ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8],
             self.hook__set_debug_flag
         )
