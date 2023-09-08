@@ -10,3 +10,4 @@ git+https://github.com/skytemple/skytemple-files@master#egg=skytemple_files
 pmdsky-debug-py
 git+https://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
 types-setuptools
+pygobject-stubs --config-settings=config=Gtk3,Gdk3,GtkSource4
