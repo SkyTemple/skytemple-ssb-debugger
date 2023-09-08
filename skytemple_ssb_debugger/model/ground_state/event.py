@@ -35,7 +35,7 @@ class Event(AbstractEntity):
 
     @property
     def _validity_offset(self) -> Optional[u32]:
-        return EVENT_EXISTS_CHECK_OFFSET  # type: ignore
+        return EVENT_EXISTS_CHECK_OFFSET
 
     @property
     def valid(self):

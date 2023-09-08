@@ -85,41 +85,41 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         self._open_files = {}
 
     def get_project_dir(self) -> str:
-        return self._project_fm.dir()  # type: ignore
+        return self._project_fm.dir()
 
     def load_script_files(self) -> ScriptFiles:
-        return load_script_files(get_rom_folder(self._rom, SCRIPT_DIR))  # type: ignore
+        return load_script_files(get_rom_folder(self._rom, SCRIPT_DIR))
 
     def is_project_loaded(self) -> bool:
         return self._rom is not None
 
     def get_rom_filename(self) -> str:
         self._check_loaded()
-        return self._rom_filename  # type: ignore
+        return self._rom_filename
 
     def save_rom(self):
         self._check_loaded()
-        self._rom.saveToFile(self._rom_filename, updateDeviceCapacity=True)  # type: ignore
+        self._rom.saveToFile(self._rom_filename, updateDeviceCapacity=True)
 
     def get_static_data(self) -> Pmd2Data:
         self._check_loaded()
-        return self._static_data  # type: ignore
+        return self._static_data
 
     def get_project_filemanager(self) -> ProjectFileManager:
         self._check_loaded()
-        return self._project_fm  # type: ignore
+        return self._project_fm
 
     def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
         with file_load_lock:
             self._check_loaded()
             if filename not in self._open_files:
                 try:
-                    ssb_bin = self._rom.getFileByName(filename)  # type: ignore
+                    ssb_bin = self._rom.getFileByName(filename)
                 except ValueError as err:
                     raise FileNotFoundError(str(err)) from err
                 self._open_files[filename] = SsbLoadedFile(
                     filename, FileType.SSB.deserialize(ssb_bin, self._static_data),
-                    ssb_file_manager, self._project_fm  # type: ignore
+                    ssb_file_manager, self._project_fm
                 )
                 self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
             return self._open_files[filename]
@@ -130,7 +130,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
         with file_load_lock:
             self._check_loaded()
-            self._rom.setFileByName(  # type: ignore
+            self._rom.setFileByName(
                 filename, FileType.SSB.serialize(ssb_model, self._static_data)
             )
             self.save_rom()
@@ -195,8 +195,8 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         Just returns the script operations and constants,
         more data is only supported by the main SkyTemple application
         """
-        yield from self._static_data.script_data.op_codes__by_name.keys()  # type: ignore
-        yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))  # type: ignore
+        yield from self._static_data.script_data.op_codes__by_name.keys()
+        yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
         yield from EXPS_KEYWORDS
 
     @staticmethod

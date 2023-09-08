@@ -230,7 +230,7 @@ class VariableController:
 
         wgd.set_halign(Gtk.Align.END)
         box.pack_start(wgd, True, True, 0)
-        self.var_form_elements[var.id][offset] = wgd  # type: ignore
+        self.var_form_elements[var.id][offset] = wgd
         return box
 
     def on_var_changed_entry(self, var: Pmd2ScriptGameVar, offset: int, wdg: Gtk.Entry, *args):
@@ -293,7 +293,7 @@ class VariableController:
             with open_utf8(path, 'r') as f:
                 vars = json.load(f)
             for name, values in vars.items():
-                var_id = self.rom_data.script_data.game_variables__by_name[name].id  # type: ignore
+                var_id = self.rom_data.script_data.game_variables__by_name[name].id
                 for i, value in enumerate(values):
                     self._queue_variable_write(var_id, i, value)
         except BaseException as err:

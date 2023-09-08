@@ -301,10 +301,10 @@ class GroundStateController:
                 ])
                 for ssb in ground_state.loaded_ssb_files:
                     if ssb is not None:
-                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:  # type: ignore
+                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:
                             self._entities__tree_store.append(pos_marks_node, [
                                 f'{mark.name}', '', '',
-                                ssb.file_name.split('/')[-1], None,  # type: ignore
+                                ssb.file_name.split('/')[-1], None,
                                 '', '', '',
                                 f'{mark.x_with_offset}', f'{mark.y_with_offset}', -1
                             ])

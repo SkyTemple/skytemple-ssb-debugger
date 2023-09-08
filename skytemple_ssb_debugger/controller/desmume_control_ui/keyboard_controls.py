@@ -30,8 +30,8 @@ class KeyboardControlsDialogController:
         path = os.path.abspath(os.path.dirname(__file__))
         # SkyTemple translation support
         try:
-            from skytemple.core.ui_utils import make_builder  # type: ignore
-            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))  # type: ignore
+            from skytemple.core.ui_utils import make_builder
+            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
@@ -71,7 +71,7 @@ class KeyboardControlsDialogController:
         self._tmp_key = self._keyboard_cfg[key]
         self.builder.get_object("label_key").set_text(Gdk.keyval_name(self._tmp_key))
         if dlg.run() == Gtk.ResponseType.OK:
-            self._keyboard_cfg[key] = self._tmp_key  # type: ignore
+            self._keyboard_cfg[key] = self._tmp_key
             self.builder.get_object(f"button_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {Gdk.keyval_name(self._tmp_key)}")
 
         dlg.hide()

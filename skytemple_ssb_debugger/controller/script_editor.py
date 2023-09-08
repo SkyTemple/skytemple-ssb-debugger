@@ -63,7 +63,7 @@ class ScriptEditorController:
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         try:
-            from skytemple.core.ui_utils import make_builder  # type: ignore
+            from skytemple.core.ui_utils import make_builder
             self.builder = make_builder(os.path.join(path, "ssb_editor.glade"))
         except ImportError:
             self.builder = Gtk.Builder()
@@ -588,19 +588,19 @@ class ScriptEditorController:
         return True
 
     def on_sr_search_setting_regex_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_regex_enabled(btn.get_active())
 
     def on_sr_search_setting_wrap_around_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_wrap_around(btn.get_active())
 
     def on_sr_search_setting_match_words_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_at_word_boundaries(btn.get_active())
 
     def on_sr_search_setting_case_sensitive_toggled(self, btn: Gtk.CheckButton, *args):
-        s: GtkSource.SearchSettings = self._active_search_context.get_settings()  # type: ignore
+        s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_case_sensitive(btn.get_active())
 
     def on_sr_search_clicked(self, btn: Gtk.Button, *args):
@@ -888,8 +888,8 @@ class ScriptEditorController:
         CalltipEmitter(
             self._ssb_script_view,
             self.rom_data.script_data.op_codes,
-            self.mapname,  # type: ignore
-            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.mapname,
+            *self.file_context.get_scene_name_and_type(),
             self.parent.get_context(),
             is_ssbs=True
         )
@@ -907,8 +907,8 @@ class ScriptEditorController:
         CalltipEmitter(
             self._explorerscript_view,
             self.rom_data.script_data.op_codes,
-            self.mapname,  # type: ignore
-            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.mapname,
+            *self.file_context.get_scene_name_and_type(),
             self.parent.get_context()
         )
         StringEventEmitter(self._explorerscript_view, self.parent.get_context())
@@ -1006,13 +1006,13 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
             type_id = -1
             slot_id = -1
             if len(execution_marks) > 0:
-                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
+                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
             self.set_pixbuf(create_breaked_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script
             ))
             return
         if len(execution_marks) > 0:
-            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
+            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
             # Don't show for global
             self.set_pixbuf(create_execution_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script

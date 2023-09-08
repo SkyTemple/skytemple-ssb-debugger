@@ -33,8 +33,8 @@ class JoystickControlsDialogController:
         path = os.path.abspath(os.path.dirname(__file__))
         # SkyTemple translation support
         try:
-            from skytemple.core.ui_utils import make_builder  # type: ignore
-            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))  # type: ignore
+            from skytemple.core.ui_utils import make_builder
+            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
@@ -97,7 +97,7 @@ class JoystickControlsDialogController:
         key -= 1  # key = bit position, start with
 
         def cb(joykey):
-            self._joystick_cfg[key] = joykey  # type: ignore
+            self._joystick_cfg[key] = joykey
             self.builder.get_object(f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
             dlg.hide()
 

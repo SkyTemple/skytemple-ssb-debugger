@@ -81,7 +81,7 @@ class GlobalStateController:
             table = self._tables[self._current_table]
             for e in table.entries:
                 line = [
-                    MemAllocType(int(e.type_alloc)).description,  # type: ignore
+                    MemAllocType(int(e.type_alloc)).description,
                     e.unk1,
                     e.unk2,
                     hex(e.start_address),

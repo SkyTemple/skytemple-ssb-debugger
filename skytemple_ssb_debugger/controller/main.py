@@ -1059,11 +1059,11 @@ class MainController:
                     if script_entity_type == SsbRoutineType.GENERIC:
                         ss = ges.global_script.script_struct
                     elif script_entity_type == SsbRoutineType.ACTOR:
-                        ss = ges.get_actor(script_entity_id).script_struct  # type: ignore
+                        ss = ges.get_actor(script_entity_id).script_struct
                     elif script_entity_type == SsbRoutineType.OBJECT:
-                        ss = ges.get_object(script_entity_id).script_struct  # type: ignore
+                        ss = ges.get_object(script_entity_id).script_struct
                     elif script_entity_type == SsbRoutineType.PERFORMER:
-                        ss = ges.get_performer(script_entity_id).script_struct  # type: ignore
+                        ss = ges.get_performer(script_entity_id).script_struct
                     else:
                         return
                     if ss.hanger_ssb == -1:
@@ -1211,7 +1211,7 @@ class MainController:
 
             with open_utf8(ground_engine_savestate_path, 'w') as f:
                 assert self.debugger
-                json.dump(self.debugger.ground_engine_state.serialize(), f)  # type: ignore
+                json.dump(self.debugger.ground_engine_state.serialize(), f)
             emulator_savestate_save_file(desmume_savestate_path)
         except BaseException as err:
             self.context.display_error(
@@ -1241,7 +1241,7 @@ class MainController:
                 self.emu_reset()
                 emulator_savestate_load_file(desmume_savestate_path)
                 with open_utf8(ground_engine_savestate_path, 'r') as f:
-                    self.debugger.ground_engine_state.deserialize(json.load(f))  # type: ignore
+                    self.debugger.ground_engine_state.deserialize(json.load(f))
                 self.emu_is_running = emulator_is_running()
                 self.load_debugger_state()
                 self.variable_controller.sync()
@@ -1466,7 +1466,7 @@ class MainController:
         )
         emulator_volume_set(0)
 
-        ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]  # type: ignore
+        ssb = self.debugger.ground_engine_state.loaded_ssb_files[state.hanger_id]
         opcode_addr = srs.current_opcode_addr_relative
         self.breakpoint_state = state
         self._set_buttons_paused()
@@ -1482,12 +1482,12 @@ class MainController:
 
         self.write_info_bar(Gtk.MessageType.WARNING, f(_("The debugger is halted at {ssb.file_name}.")))
         # This will mark the hanger as being breaked:
-        self.debugger.ground_engine_state.break_pulled(state)  # type: ignore
+        self.debugger.ground_engine_state.break_pulled(state)
         # This will tell the code editor to refresh the debugger controls for all open editors
         self.editor_notebook.break_pulled(state)
         self.editor_notebook.focus_by_opcode_addr(ssb.file_name, opcode_addr)
         self.load_debugger_state(srs, breakpoint_file_state, state.local_vars_values)
-        self.debug_overlay.break_pulled()  # type: ignore
+        self.debug_overlay.break_pulled()
 
         state.add_release_hook(self.break_released)
 
@@ -1590,14 +1590,14 @@ class MainController:
         This is super annoying. Because of the two different "views" on the model,
         we can't do this in show_matches, because we have to use the filter model here!
         """
-        search_query = self._search_text.lower()  # type: ignore
+        search_query = self._search_text.lower()
         text = model[iter][1].lower()
         ssb_file_tree = self.builder.get_object('ssb_file_tree')
         if search_query in text:
             ssb_file_tree.expand_to_path(path)
 
     def _filter__show_matches(self, model: Gtk.TreeStore, path, iter):
-        search_query = self._search_text.lower()  # type: ignore
+        search_query = self._search_text.lower()
         text = model[iter][1].lower()
         if search_query in text:
             # Propagate visibility change up

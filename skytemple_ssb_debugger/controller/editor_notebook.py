@@ -92,7 +92,7 @@ class EditorNotebookController:
             else:
                 assert self.rom_data
                 editor_controller = ScriptEditorController(
-                    self, self._main_window, file_context,  # type: ignore
+                    self, self._main_window, file_context,
                     self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript,
                     not self.get_context().show_ssb_script_editor()
                 )
