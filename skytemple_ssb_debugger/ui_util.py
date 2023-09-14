@@ -22,13 +22,20 @@ from typing import TypeVar, Any
 
 from gi.repository import GObject, Gtk
 
-T = TypeVar("T", bound=GObject.Object)
-UI_ASSERT = "SKYTEMPLE_UI_ASSERT" in os.environ
-
 if sys.version_info >= (3, 9):
     import importlib.metadata as importlib_metadata
 else:
     import importlib_metadata
+
+
+T = TypeVar("T", bound=GObject.Object)
+X = TypeVar("X")
+UI_ASSERT = "SKYTEMPLE_UI_ASSERT" in os.environ
+
+
+def assert_not_none(obj: X | None) -> X:
+    assert obj is not None
+    return obj
 
 
 def builder_get_assert(builder: Gtk.Builder, typ: type[T], name: str) -> T:

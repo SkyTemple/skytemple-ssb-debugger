@@ -29,7 +29,7 @@ from gtkspellcheck import SpellChecker
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
-from skytemple.core.ui_utils import assert_not_none
+from skytemple_ssb_debugger.ui_util import assert_not_none
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_debug_breakpoints_resync, emulator_debug_breakpoint_add, \
     emulator_debug_breakpoint_remove, emulator_breakpoints_get_saved_in_ram_for
@@ -66,8 +66,8 @@ class ScriptEditorController:
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         try:
-            from skytemple.core.ui_utils import make_builder
-            self.builder = make_builder(os.path.join(path, "ssb_editor.glade"))
+            from skytemple.core.ui_utils import make_builder  # type: ignore
+            self.builder = make_builder(os.path.join(path, "ssb_editor.glade"))  # type: ignore
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "ssb_editor.glade"))

@@ -28,7 +28,6 @@ import cairo
 import gi
 from PIL import Image
 from range_typed_integers import u32
-from skytemple.core.ui_utils import assert_not_none
 
 from skytemple_files.common.util import open_utf8, add_extension_if_missing
 from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_controls, Language, emulator_poll, \
@@ -64,6 +63,7 @@ from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_
 from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
 from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
 from skytemple_files.common.i18n_util import f, _
+from skytemple_ssb_debugger.ui_util import assert_not_none
 
 gi.require_version('Gtk', '3.0')
 

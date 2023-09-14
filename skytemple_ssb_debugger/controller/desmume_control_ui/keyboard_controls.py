@@ -19,11 +19,10 @@ import os
 from typing import Optional, List
 
 from gi.repository import Gtk, Gdk
-from skytemple.core.ui_utils import assert_not_none
 from skytemple_ssb_emulator import emulator_get_key_names, EmulatorKeys
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import key_names_localized, widget_to_primitive
-from skytemple_ssb_debugger.ui_util import builder_get_assert
+from skytemple_ssb_debugger.ui_util import builder_get_assert, assert_not_none
 
 
 class KeyboardControlsDialogController:
@@ -32,8 +31,8 @@ class KeyboardControlsDialogController:
         path = os.path.abspath(os.path.dirname(__file__))
         # SkyTemple translation support
         try:
-            from skytemple.core.ui_utils import make_builder
-            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))
+            from skytemple.core.ui_utils import make_builder  # type: ignore
+            self.builder = make_builder(os.path.join(path, "PyDeSmuMe_controls.glade"))  # type: ignore
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
