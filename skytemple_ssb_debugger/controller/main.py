@@ -647,7 +647,7 @@ class MainController:
         self.on_emulator_controls_loadstate3_clicked()
 
     def on_menu_emulator_volume_toggled(self, button: Gtk.CheckMenuItem, *args):
-        builder_get_assert(self.builder, Gtk.ToggleToolButton, 'emulator_controls_volume').set_active(button.get_active())
+        builder_get_assert(self.builder, Gtk.ToggleButton, 'emulator_controls_volume').set_active(button.get_active())
 
     def on_menu_emulator_screenshot_activate(self, button: Gtk.CheckMenuItem, *args):
         filter_png = Gtk.FileFilter()
