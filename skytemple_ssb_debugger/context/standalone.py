@@ -85,31 +85,40 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         self._open_files = {}
 
     def get_project_dir(self) -> str:
+        assert self._project_fm is not None
         return self._project_fm.dir()
 
     def load_script_files(self) -> ScriptFiles:
-        return load_script_files(get_rom_folder(self._rom, SCRIPT_DIR))
+        assert self._rom is not None
+        folder = get_rom_folder(self._rom, SCRIPT_DIR)
+        assert folder is not None
+        return load_script_files(folder)
 
     def is_project_loaded(self) -> bool:
         return self._rom is not None
 
     def get_rom_filename(self) -> str:
         self._check_loaded()
+        assert self._rom_filename is not None
         return self._rom_filename
 
     def save_rom(self):
         self._check_loaded()
+        assert self._rom_filename is not None and self._rom is not None
         self._rom.saveToFile(self._rom_filename, updateDeviceCapacity=True)
 
     def get_static_data(self) -> Pmd2Data:
         self._check_loaded()
+        assert self._static_data is not None
         return self._static_data
 
     def get_project_filemanager(self) -> ProjectFileManager:
         self._check_loaded()
+        assert self._project_fm is not None
         return self._project_fm
 
     def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
+        assert self._project_fm is not None and self._rom is not None
         with file_load_lock:
             self._check_loaded()
             if filename not in self._open_files:
@@ -128,6 +137,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         pass
 
     def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
+        assert self._rom is not None
         with file_load_lock:
             self._check_loaded()
             self._rom.setFileByName(
@@ -175,11 +185,11 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         exc_info_str = ''
         if exc_info:
             exc_info_str = '\n' + ''.join(traceback.format_exception(exc_info[0], value=exc_info[1], tb=exc_info[2]))
-        md = self.message_dialog_cls()(self._main_window,
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK,
-                                       f"{error_message}{exc_info_str}",
-                                       title=error_title)
+        md = self.message_dialog(self._main_window,
+                                 Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                                 Gtk.ButtonsType.OK,
+                                 f"{error_message}{exc_info_str}",
+                                 title=error_title)
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
@@ -195,10 +205,28 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         Just returns the script operations and constants,
         more data is only supported by the main SkyTemple application
         """
+        assert self._static_data is not None
         yield from self._static_data.script_data.op_codes__by_name.keys()
         yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
         yield from EXPS_KEYWORDS
 
     @staticmethod
-    def message_dialog_cls():
-        return Gtk.MessageDialog
+    def message_dialog(
+        parent: Optional[Gtk.Window],
+        dialog_flags: Gtk.DialogFlags,
+        message_type: Gtk.MessageType,
+        buttons_type: Gtk.ButtonsType,
+        text: str,
+        **kwargs
+    ):
+        kwargs.update({
+            'destroy_with_parent': (dialog_flags & Gtk.DialogFlags.DESTROY_WITH_PARENT) > 0,
+            'modal': (dialog_flags & Gtk.DialogFlags.MODAL) > 0,
+            'use_header_bar': (dialog_flags & Gtk.DialogFlags.USE_HEADER_BAR) > 0,
+            'message_type': message_type,
+            'buttons': buttons_type,
+            'text': text
+        })
+        if parent is not None:
+            kwargs['parent'] = parent
+        return Gtk.MessageDialog(**kwargs)

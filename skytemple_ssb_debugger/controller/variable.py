@@ -21,7 +21,7 @@ import math
 import os
 import sys
 from functools import partial
-from typing import Optional, List, Dict, Mapping, Sequence
+from typing import Optional, List, Dict, Mapping, Sequence, cast
 
 import gi
 
@@ -33,6 +33,8 @@ from skytemple_ssb_emulator import emulator_register_script_variable_set, emulat
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_files.common.i18n_util import f, _
+
+from skytemple_ssb_debugger.ui_util import builder_get_assert
 
 gi.require_version('Gtk', '3.0')
 
@@ -107,7 +109,7 @@ class VariableController:
             self._apply_sync()
 
         self._pending_sync = True
-        notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
+        notebook = builder_get_assert(self.builder, Gtk.Notebook, 'variables_notebook')
         notebook.set_sensitive(False)
         emulator_sync_vars(update)
 
@@ -122,14 +124,14 @@ class VariableController:
                         if isinstance(el, Gtk.Entry):
                             el.set_text(str(val))
                         else:
-                            el.set_active(bool(val))
-        self.builder.get_object('variables_notebook').set_sensitive(True)
+                            cast(Gtk.Switch, el).set_active(bool(val))
+        builder_get_assert(self.builder, Gtk.Notebook, 'variables_notebook').set_sensitive(True)
         self._suppress_events = False
 
     def init(self, rom_data: Pmd2Data):
         self.rom_data = rom_data
         self.var_form_elements = [None for _ in range(0, len(rom_data.script_data.game_variables))]
-        notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
+        notebook = builder_get_assert(self.builder, Gtk.Notebook, 'variables_notebook')
 
         # Build the GTK form
         for category, items in self.CATEGORIES.items():
@@ -188,7 +190,7 @@ class VariableController:
         )
 
     def uninit(self):
-        notebook: Gtk.Notebook = self.builder.get_object('variables_notebook')
+        notebook = builder_get_assert(self.builder, Gtk.Notebook, 'variables_notebook')
         for _ in range(0, notebook.get_n_pages()):
             # TODO: Do the children need to be destroyed?
             notebook.remove_page(0)
@@ -212,25 +214,26 @@ class VariableController:
                 box.pack_start(label_obj, False, True, 0)
         else:
             label = ''
-
-        wgd: Gtk.Widget
+        wdg: Gtk.Widget
         if var.type == GameVariableType.BIT:
-            wgd = Gtk.CheckButton.new()
-            wgd.set_label(label)
-            wgd.connect('toggled', partial(self.on_var_changed_check, var, offset))
+            wgd1 = Gtk.CheckButton.new()
+            wgd1.set_label(label)
+            wgd1.connect('toggled', partial(self.on_var_changed_check, var, offset))
+            wdg = wgd1
         else:
-            wgd = Gtk.Entry.new()
+            wgd2 = Gtk.Entry.new()
             if var.type == GameVariableType.UINT32 or var.type == GameVariableType.INT32:
-                wgd.set_width_chars(11)
+                wgd2.set_width_chars(11)
             elif var.type == GameVariableType.UINT16 or var.type == GameVariableType.INT16:
-                wgd.set_width_chars(6)
+                wgd2.set_width_chars(6)
             else:
-                wgd.set_width_chars(4)
-            wgd.connect('focus-out-event', partial(self.on_var_changed_entry, var, offset))
+                wgd2.set_width_chars(4)
+            wgd2.connect('focus-out-event', partial(self.on_var_changed_entry, var, offset))
+            wdg = wgd2
 
-        wgd.set_halign(Gtk.Align.END)
-        box.pack_start(wgd, True, True, 0)
-        self.var_form_elements[var.id][offset] = wgd
+        wdg.set_halign(Gtk.Align.END)
+        box.pack_start(wdg, True, True, 0)
+        self.var_form_elements[var.id][offset] = wdg  # type: ignore
         return box
 
     def on_var_changed_entry(self, var: Pmd2ScriptGameVar, offset: int, wdg: Gtk.Entry, *args):
@@ -264,11 +267,13 @@ class VariableController:
                 if value < -2147483648 or value > 2147483647:
                     raise ValueError("This variable must have a value between: -2147483648 and 2147483647.")
         except ValueError as err:
-            md = self.context.message_dialog_cls()(self.builder.get_object('main_window'),
-                                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                                   Gtk.ButtonsType.OK,
-                                                   f(_("Invalid variable value:\n{err}\nThe value was not written to RAM.")),
-                                                   title=_("Error!"))
+            md = self.context.message_dialog(
+                builder_get_assert(self.builder, Gtk.Window, 'main_window'),
+                Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
+                Gtk.ButtonsType.OK,
+                f(_("Invalid variable value:\n{err}\nThe value was not written to RAM.")),
+                title=_("Error!")
+            )
             md.set_position(Gtk.WindowPosition.CENTER)
             md.run()
             md.destroy()
@@ -293,6 +298,7 @@ class VariableController:
             with open_utf8(path, 'r') as f:
                 vars = json.load(f)
             for name, values in vars.items():
+                assert self.rom_data is not None
                 var_id = self.rom_data.script_data.game_variables__by_name[name].id
                 for i, value in enumerate(values):
                     self._queue_variable_write(var_id, i, value)

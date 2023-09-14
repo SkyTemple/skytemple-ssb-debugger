@@ -60,6 +60,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         logger.debug(f"{loaded_ssb.filename}: Reloaded")
         if self._on_ssbs_state_change:
+            assert self._on_ssbs_reload is not None
             self._on_ssbs_reload(loaded_ssb.filename)
 
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
@@ -217,6 +218,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         success_callback()
         if ready_to_reload:
             logger.debug(f"After save: NOW READY TO RELOAD!")
+            assert self._ssb_file.file_manager is not None
             self._ssb_file.file_manager.force_reload(self._ssb_file.filename)
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):

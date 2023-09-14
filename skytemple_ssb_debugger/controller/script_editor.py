@@ -21,7 +21,7 @@ import os
 import re
 import webbrowser
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, Iterable
+from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, Iterable, cast
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
@@ -29,6 +29,7 @@ from gtkspellcheck import SpellChecker
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
+from skytemple.core.ui_utils import assert_not_none
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_debug_breakpoints_resync, emulator_debug_breakpoint_add, \
     emulator_debug_breakpoint_remove, emulator_breakpoints_get_saved_in_ram_for
@@ -45,6 +46,8 @@ from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractSc
 from skytemple_ssb_debugger.model.settings import TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.pixbuf.icons import *
 from skytemple_files.common.i18n_util import f, _
+
+from skytemple_ssb_debugger.ui_util import builder_get_assert
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.controller.editor_notebook import EditorNotebookController
@@ -75,10 +78,11 @@ class ScriptEditorController:
         self._main_window = main_window
         self._modified_handler = modified_handler
 
-        self._root: Gtk.Box = self.builder.get_object('code_editor')
-        self._active_scheme: GtkSource.StyleScheme = self.parent.parent.style_scheme_manager.get_scheme(
+        self._root = builder_get_assert(self.builder, Gtk.Box, 'code_editor')
+        scheme = self.parent.parent.style_scheme_manager.get_scheme(
             self.parent.parent.selected_style_scheme_id
         )
+        self._active_scheme: GtkSource.StyleScheme = assert_not_none(scheme)
         self._lm = LanguageManager()
         self._lm.set_search_path(self._lm.get_search_path() + [os.path.join(path, '..')])
 
@@ -90,19 +94,19 @@ class ScriptEditorController:
         # If True, the SSBScript view is hidden (including it's ta
         self._hide_ssb_script = hide_ssb_script
         if self._hide_ssb_script:
-            notebook: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
+            notebook = builder_get_assert(self.builder, Gtk.Notebook, 'code_editor_notebook')
             notebook.set_show_tabs(False)
 
-        self._ssb_script_view: GtkSource.View = None
-        self._explorerscript_view: GtkSource.View = None
-        self._ssb_script_spellcheck: SpellChecker = None
-        self._explorerscript_spellcheck: SpellChecker = None
-        self._ssb_script_revealer: Gtk.Revealer = None
-        self._explorerscript_revealer: Gtk.Revealer = None
-        self._ssb_script_search: Gtk.SearchEntry = None
-        self._explorerscript_search: Gtk.SearchEntry = None
-        self._ssb_script_search_context: GtkSource.SearchContext = None
-        self._explorerscript_search_context: GtkSource.SearchContext = None
+        self._ssb_script_view: GtkSource.View = None  # type: ignore
+        self._explorerscript_view: GtkSource.View = None  # type: ignore
+        self._ssb_script_spellcheck: SpellChecker = None  # type: ignore
+        self._explorerscript_spellcheck: SpellChecker = None  # type: ignore
+        self._ssb_script_revealer: Gtk.Revealer = None  # type: ignore
+        self._explorerscript_revealer: Gtk.Revealer = None  # type: ignore
+        self._ssb_script_search: Gtk.SearchEntry = None  # type: ignore
+        self._explorerscript_search: Gtk.SearchEntry = None  # type: ignore
+        self._ssb_script_search_context: GtkSource.SearchContext = None  # type: ignore
+        self._explorerscript_search_context: GtkSource.SearchContext = None  # type: ignore
         self._saving_dialog: Optional[Gtk.Dialog] = None
 
         self._still_loading = True
@@ -128,10 +132,11 @@ class ScriptEditorController:
         self.file_context.register_insert_opcode_text_mark_handler(self.insert_opcode_text_mark)
 
         self.load_views(
-            self.builder.get_object('page_ssbscript'), self.builder.get_object('page_explorerscript')
+            builder_get_assert(self.builder, Gtk.Box, 'page_ssbscript'),
+            builder_get_assert(self.builder, Gtk.Box, 'page_explorerscript')
         )
 
-        self.builder.get_object('code_editor_cntrls_breaks').set_active(self.parent.parent.global_state__breaks_disabled)
+        builder_get_assert(self.builder, Gtk.ToggleToolButton, 'code_editor_cntrls_breaks').set_active(self.parent.parent.global_state__breaks_disabled)
 
         self.builder.connect_signals(self)
 
@@ -159,11 +164,11 @@ class ScriptEditorController:
         return self.file_context.exps_filepath
 
     def toggle_debugging_controls(self, val):
-        self.builder.get_object('code_editor_cntrls_resume').set_sensitive(val)
-        self.builder.get_object('code_editor_cntrls_step_over').set_sensitive(val)
-        self.builder.get_object('code_editor_cntrls_step_into').set_sensitive(val)
-        self.builder.get_object('code_editor_cntrls_step_out').set_sensitive(val)
-        self.builder.get_object('code_editor_cntrls_step_next').set_sensitive(val)
+        builder_get_assert(self.builder, Gtk.ToolButton, 'code_editor_cntrls_resume').set_sensitive(val)
+        builder_get_assert(self.builder, Gtk.ToolButton, 'code_editor_cntrls_step_over').set_sensitive(val)
+        builder_get_assert(self.builder, Gtk.ToolButton, 'code_editor_cntrls_step_into').set_sensitive(val)
+        builder_get_assert(self.builder, Gtk.ToolButton, 'code_editor_cntrls_step_out').set_sensitive(val)
+        builder_get_assert(self.builder, Gtk.ToolButton, 'code_editor_cntrls_step_next').set_sensitive(val)
 
     def on_break_pulled(self, ssb_filename, opcode_addr, halted_on_call):
         """Mark the currently actively halted opcode, if we have one for the current file and opcode."""
@@ -262,9 +267,9 @@ class ScriptEditorController:
         if not save_text:
             return
 
-        self._saving_dialog = self.builder.get_object('file_saving_dialog')
+        self._saving_dialog = builder_get_assert(self.builder, Gtk.Dialog, 'file_saving_dialog')
         self._saving_dialog.set_transient_for(self._main_window)
-        self.builder.get_object('file_saving_dialog_label').set_label(
+        builder_get_assert(self.builder, Gtk.Label, 'file_saving_dialog_label').set_label(
             f(_('Compiling script "{self.filename}"...'))
         )
 
@@ -341,12 +346,12 @@ class ScriptEditorController:
             view = self._ssb_script_view
             if is_explorerscript:
                 ovl = exps_ovl
-                bx = exps_bx
+                bx = assert_not_none(exps_bx)
                 view = self._explorerscript_view
             for child in bx.get_children():
                 bx.remove(child)
             buffer: GtkSource.Buffer = view.get_buffer()
-            undo_manager: GtkSource.UndoManager = buffer.get_undo_manager()
+            undo_manager: GtkSource.UndoManager = assert_not_none(buffer.get_undo_manager())
             undo_manager.begin_not_undoable_action()
             buffer.set_text(text)
             buffer.set_modified(False)
@@ -377,7 +382,7 @@ class ScriptEditorController:
             for child in ssbs_bx.get_children():
                 ssbs_bx.remove(child)
             self._refill_info_bar(
-                self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.WARNING,
+                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar'), Gtk.MessageType.WARNING,
                 _("SSBScript is not available for this file.")
             )
             self._ssb_script_view.set_editable(False)
@@ -405,7 +410,7 @@ class ScriptEditorController:
             self.insert_hanger_halt_lines(*self._hanger_halt_lines_after_load)
 
     def add_breakpoint(self, line_number: int, view: GtkSource.View):
-        buffer: Gtk.TextBuffer = view.get_buffer()
+        buffer: GtkSource.Buffer = view.get_buffer()
         for ssb_filename, opcode_offset in EditorTextMarkUtil.get_opcodes_in_line(buffer, line_number - 1):
             emulator_debug_breakpoint_add(ssb_filename, opcode_offset)
 
@@ -461,9 +466,9 @@ class ScriptEditorController:
     # Signal & event handlers
     def on_ssbs_state_change(self, breakable, ram_state_up_to_date):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
-        info_bar: Gtk.InfoBar = self.builder.get_object('code_editor_box_ssbscript_bar')
+        info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar')
         if self._explorerscript_active:
-            info_bar = self.builder.get_object('code_editor_box_es_bar')
+            info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar')
 
         if not breakable:
             self._refill_info_bar(
@@ -588,18 +593,22 @@ class ScriptEditorController:
         return True
 
     def on_sr_search_setting_regex_toggled(self, btn: Gtk.CheckButton, *args):
+        assert self._active_search_context is not None
         s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_regex_enabled(btn.get_active())
 
     def on_sr_search_setting_wrap_around_toggled(self, btn: Gtk.CheckButton, *args):
+        assert self._active_search_context is not None
         s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_wrap_around(btn.get_active())
 
     def on_sr_search_setting_match_words_toggled(self, btn: Gtk.CheckButton, *args):
+        assert self._active_search_context is not None
         s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_at_word_boundaries(btn.get_active())
 
     def on_sr_search_setting_case_sensitive_toggled(self, btn: Gtk.CheckButton, *args):
+        assert self._active_search_context is not None
         s: GtkSource.SearchSettings = self._active_search_context.get_settings()
         s.set_case_sensitive(btn.get_active())
 
@@ -608,9 +617,9 @@ class ScriptEditorController:
         buffer: Gtk.TextBuffer = self._active_search_context.get_buffer()
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
-        settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
+        settings.set_search_text(builder_get_assert(self.builder, Gtk.Entry, 'sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
+        search_down = not builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_search_backwards').get_active()
         if search_down:
             found, match_start, match_end, wrap = self._active_search_context.forward(cursor)
         else:
@@ -630,23 +639,23 @@ class ScriptEditorController:
         buffer: Gtk.TextBuffer = self._active_search_context.get_buffer()
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
-        settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
+        settings.set_search_text(builder_get_assert(self.builder, Gtk.Entry, 'sr_search_text').get_text())
         cursor = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        search_down = not self.builder.get_object('sr_search_setting_search_backwards').get_active()
+        search_down = not builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_search_backwards').get_active()
         if search_down:
             found, match_start, match_end, wrap = self._active_search_context.forward(cursor)
         else:
             found, match_start, match_end, wrap = self._active_search_context.backward(cursor)
         if found:
             # No running twice this time, because if we search forward2 we take the current pos.
-            self._active_search_context.replace(match_start, match_end, self.builder.get_object('sr_replace_text').get_text(), -1)
+            self._active_search_context.replace(match_start, match_end, builder_get_assert(self.builder, Gtk.Entry, 'sr_replace_text').get_text(), -1)
 
     def on_sr_replace_all_clicked(self, btn: Gtk.Button, *args):
         assert self._active_search_context
         settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
 
-        settings.set_search_text(self.builder.get_object('sr_search_text').get_text())
-        self._active_search_context.replace_all(self.builder.get_object('sr_replace_text').get_text(), -1)
+        settings.set_search_text(builder_get_assert(self.builder, Gtk.Entry, 'sr_search_text').get_text())
+        self._active_search_context.replace_all(builder_get_assert(self.builder, Gtk.Entry, 'sr_replace_text').get_text(), -1)
 
     def on_text_buffer_modified(self, buffer: Gtk.TextBuffer, *args):
         if self._modified_handler:
@@ -678,7 +687,7 @@ class ScriptEditorController:
         webbrowser.open_new_tab(TEXTBOX_TOOL_URL)
 
     def toggle_breaks_disabled(self, value):
-        self.builder.get_object('code_editor_cntrls_breaks').set_active(value)
+        builder_get_assert(self.builder, Gtk.ToggleToolButton, 'code_editor_cntrls_breaks').set_active(value)
 
     def toggle_spellchecker(self, value):
         try:
@@ -725,12 +734,12 @@ class ScriptEditorController:
 
     def menu__undo(self):
         um = self._active_view().get_buffer().get_undo_manager()
-        if um.can_undo():
+        if um and um.can_redo():
             um.undo()
 
     def menu__redo(self):
         um = self._active_view().get_buffer().get_undo_manager()
-        if um.can_redo():
+        if um and um.can_redo():
             um.redo()
 
     def menu__search(self):
@@ -752,13 +761,13 @@ class ScriptEditorController:
             if widget == self._ssb_script_view:
                 self._active_search_context = self._ssb_script_search_context
             search_settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
-            self._loaded_search_window = self.builder.get_object('sr_dialog')
-            self.builder.get_object('sr_search_setting_case_sensitive').set_active(
+            self._loaded_search_window = builder_get_assert(self.builder, Gtk.Dialog, 'sr_dialog')
+            builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_case_sensitive').set_active(
                 search_settings.get_case_sensitive())
-            self.builder.get_object('sr_search_setting_match_words').set_active(
+            builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_match_words').set_active(
                 search_settings.get_at_word_boundaries())
-            self.builder.get_object('sr_search_setting_regex').set_active(search_settings.get_regex_enabled())
-            self.builder.get_object('sr_search_setting_wrap_around').set_active(search_settings.get_wrap_around())
+            builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_regex').set_active(search_settings.get_regex_enabled())
+            builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_wrap_around').set_active(search_settings.get_wrap_around())
             self._loaded_search_window.set_title(f(_('Search and Replace in {self.filename}')))
             self._loaded_search_window.show_all()
 
@@ -773,8 +782,8 @@ class ScriptEditorController:
 
     # Utility
     def _active_view(self) -> GtkSource.View:
-        ntbk: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
-        if ntbk.get_nth_page(ntbk.get_current_page()) == self.builder.get_object('code_editor_box_es'):
+        ntbk = builder_get_assert(self.builder, Gtk.Notebook, 'code_editor_notebook')
+        if ntbk.get_nth_page(ntbk.get_current_page()) == builder_get_assert(self.builder, Gtk.Box, 'code_editor_box_es'):
             return self._explorerscript_view
         return self._ssb_script_view
 
@@ -783,15 +792,15 @@ class ScriptEditorController:
         background_mix_style = None
         text_mix_bg_style = None
         try:
-            background_mix_style = self._active_scheme.get_style(mix_style_name).props.background
-        except AttributeError:
+            background_mix_style = assert_not_none(self._active_scheme.get_style(mix_style_name)).props.background
+        except (AttributeError, AssertionError):
             pass
         if background_mix_style is None:
             background_mix_style = fallback_color
         breakpoint_bg = color_hex_to_rgb(background_mix_style, mix_style_alpha)
         try:
-            text_mix_bg_style = self._active_scheme.get_style('text').props.background
-        except AttributeError:
+            text_mix_bg_style = assert_not_none(self._active_scheme.get_style('text')).props.background
+        except (AttributeError, AssertionError):
             pass
         if text_mix_bg_style is None:
             text_mix_bg_style = '#ffffff'
@@ -800,7 +809,7 @@ class ScriptEditorController:
             breakpoint_bg, text_bg
         ))
 
-    def _create_editor(self) -> Tuple[Gtk.ScrolledWindow, GtkSource.View, Gtk.Revealer, Gtk.SearchEntry, GtkSource.SearchContext]:
+    def _create_editor(self) -> Tuple[Gtk.Overlay, GtkSource.View, Gtk.Revealer, Gtk.SearchEntry, GtkSource.SearchContext]:
         ovl: Gtk.Overlay = Gtk.Overlay.new()
         sw: Gtk.ScrolledWindow = Gtk.ScrolledWindow.new()
         view: GtkSource.View = GtkSource.View.new()
@@ -820,7 +829,7 @@ class ScriptEditorController:
         view.set_indent_on_tab(True)
         view.set_highlight_current_line(True)
         view.set_smart_backspace(True)
-        view.set_smart_home_end(True)
+        view.set_smart_home_end(GtkSource.SmartHomeEndType.BEFORE)
         view.set_monospace(True)
         buffer.set_highlight_matching_brackets(True)
         buffer.set_style_scheme(self._active_scheme)
@@ -888,9 +897,9 @@ class ScriptEditorController:
         CalltipEmitter(
             self._ssb_script_view,
             self.rom_data.script_data.op_codes,
-            self.mapname,
-            *self.file_context.get_scene_name_and_type(),
-            self.parent.get_context(),
+            assert_not_none(self.mapname),
+            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.parent.get_context(),  # type: ignore
             is_ssbs=True
         )
         StringEventEmitter(self._ssb_script_view, self.parent.get_context())
@@ -907,9 +916,9 @@ class ScriptEditorController:
         CalltipEmitter(
             self._explorerscript_view,
             self.rom_data.script_data.op_codes,
-            self.mapname,
-            *self.file_context.get_scene_name_and_type(),
-            self.parent.get_context()
+            self.mapname,  # type: ignore
+            *self.file_context.get_scene_name_and_type(),  # type: ignore
+            self.parent.get_context()  # type: ignore
         )
         StringEventEmitter(self._explorerscript_view, self.parent.get_context())
 
@@ -922,7 +931,7 @@ class ScriptEditorController:
             self._ssb_script_view.set_editable(False)
             # Show notice on SSBS info bar
             self._refill_info_bar(
-                self.builder.get_object('code_editor_box_ssbscript_bar'), Gtk.MessageType.INFO,
+                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar'), Gtk.MessageType.INFO,
                 _("This is a read-only representation of the compiled ExplorerScript.")
             )
             # Force refresh of ES info bar
@@ -933,7 +942,7 @@ class ScriptEditorController:
             self._explorerscript_view.set_editable(False)
             # Show notice on ES info bar
             self._refill_info_bar(
-                self.builder.get_object('code_editor_box_es_bar'), Gtk.MessageType.INFO,
+                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar'), Gtk.MessageType.INFO,
                 _("ExplorerScript is not available for this file.")
             )
             # Force refresh of ES info bar
@@ -951,7 +960,7 @@ class ScriptEditorController:
         info_bar.show_all()
 
     def _show_ssbs_es_changed_warning(self):
-        md = self.parent.parent.context.message_dialog_cls()(
+        md = self.parent.parent.context.message_dialog(
             self._main_window,
             Gtk.DialogFlags.MODAL, Gtk.MessageType.QUESTION,
             Gtk.ButtonsType.NONE,
@@ -991,13 +1000,13 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
         self.set_size(12 * 3)
         self.set_padding(5, 3)
         icon_theme: Gtk.IconTheme = Gtk.IconTheme.get_for_screen(self.view.get_screen())
-        self._icon_actor = icon_theme.load_icon(ICON_ACTOR[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_object = icon_theme.load_icon(ICON_OBJECT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_performer = icon_theme.load_icon(ICON_PERFORMER[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
-        self._icon_global_script = icon_theme.load_icon(ICON_GLOBAL_SCRIPT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()
+        self._icon_actor = icon_theme.load_icon(ICON_ACTOR[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()  # type: ignore
+        self._icon_object = icon_theme.load_icon(ICON_OBJECT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()  # type: ignore
+        self._icon_performer = icon_theme.load_icon(ICON_PERFORMER[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()  # type: ignore
+        self._icon_global_script = icon_theme.load_icon(ICON_GLOBAL_SCRIPT[:-9] + '-gutter', 12, Gtk.IconLookupFlags.FORCE_SIZE).copy()  # type: ignore
 
     def do_query_data(self, start: Gtk.TextIter, end: Gtk.TextIter, state: GtkSource.GutterRendererState):
-        view: GtkSource.View = self.get_view()
+        view: GtkSource.View = cast(GtkSource.View, self.get_view())
         buffer: GtkSource.Buffer = view.get_buffer()
         execution_marks = buffer.get_source_marks_at_line(start.get_line(), 'execution-line')
         breaked_marks = buffer.get_source_marks_at_line(start.get_line(), 'breaked-line')
@@ -1006,13 +1015,13 @@ class PlayIconRenderer(GtkSource.GutterRendererPixbuf):
             type_id = -1
             slot_id = -1
             if len(execution_marks) > 0:
-                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+                _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
             self.set_pixbuf(create_breaked_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script
             ))
             return
         if len(execution_marks) > 0:
-            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()
+            _, type_id, slot_id = EXECUTION_LINE_PATTERN.match(execution_marks[0].get_name()).groups()  # type: ignore
             # Don't show for global
             self.set_pixbuf(create_execution_line_icon(
                 int(type_id), int(slot_id), self._icon_actor, self._icon_object, self._icon_performer, self._icon_global_script

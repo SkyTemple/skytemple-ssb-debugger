@@ -17,9 +17,7 @@
 from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List, Iterable, Type, Dict
-
-from gi.repository import Gtk
+from typing import TYPE_CHECKING, Optional, List, Iterable, Dict
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -30,6 +28,7 @@ from skytemple_files.common.util import Capturable
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
     from skytemple_ssb_debugger.model.ssb_files import SsbLoadedFile
+    from gi.repository import Gtk
 
 PROJECT_DIR_SUBDIR_NAME = 'debugger'
 PROJECT_DIR_MACRO_NAME = 'Macros'
@@ -249,5 +248,12 @@ class AbstractDebuggerControlContext(ABC):
 
     @staticmethod
     @abstractmethod
-    def message_dialog_cls() -> Type[Gtk.MessageDialog]:
-        """Returns the class for use for MessageDialogs. Must extend Gtk.MessageDialog."""
+    def message_dialog(
+        parent: Optional[Gtk.Window],
+        dialog_flags: Gtk.DialogFlags,
+        message_type: Gtk.MessageType,
+        buttons_type: Gtk.ButtonsType,
+        text: str,
+        **kwargs
+    ) -> Gtk.MessageDialog:
+        """Creates a Gtk.MessageDialog."""

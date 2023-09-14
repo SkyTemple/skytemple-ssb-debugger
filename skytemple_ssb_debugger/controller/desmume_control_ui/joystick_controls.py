@@ -21,15 +21,17 @@ from typing import Optional, List, Callable, Any
 
 from gi.repository import Gtk, Gdk, GLib
 from skytemple_files.common.i18n_util import _
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_emulator import emulator_get_joy_number_connected, emulator_get_key_names, EmulatorKeys, \
     emulator_joy_get_set_key
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import widget_to_primitive, key_names_localized
+from skytemple_ssb_debugger.ui_util import builder_get_assert
 
 
 class JoystickControlsDialogController:
     """This dialog shows the joystick controls."""
-    def __init__(self, parent_window: Gtk.Window):
+    def __init__(self, parent_window: Gtk.Window, context: AbstractDebuggerControlContext):
         path = os.path.abspath(os.path.dirname(__file__))
         # SkyTemple translation support
         try:
@@ -38,11 +40,12 @@ class JoystickControlsDialogController:
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
-        self.window: Gtk.Window = self.builder.get_object('wJoyConfDlg')
+        self.window = builder_get_assert(self.builder, Gtk.Dialog, 'wJoyConfDlg')
         self.window.set_transient_for(parent_window)
         self.window.set_attached_to(parent_window)
         self._joystick_cfg: Optional[List[int]] = None
         self.builder.connect_signals(self)
+        self.context = context
 
     def run(self,
             poll_emulator: Callable[[], Any],
@@ -60,18 +63,20 @@ class JoystickControlsDialogController:
                 else:
                     text = _("Can't configure joystick while the game is running!")
 
-                md = Gtk.MessageDialog(None,
-                                       Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL,
-                                       Gtk.MessageType.ERROR,
-                                       Gtk.ButtonsType.OK, text,
-                                       title="Error!")
+                md = self.context.message_dialog(
+                    None,
+                    Gtk.DialogFlags.DESTROY_WITH_PARENT | Gtk.DialogFlags.MODAL,
+                    Gtk.MessageType.ERROR,
+                    Gtk.ButtonsType.OK, text,
+                    title="Error!"
+                )
                 md.set_position(Gtk.WindowPosition.CENTER)
                 md.run()
                 md.destroy()
             else:
                 key_names = emulator_get_key_names()
                 for i in range(0, EmulatorKeys.NB_KEYS):
-                    b = self.builder.get_object(f"button_joy_{key_names[i]}")
+                    b = builder_get_assert(self.builder, Gtk.Button, f"button_joy_{key_names[i]}")
                     b.set_label(f"{key_names_localized[i]} : {self._joystick_cfg[i]}")
                 # todo: a bit of a hack since Gtk.Dialog.run starts a new loop and temporarily "disables" the emulator polling.
                 source_id = GLib.timeout_add(1000 // 45, poll_emulator)
@@ -93,12 +98,13 @@ class JoystickControlsDialogController:
     # Joystick configuration / Key definition
     def on_button_joy_key_clicked(self, w, *args):
         key = widget_to_primitive(w)
-        dlg = self.builder.get_object("wJoyDlg")
+        dlg = builder_get_assert(self.builder, Gtk.Dialog, "wJoyDlg")
         key -= 1  # key = bit position, start with
 
         def cb(joykey):
+            assert self._joystick_cfg is not None
             self._joystick_cfg[key] = joykey
-            self.builder.get_object(f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
+            builder_get_assert(self.builder, Gtk.Button, f"button_joy_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {joykey}")
             dlg.hide()
 
         emulator_joy_get_set_key(key, cb)

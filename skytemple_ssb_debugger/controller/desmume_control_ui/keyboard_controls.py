@@ -19,9 +19,11 @@ import os
 from typing import Optional, List
 
 from gi.repository import Gtk, Gdk
+from skytemple.core.ui_utils import assert_not_none
 from skytemple_ssb_emulator import emulator_get_key_names, EmulatorKeys
 
 from skytemple_ssb_debugger.controller.desmume_control_ui import key_names_localized, widget_to_primitive
+from skytemple_ssb_debugger.ui_util import builder_get_assert
 
 
 class KeyboardControlsDialogController:
@@ -35,11 +37,11 @@ class KeyboardControlsDialogController:
         except ImportError:
             self.builder = Gtk.Builder()
             self.builder.add_from_file(os.path.join(path, "PyDeSmuMe_controls.glade"))
-        self.window: Gtk.Window = self.builder.get_object('wKeybConfDlg')
+        self.window = builder_get_assert(self.builder, Gtk.Dialog, 'wKeybConfDlg')
         self.window.set_transient_for(parent_window)
         self.window.set_attached_to(parent_window)
         self._keyboard_cfg: Optional[List[int]] = None
-        self._tmp_key = None
+        self._tmp_key: Optional[int] = None
         self.builder.connect_signals(self)
 
     def run(self, keyboard_cfg: List[int]) -> Optional[List[int]]:
@@ -48,7 +50,7 @@ class KeyboardControlsDialogController:
         self._keyboard_cfg = keyboard_cfg.copy()
         key_names = emulator_get_key_names()
         for i in range(0, EmulatorKeys.NB_KEYS):
-            b = self.builder.get_object(f"button_{key_names[i]}")
+            b = builder_get_assert(self.builder, Gtk.Button, f"button_{key_names[i]}")
             b.set_label(f"{key_names_localized[i]} : {Gdk.keyval_name(self._keyboard_cfg[i])}")
         response = self.window.run()
 
@@ -60,19 +62,24 @@ class KeyboardControlsDialogController:
     # KEYBOARD CONFIG / KEY DEFINITION
     def on_wKeyDlg_key_press_event(self, widget: Gtk.Widget, event: Gdk.EventKey, *args):
         self._tmp_key = event.keyval
-        self.builder.get_object("label_key").set_text(Gdk.keyval_name(self._tmp_key))
+        builder_get_assert(self.builder, Gtk.Label, "label_key").set_text(
+            assert_not_none(Gdk.keyval_name(self._tmp_key))
+        )
         return True
 
     def on_button_kb_key_clicked(self, w, *args):
         key = widget_to_primitive(w)
-        dlg = self.builder.get_object("wKeyDlg")
+        dlg = builder_get_assert(self.builder, Gtk.Dialog, "wKeyDlg")
         key -= 1  # key = bit position, start with
         assert self._keyboard_cfg is not None
         self._tmp_key = self._keyboard_cfg[key]
-        self.builder.get_object("label_key").set_text(Gdk.keyval_name(self._tmp_key))
+        assert self._tmp_key is not None
+        builder_get_assert(self.builder, Gtk.Label, "label_key").set_text(assert_not_none(
+            Gdk.keyval_name(self._tmp_key)
+        ))
         if dlg.run() == Gtk.ResponseType.OK:
             self._keyboard_cfg[key] = self._tmp_key
-            self.builder.get_object(f"button_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {Gdk.keyval_name(self._tmp_key)}")
+            builder_get_assert(self.builder, Gtk.Button, f"button_{emulator_get_key_names()[key]}").set_label(f"{key_names_localized[key]} : {Gdk.keyval_name(self._tmp_key)}")
 
         dlg.hide()
 

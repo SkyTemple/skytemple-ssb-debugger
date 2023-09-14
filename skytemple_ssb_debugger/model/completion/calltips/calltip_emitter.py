@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from gi.repository import GtkSource, Gtk
 
@@ -77,7 +77,7 @@ class CalltipEmitter:
 
         if not op_was_same or self._active_arg != arg_index:
             self._active_arg = arg_index
-            btn_box = self._active_widget.get_children()[0].get_children()[0]
+            btn_box = cast(Gtk.Box, cast(Gtk.Container, self._active_widget.get_children()[0]).get_children()[0])
             for c in btn_box.get_children():
                 btn_box.remove(c)
             for i, arg in enumerate(op.arguments):
@@ -108,7 +108,9 @@ class CalltipEmitter:
                 btn_box.pack_start(lbl, True, False, 0)
 
         if self.position_mark_calltip is not None:
-            self.position_mark_calltip.add_button_if_pos_mark(self._active_widget.get_children()[0], buffer)
+            self.position_mark_calltip.add_button_if_pos_mark(
+                cast(Gtk.Box, self._active_widget.get_children()[0]), buffer
+            )
 
         self._active_widget.show_all()
 

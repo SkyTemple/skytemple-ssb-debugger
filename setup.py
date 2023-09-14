@@ -27,7 +27,8 @@ setup(
         'skytemple-ssb-emulator >= 1.6.0a1',
         'explorerscript >= 0.1.3',
         'nest-asyncio >= 1.4.1',
-        'pygtkspellcheck >= 5.0'
+        'pygtkspellcheck >= 5.0',
+        'importlib_metadata>=4.6; python_version < "3.10"'
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
