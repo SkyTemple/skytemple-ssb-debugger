@@ -299,12 +299,14 @@ class GroundEngineState:
                 were_invalid.append(f.file_name)
         if len(were_invalid) > 0:
             n = '\n'
-            md = self.context.message_dialog_cls()(None,
-                                                   Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
-                                                   Gtk.ButtonsType.OK,
-                                                   f"Some SSB script files that are loaded in RAM were changed. You can not debug "
-                                                   f"these files, until they are reloaded:\n{n.join(were_invalid)}",
-                                                   title="Warning!")
+            md = self.context.message_dialog(
+                None,
+                Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
+                Gtk.ButtonsType.OK,
+                f"Some SSB script files that are loaded in RAM were changed. You can not debug "
+                f"these files, until they are reloaded:\n{n.join(were_invalid)}",
+                title="Warning!"
+            )
             md.set_position(Gtk.WindowPosition.CENTER)
             # Some timing issues here.
             def run_and_destroy():

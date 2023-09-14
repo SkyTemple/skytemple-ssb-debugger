@@ -43,7 +43,7 @@ class SsbFileManager:
 
     def get(self, filename: str) -> SsbLoadedFile:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
-        return self.context.get_ssb(filename, self)  # type: ignore
+        return self.context.get_ssb(filename, self)
 
     def save_from_ssb_script(self, filename: str, code: str) -> bool:
         """
@@ -62,7 +62,7 @@ class SsbFileManager:
         f = self.get(filename)
         f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
         logger.debug(f"{filename}: Saving to ROM")
-        self.context.save_ssb(filename, f.ssb_model, self)  # type: ignore
+        self.context.save_ssb(filename, f.ssb_model, self)
         # After save:
         return self._handle_after_save(filename)
 
@@ -122,7 +122,7 @@ class SsbFileManager:
 
         # Save ROM
         logger.debug(f"{ssb_filename}: Save ROM")
-        self.context.save_ssb(ssb_filename, f.ssb_model, self)  # type: ignore
+        self.context.save_ssb(ssb_filename, f.ssb_model, self)
 
         # Update the hash of the ExplorerScript file
         logger.debug(f"{ssb_filename}: Hash")

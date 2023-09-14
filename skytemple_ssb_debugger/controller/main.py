@@ -22,7 +22,7 @@ import shutil
 import sys
 import webbrowser
 from functools import partial
-from typing import Optional, Dict, List, Sequence
+from typing import Optional, Dict, List, Sequence, cast, TypeVar
 
 import cairo
 import gi
@@ -38,9 +38,6 @@ from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_co
     emulator_start, emulator_joy_init, emulator_touch_set_pos, emulator_resume, emulator_unpress_all_keys, \
     emulator_reset, emulator_pause, emulator_shutdown, emulator_set_boost, emulator_set_language, emulator_open_rom, \
     emulator_display_buffer_as_rgbx, emulator_debug_init_breakpoint_manager
-
-from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
-from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
 
 gi.require_version('GtkSource', '4')
 from gi.repository.GtkSource import StyleSchemeManager
@@ -62,7 +59,11 @@ from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStru
 from skytemple_ssb_debugger.model.settings import DebuggerSettingsStore, TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.renderer.async_software import AsyncSoftwareRenderer
+from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_column
+from skytemple_ssb_debugger.controller.desmume_control_ui.joystick_controls import JoystickControlsDialogController
+from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls import KeyboardControlsDialogController
 from skytemple_files.common.i18n_util import f, _
+from skytemple_ssb_debugger.ui_util import assert_not_none
 
 gi.require_version('Gtk', '3.0')
 
@@ -97,14 +98,14 @@ class MainController:
         self._debug_log_scroll_to_bottom = False
         self._suppress_event = False
         self._stopped = False
-        self._resize_timeout_id = None
+        self._resize_timeout_id: Optional[int] = None
 
-        self._search_text = None
-        self._ssb_item_filter = None
+        self._search_text: Optional[str] = None
+        self._ssb_item_filter: Optional[Gtk.TreeModelFilter] = None
 
         self._log_stdout_io_source = None
 
-        self._file_tree_store = Gtk.TreeStore(str, str, str, bool)
+        self._file_tree_store = Gtk.TreeStore(str, str, str, bool)  # type: ignore
 
         self._current_screen_width = SCREEN_WIDTH
         self._current_screen_height = SCREEN_HEIGHT
@@ -120,19 +121,19 @@ class MainController:
         # mapname
         self._registered_maps: Dict[str, Gtk.TreeIter] = {}
 
-        spellcheck_enabled_item = self.builder.get_object('menu_spellcheck_enabled')
+        spellcheck_enabled_item = builder_get_assert(self.builder, Gtk.CheckMenuItem, 'menu_spellcheck_enabled')
         spellcheck_enabled_item.set_active(self.settings.get_spellcheck_enabled())
 
         # Source editor style schema
         self.style_scheme_manager = StyleSchemeManager()
-        self.selected_style_scheme_id = self.settings.get_style_scheme()
+        self.selected_style_scheme_id: str = self.settings.get_style_scheme()  # type: ignore
         was_none_before = self.selected_style_scheme_id is None
         style_dict: Dict[str, str] = {}
-        for style_id in self.style_scheme_manager.get_scheme_ids():
+        for style_id in assert_not_none(self.style_scheme_manager.get_scheme_ids()):
             if not self.selected_style_scheme_id or (was_none_before and style_id == 'oblivion'):
                 self.selected_style_scheme_id = style_id
-            style_dict[style_id] = self.style_scheme_manager.get_scheme(style_id).get_name()
-        menu_view_schemes: Gtk.MenuItem = self.builder.get_object('menu_view_schemes')
+            style_dict[style_id] = assert_not_none(self.style_scheme_manager.get_scheme(style_id)).get_name()
+        menu_view_schemes = builder_get_assert(self.builder, Gtk.MenuItem, 'menu_view_schemes')
         first_item = None
         submenu = Gtk.Menu.new()
         for style_id, style_name in style_dict.items():
@@ -160,12 +161,12 @@ class MainController:
         self._filter_any.set_name(_("All files"))
         self._filter_any.add_pattern("*")
 
-        self._poll_emulator_event_id = None
+        self._poll_emulator_event_id: Optional[int] = None
 
-        self.main_draw = builder.get_object("draw_main")
+        self.main_draw = builder_get_assert(builder, Gtk.DrawingArea, "draw_main")
         self.main_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
         self.main_draw.show()
-        self.sub_draw = builder.get_object("draw_sub")
+        self.sub_draw = builder_get_assert(builder, Gtk.DrawingArea, "draw_sub")
         self.sub_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
         self.sub_draw.show()
 
@@ -187,17 +188,17 @@ class MainController:
         if lang:
             self._suppress_event = True
             if lang == Language.Japanese:
-                self.builder.get_object('menu_emulator_language_jp').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_jp').set_active(True)
             elif lang == Language.English:
-                self.builder.get_object('menu_emulator_language_en').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_en').set_active(True)
             elif lang == Language.French:
-                self.builder.get_object('menu_emulator_language_fr').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_fr').set_active(True)
             elif lang == Language.German:
-                self.builder.get_object('menu_emulator_language_de').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_de').set_active(True)
             elif lang == Language.Italian:
-                self.builder.get_object('menu_emulator_language_it').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_it').set_active(True)
             elif lang == Language.Spanish:
-                self.builder.get_object('menu_emulator_language_es').set_active(True)
+                builder_get_assert(self.builder, Gtk.RadioMenuItem, 'menu_emulator_language_es').set_active(True)
             self._suppress_event = False
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
@@ -209,27 +210,27 @@ class MainController:
         self.ground_state_controller = GroundStateController(self.debugger, self.builder)
 
         # Load more initial settings
-        self.on_debug_log_cntrl_ops_toggled(builder.get_object('debug_log_cntrl_ops'))
-        self.on_debug_log_cntrl_script_toggled(builder.get_object('debug_log_cntrl_script'))
-        self.on_debug_log_cntrl_internal_toggled(builder.get_object('debug_log_cntrl_internal'))
-        self.on_debug_log_cntrl_ground_state_toggled(builder.get_object('debug_log_cntrl_ground_state'))
-        self.on_debug_settings_debug_mode_toggled(builder.get_object('debug_settings_debug_mode'))
-        self.on_debug_settings_overlay_toggled(builder.get_object('debug_settings_overlay'))
-        self.on_emulator_controls_volume_toggled(builder.get_object('emulator_controls_volume'))
-        self.on_debug_log_scroll_to_bottom_toggled(builder.get_object('debug_log_scroll_to_bottom'))
+        self.on_debug_log_cntrl_ops_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_log_cntrl_ops'))
+        self.on_debug_log_cntrl_script_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_log_cntrl_script'))
+        self.on_debug_log_cntrl_internal_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_log_cntrl_internal'))
+        self.on_debug_log_cntrl_ground_state_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_log_cntrl_ground_state'))
+        self.on_debug_settings_debug_mode_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_settings_debug_mode'))
+        self.on_debug_settings_overlay_toggled(builder_get_assert(builder, Gtk.CheckButton, 'debug_settings_overlay'))
+        self.on_emulator_controls_volume_toggled(builder_get_assert(builder, Gtk.ToggleButton, 'emulator_controls_volume'))
+        self.on_debug_log_scroll_to_bottom_toggled(builder_get_assert(builder, Gtk.ToggleButton, 'debug_log_scroll_to_bottom'))
 
         # Trees / Lists
-        ssb_file_tree: Gtk.TreeView = self.builder.get_object('ssb_file_tree')
-        column_main = Gtk.TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=1)
+        ssb_file_tree = builder_get_assert(self.builder, Gtk.TreeView, 'ssb_file_tree')
+        column_main = create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=1)
         ssb_file_tree.append_column(column_main)
 
         # Other gtk stuff
-        self._debug_log_textview_right_marker = self.builder.get_object('debug_log_textview').get_buffer().create_mark(
-            'end', self.builder.get_object('debug_log_textview').get_buffer().get_end_iter(), False
+        self._debug_log_textview_right_marker = builder_get_assert(self.builder, Gtk.TextView, 'debug_log_textview').get_buffer().create_mark(
+            'end', builder_get_assert(self.builder, Gtk.TextView, 'debug_log_textview').get_buffer().get_end_iter(), False
         )
 
         # Initial sizes
-        self.builder.get_object('frame_debug_log').set_size_request(220, -1)
+        builder_get_assert(self.builder, Gtk.Frame, 'frame_debug_log').set_size_request(220, -1)
 
         # Load window sizes
         window_size = self.settings.get_window_size()
@@ -243,8 +244,8 @@ class MainController:
         self.window.present()
 
         if not self.context.allows_interactive_file_management():
-            menu_file: Gtk.Menu = self.builder.get_object('menu_file')
-            for child in menu_file:
+            menu_file = builder_get_assert(self.builder, Gtk.Menu, 'menu_file')
+            for child in menu_file.get_children():
                 if Gtk.Buildable.get_name(child) in ['menu_open', 'menu_open_sep']:
                     menu_file.remove(child)
 
@@ -283,17 +284,17 @@ class MainController:
 
     @property
     def global_state__breaks_disabled(self):
-        return self.builder.get_object('menu_debugger_disable_breaks').get_active()
+        return builder_get_assert(self.builder, Gtk.CheckMenuItem, 'menu_debugger_disable_breaks').get_active()
 
     @global_state__breaks_disabled.setter
     def global_state__breaks_disabled(self, value):
         if self._suppress_event:
             return
-        self.builder.get_object('menu_debugger_disable_breaks').set_active(value)
+        builder_get_assert(self.builder, Gtk.CheckMenuItem, 'menu_debugger_disable_breaks').set_active(value)
 
     @property
     def global_state__audio_enabled(self):
-        return self.builder.get_object('emulator_controls_volume').get_active()
+        return builder_get_assert(self.builder, Gtk.ToggleButton, 'emulator_controls_volume').get_active()
 
     def init_emulator(self):
         try:
@@ -380,11 +381,11 @@ class MainController:
 
     # EMULATOR
     def on_draw_aspect_frame_size_allocate(self, widget: Gtk.AspectFrame, *args):
-        scale = widget.get_child().get_allocated_width() / SCREEN_WIDTH
+        scale = assert_not_none(widget.get_child()).get_allocated_width() / SCREEN_WIDTH
         if self.renderer:
             self.renderer.set_scale(scale)
-        self._current_screen_height = SCREEN_HEIGHT * scale
-        self._current_screen_width = SCREEN_WIDTH * scale
+        self._current_screen_height = round(SCREEN_HEIGHT * scale)
+        self._current_screen_width = round(SCREEN_WIDTH * scale)
 
     def on_main_window_key_press_event(self, widget: Gtk.Widget, event: Gdk.EventKey, *args):
         # Don't enable controls when in any entry or text view
@@ -449,10 +450,10 @@ class MainController:
     def on_draw_motion_notify_event(self, widget: Gtk.Widget, event: Gdk.EventMotion, display_id: int):
         if display_id == 1 and self._click:
             if event.is_hint:
-                _, x, y, state = widget.get_window().get_pointer()
+                _, x, y, state = assert_not_none(widget.get_window()).get_pointer()
             else:
-                x = event.x
-                y = event.y
+                x = round(event.x)
+                y = round(event.y)
                 state = event.state
             if state & Gdk.ModifierType.BUTTON1_MASK:
                 self.set_touch_pos(x, y)
@@ -468,7 +469,7 @@ class MainController:
         if event.button == 1:
             if display_id == 1 and self.emu_is_running:
                 self._click = True
-                _, x, y, state = widget.get_window().get_pointer()
+                _, x, y, state = assert_not_none(widget.get_window()).get_pointer()
                 if state & Gdk.ModifierType.BUTTON1_MASK:
                     self.set_touch_pos(x, y)
         return True
@@ -486,7 +487,7 @@ class MainController:
 
         response, fn = self._file_chooser(Gtk.FileChooserAction.OPEN, _("Open..."), (self._filter_nds, self._filter_gba_ds, self._filter_any))
 
-        if response == Gtk.ResponseType.OK:
+        if response == Gtk.ResponseType.ACCEPT:
             try:
                 self.context.open_rom(fn)
             except BaseException as ex:
@@ -599,7 +600,7 @@ class MainController:
             self._joystick_cfg = jscfg
             self.settings.set_emulator_joystick_cfg(self._joystick_cfg)
 
-        JoystickControlsDialogController(self.window).run(
+        JoystickControlsDialogController(self.window, self.context).run(
             self.do_poll_emulator, self._joystick_cfg, emulator_is_running(), update
         )
 
@@ -646,7 +647,7 @@ class MainController:
         self.on_emulator_controls_loadstate3_clicked()
 
     def on_menu_emulator_volume_toggled(self, button: Gtk.CheckMenuItem, *args):
-        self.builder.get_object('emulator_controls_volume').set_active(button.get_active())
+        builder_get_assert(self.builder, Gtk.ToggleButton, 'emulator_controls_volume').set_active(button.get_active())
 
     def on_menu_emulator_screenshot_activate(self, button: Gtk.CheckMenuItem, *args):
         filter_png = Gtk.FileFilter()
@@ -656,7 +657,7 @@ class MainController:
         response, fn = self._file_chooser(Gtk.FileChooserAction.SAVE, _("Save Screenshot..."),
                                           (filter_png, self._filter_any))
 
-        if response == Gtk.ResponseType.OK:
+        if response == Gtk.ResponseType.ACCEPT:
             fn = add_extension_if_missing(fn, 'png')
             Image.frombuffer(
                 'RGBA',
@@ -672,8 +673,8 @@ class MainController:
         webbrowser.open_new_tab(TEXTBOX_TOOL_URL)
 
     def on_menu_help_about_activate(self, btn: Gtk.MenuItem, *args):
-        from skytemple_ssb_debugger.main import get_debugger_version
-        about: Gtk.AboutDialog = self.builder.get_object("about_dialog")
+        from skytemple_ssb_debugger.ui_util import get_debugger_version
+        about = builder_get_assert(self.builder, Gtk.AboutDialog, "about_dialog")
         about.connect("response", lambda d, r: d.hide())
 
         def activate_link(l, uri, *args):
@@ -715,7 +716,7 @@ class MainController:
         else:
             emulator_volume_set(0)
         self._suppress_event = True
-        self.builder.get_object('menu_emulator_volume').set_active(button.get_active())
+        builder_get_assert(self.builder, Gtk.CheckMenuItem, 'menu_emulator_volume').set_active(button.get_active())
         self._suppress_event = False
 
     def on_emulator_controls_savestate1_clicked(self, *args):
@@ -737,31 +738,31 @@ class MainController:
         self.loadstate(3)
 
     # OPTION TOGGLES
-    def on_debug_log_cntrl_ops_toggled(self, btn: Gtk.Widget):
+    def on_debug_log_cntrl_ops_toggled(self, btn: Gtk.CheckButton):
         if self.debugger:
             self.debugger.log_operations(btn.get_active())
 
-    def on_debug_log_cntrl_script_toggled(self, btn: Gtk.Widget):
+    def on_debug_log_cntrl_script_toggled(self, btn: Gtk.CheckButton):
         if self.debugger:
             self.debugger.log_debug_print(btn.get_active())
 
-    def on_debug_log_cntrl_internal_toggled(self, btn: Gtk.Widget):
+    def on_debug_log_cntrl_internal_toggled(self, btn: Gtk.CheckButton):
         if self.debugger:
             self.debugger.log_printfs(btn.get_active())
 
-    def on_debug_log_cntrl_ground_state_toggled(self, btn: Gtk.Widget):
+    def on_debug_log_cntrl_ground_state_toggled(self, btn: Gtk.CheckButton):
         if self.debugger:
             self.debugger.log_ground_engine_state(btn.get_active())
 
     @staticmethod
-    def on_debug_settings_debug_mode_toggled(btn: Gtk.Widget):
+    def on_debug_settings_debug_mode_toggled(btn: Gtk.CheckButton):
         emulator_set_debug_mode(btn.get_active())
 
-    def on_debug_settings_debug_dungeon_skip_toggled(self, btn: Gtk.Widget):
+    def on_debug_settings_debug_dungeon_skip_toggled(self, btn: Gtk.CheckButton):
         if self.debugger:
             self.debugger.debug_dungeon_skip(btn.get_active())
 
-    def on_debug_settings_overlay_toggled(self, btn: Gtk.Widget):
+    def on_debug_settings_overlay_toggled(self, btn: Gtk.CheckButton):
         if self.debug_overlay:
             self.debug_overlay.toggle(btn.get_active())
 
@@ -769,7 +770,7 @@ class MainController:
         self._debug_log_scroll_to_bottom = btn.get_active()
 
     def on_debug_log_clear_clicked(self, btn: Gtk.Button):
-        buff: Gtk.TextBuffer = self.builder.get_object('debug_log_textview').get_buffer()
+        buff = builder_get_assert(self.builder, Gtk.TextView, 'debug_log_textview').get_buffer()
         buff.delete(buff.get_start_iter(), buff.get_end_iter())
 
     # FILE TREE
@@ -779,12 +780,12 @@ class MainController:
         self._search_text = search.get_text().strip()
         self._filter__refresh_results()
 
-    def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.Event):
+    def on_ssb_file_tree_button_press_event(self, tree: Gtk.TreeView, event: Gdk.EventButton):
         if event.type == Gdk.EventType.DOUBLE_BUTTON_PRESS:
             model, treeiter = tree.get_selection().get_selected()
             if treeiter is not None and model is not None:
                 if model[treeiter][0] == '':
-                    tree.expand_row(model[treeiter].path, False)
+                    tree.expand_row(cast(Gtk.TreePath, model[treeiter].path), False)
                 elif model[treeiter][2] == 'ssb':
                     self.editor_notebook.open_ssb(SCRIPT_DIR + '/' + model[treeiter][0])
                 elif model[treeiter][2] == 'exps_macro':
@@ -796,6 +797,7 @@ class MainController:
                     tree.expand_row(model.get_path(treeiter), False)
         elif event.type == Gdk.EventType.BUTTON_PRESS and event.button == Gdk.BUTTON_SECONDARY:
             # Right click!
+            assert self._ssb_item_filter is not None
             model = self._ssb_item_filter
             paths = tree.get_path_at_pos(int(event.x), int(event.y))
             if paths is not None:
@@ -804,7 +806,7 @@ class MainController:
                     if model[treepath][2] in ['map_root', 'map_sss', 'map_sse', 'map_ssa']:
                         menu: Gtk.Menu = Gtk.Menu.new()
                         open_scene: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Open Scenes..."))
-                        open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[treepath][0]))
+                        open_scene.connect('activate', lambda *args: self.context.open_scene_editor_for_map(model[not_none(treepath)][0]))
                         menu.add(open_scene)
                         menu.show_all()
                         menu.popup_at_pointer(event)
@@ -812,7 +814,7 @@ class MainController:
                         menu = Gtk.Menu.new()
                         open_scene = Gtk.MenuItem.new_with_label(_("Open Scene..."))
                         open_scene.connect('activate', lambda *args: self.context.open_scene_editor(
-                            self.get_scene_type_for(model[treepath][0]), self.get_scene_name_for(model[treepath][0])
+                            self.get_scene_type_for(model[not_none(treepath)][0]), self.get_scene_name_for(model[not_none(treepath)][0])
                         ))
                         menu.add(open_scene)
                         menu.show_all()
@@ -886,7 +888,7 @@ class MainController:
 
         if not self._ssb_item_filter:
             self._ssb_item_filter = ssb_file_tree_store.filter_new()
-            self.builder.get_object('ssb_file_tree').set_model(self._ssb_item_filter)
+            builder_get_assert(self.builder, Gtk.TreeView, 'ssb_file_tree').set_model(self._ssb_item_filter)
             assert self._ssb_item_filter is not None
             self._ssb_item_filter.set_visible_column(COL_VISIBLE)
 
@@ -977,7 +979,7 @@ class MainController:
         self.global_state_controller.sync()
         
     def on_global_state_alloc_dump_clicked(self, *args):
-        active_rows: List[Gtk.TreePath] = self.builder.get_object('global_state_alloc_treeview').get_selection().get_selected_rows()[1]
+        active_rows: List[Gtk.TreePath] = builder_get_assert(self.builder, Gtk.TreeView, 'global_state_alloc_treeview').get_selection().get_selected_rows()[1]
         if len(active_rows) >= 1:
             def do_dump(data):
                 dialog = Gtk.FileChooserNative.new(
@@ -991,7 +993,7 @@ class MainController:
                 fn = dialog.get_filename()
                 dialog.destroy()
 
-                if response == Gtk.ResponseType.ACCEPT:
+                if response == Gtk.ResponseType.ACCEPT and fn is not None:
                     with open(fn, 'wb') as f:
                         f.write(data)
 
@@ -1110,12 +1112,12 @@ class MainController:
                 fl1 = []
                 fl2 = []
                 for i in range(0, 12):
-                    fl1.append(self.builder.get_object(f"chk_debug_flag_1_{i}").get_active())
+                    fl1.append(builder_get_assert(self.builder, Gtk.CheckButton, f"chk_debug_flag_1_{i}").get_active())
                 for j in range(0, 16):
-                    fl2.append(self.builder.get_object(f"chk_debug_flag_2_{j}").get_active())
+                    fl2.append(builder_get_assert(self.builder, Gtk.CheckButton, f"chk_debug_flag_2_{j}").get_active())
                 self.debugger.enable(
                     rom_data, self.ssb_fm, self.on_ground_engine_start,
-                    debug_mode=self.builder.get_object('debug_settings_debug_mode').get_active(),
+                    debug_mode=builder_get_assert(self.builder, Gtk.CheckButton, 'debug_settings_debug_mode').get_active(),
                     debug_flag_1=fl1, debug_flag_2=fl2
                 )
             self.init_file_tree()
@@ -1136,9 +1138,9 @@ class MainController:
             self.emu_stop()
 
     def enable_editing_features(self):
-        code_editor_main: Gtk.Box = self.builder.get_object('code_editor_main')
-        code_editor_notebook: Gtk.Notebook = self.builder.get_object('code_editor_notebook')
-        code_editor_main.remove(self.builder.get_object('main_label'))
+        code_editor_main = builder_get_assert(self.builder, Gtk.Box, 'code_editor_main')
+        code_editor_notebook = builder_get_assert(self.builder, Gtk.Notebook, 'code_editor_notebook')
+        code_editor_main.remove(builder_get_assert(self.builder, Gtk.Widget, 'main_label'))
         code_editor_main.pack_start(code_editor_notebook, True, True, 0)
 
     def enable_debugging_features(self):
@@ -1210,8 +1212,8 @@ class MainController:
             )
 
             with open_utf8(ground_engine_savestate_path, 'w') as f:
-                assert self.debugger
-                json.dump(self.debugger.ground_engine_state.serialize(), f)  # type: ignore
+                assert self.debugger and self.debugger.ground_engine_state
+                json.dump(self.debugger.ground_engine_state.serialize(), f)
             emulator_savestate_save_file(desmume_savestate_path)
         except BaseException as err:
             self.context.display_error(
@@ -1445,7 +1447,7 @@ class MainController:
         emulator_set_debug_flag_2(int(w.get_name()[len("chk_debug_flag_2_"):]), w.get_active())
 
     def set_check_debug_flag(self, var_id, flag_id, value):
-        self.builder.get_object(f"chk_debug_flag_{var_id}_{flag_id}").set_active(bool(value))
+        builder_get_assert(self.builder, Gtk.CheckButton, f"chk_debug_flag_{var_id}_{flag_id}").set_active(bool(value))
 
     def break_pulled(self, state: BreakpointState):
         """
@@ -1559,7 +1561,7 @@ class MainController:
         if self._search_text == "":
             item_store.foreach(self._filter__reset_row, True)
         else:
-            self.builder.get_object('ssb_file_tree').collapse_all()
+            builder_get_assert(self.builder, Gtk.TreeView, 'ssb_file_tree').collapse_all()
             item_store.foreach(self._filter__reset_row, False)
             item_store.foreach(self._filter__show_matches)
             assert self._ssb_item_filter is not None
@@ -1590,35 +1592,34 @@ class MainController:
         This is super annoying. Because of the two different "views" on the model,
         we can't do this in show_matches, because we have to use the filter model here!
         """
-        search_query = self._search_text.lower()  # type: ignore
-        text = model[iter][1].lower()
-        ssb_file_tree = self.builder.get_object('ssb_file_tree')
-        if search_query in text:
-            ssb_file_tree.expand_to_path(path)
+        if self._search_text:
+            search_query = self._search_text.lower()
+            text = model[iter][1].lower()
+            ssb_file_tree = builder_get_assert(self.builder, Gtk.TreeView, 'ssb_file_tree')
+            if search_query in text:
+                ssb_file_tree.expand_to_path(path)
 
     def _filter__show_matches(self, model: Gtk.TreeStore, path, iter):
-        search_query = self._search_text.lower()  # type: ignore
-        text = model[iter][1].lower()
-        if search_query in text:
-            # Propagate visibility change up
-            self._filter__make_path_visible(model, iter)
-            # Propagate visibility change down
-            self._filter__make_subtree_visible(model, iter)
+        if self._search_text:
+            search_query = self._search_text.lower()
+            text = model[iter][1].lower()
+            if search_query in text:
+                # Propagate visibility change up
+                self._filter__make_path_visible(model, iter)
+                # Propagate visibility change down
+                self._filter__make_subtree_visible(model, iter)
     # END CODE DUPLICATION
 
     def _set_sensitve(self, name, state):
-        w = self.builder.get_object(name)
+        w = builder_get_assert(self.builder, Gtk.Widget, name)
         w.set_sensitive(state)
 
-    def _file_chooser(self, type, name, filter):
-        btn = Gtk.STOCK_OPEN
-        if type == Gtk.FileChooserAction.SAVE:
-            btn = Gtk.STOCK_SAVE
-        dialog = Gtk.FileChooserDialog(
+    def _file_chooser(self, type: Gtk.FileChooserAction, name, filter):
+        dialog = Gtk.FileChooserNative.new(
             name,
             self.window,
             type,
-            (Gtk.STOCK_CANCEL, Gtk.ResponseType.CANCEL, btn, Gtk.ResponseType.OK)
+            None, None
         )
         for f in filter:
             dialog.add_filter(f)
@@ -1630,7 +1631,7 @@ class MainController:
         return response, fn
 
     def _debugger_print_callback(self, string):
-        textview: Gtk.TextView = self.builder.get_object('debug_log_textview')
+        textview = builder_get_assert(self.builder, Gtk.TextView, 'debug_log_textview')
         textview.get_buffer().insert(textview.get_buffer().get_end_iter(), string + '\n')
 
         if self._debug_log_scroll_to_bottom:
@@ -1639,7 +1640,7 @@ class MainController:
             self._suppress_event = False
 
     def _warn_about_unsaved_vars(self):
-        md = self.context.message_dialog_cls()(
+        md = self.context.message_dialog(
             self.window,
             Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.WARNING,
             Gtk.ButtonsType.OK_CANCEL,
@@ -1659,48 +1660,48 @@ class MainController:
         return False
 
     def write_info_bar(self, message_type: Gtk.MessageType, text: str):
-        info_bar: Gtk.InfoBar = self.builder.get_object('info_bar')
-        info_bar_label: Gtk.Label = self.builder.get_object('info_bar_label')
+        info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'info_bar')
+        info_bar_label = builder_get_assert(self.builder, Gtk.Label, 'info_bar_label')
         info_bar_label.set_text(text)
         info_bar.set_message_type(message_type)
         info_bar.set_revealed(True)
 
     def clear_info_bar(self):
-        info_bar: Gtk.InfoBar = self.builder.get_object('info_bar')
+        info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'info_bar')
         info_bar.set_revealed(False)
 
     def _set_buttons_running(self):
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_playstop')
-        if self.builder.get_object('img_play').get_parent():
-            btn.remove(self.builder.get_object('img_play'))
-            btn.add(self.builder.get_object('img_stop'))
-        btn = self.builder.get_object('emulator_controls_pause')
-        if self.builder.get_object('img_play2').get_parent():
-            btn.remove(self.builder.get_object('img_play2'))
-            btn.add(self.builder.get_object('img_pause'))
+        btn = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_playstop')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_play').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_play'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_stop'))
+        btn = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_pause')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_play2').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_play2'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_pause'))
 
     def _set_buttons_stopped(self):
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_playstop')
-        if self.builder.get_object('img_stop').get_parent():
-            btn.remove(self.builder.get_object('img_stop'))
-            btn.add(self.builder.get_object('img_play'))
-        btn = self.builder.get_object('emulator_controls_pause')
-        if self.builder.get_object('img_play2').get_parent():
-            btn.remove(self.builder.get_object('img_play2'))
-            btn.add(self.builder.get_object('img_pause'))
+        btn = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_playstop')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_stop').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_stop'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_play'))
+        btn = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_pause')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_play2').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_play2'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_pause'))
 
     def _set_buttons_paused(self):
-        btn: Gtk.Button = self.builder.get_object('emulator_controls_pause')
-        if self.builder.get_object('img_pause').get_parent():
-            btn.remove(self.builder.get_object('img_pause'))
-            btn.add(self.builder.get_object('img_play2'))
-        btn = self.builder.get_object('emulator_controls_playstop')
-        if self.builder.get_object('img_play').get_parent():
-            btn.remove(self.builder.get_object('img_play'))
-            btn.add(self.builder.get_object('img_stop'))
+        btn: Gtk.Button = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_pause')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_pause').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_pause'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_play2'))
+        btn = builder_get_assert(self.builder, Gtk.Button, 'emulator_controls_playstop')
+        if builder_get_assert(self.builder, Gtk.Image, 'img_play').get_parent():
+            btn.remove(builder_get_assert(self.builder, Gtk.Image, 'img_play'))
+            btn.add(builder_get_assert(self.builder, Gtk.Image, 'img_stop'))
 
     def _show_are_you_sure_delete(self, text):
-        dialog: Gtk.MessageDialog = self.context.message_dialog_cls()(
+        dialog: Gtk.MessageDialog = self.context.message_dialog(
             self.window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
@@ -1715,9 +1716,9 @@ class MainController:
         return response
 
     def _show_generic_input(self, label_text, ok_text):
-        dialog: Gtk.Dialog = self.builder.get_object('generic_input_dialog')
-        entry: Gtk.Entry = self.builder.get_object('generic_input_dialog_entry')
-        label: Gtk.Label = self.builder.get_object('generic_input_dialog_label')
+        dialog = builder_get_assert(self.builder, Gtk.Dialog, 'generic_input_dialog')
+        entry = builder_get_assert(self.builder, Gtk.Entry, 'generic_input_dialog_entry')
+        label = builder_get_assert(self.builder, Gtk.Label, 'generic_input_dialog_label')
         label.set_text(label_text)
         btn_cancel = dialog.add_button(_("Cancel"), Gtk.ResponseType.CANCEL)
         btn = dialog.add_button(ok_text, Gtk.ResponseType.OK)
@@ -1726,6 +1727,13 @@ class MainController:
         entry.set_activates_default(True)
         response = dialog.run()
         dialog.hide()
-        btn.get_parent().remove(btn)
-        btn_cancel.get_parent().remove(btn_cancel)
+        assert_not_none(cast(Optional[Gtk.Container], btn.get_parent())).remove(btn)
+        assert_not_none(cast(Optional[Gtk.Container], btn_cancel.get_parent())).remove(btn_cancel)
         return response, entry.get_text()
+
+
+T = TypeVar('T')
+
+
+def not_none(x: Optional[T]) -> T:
+    return cast(T, x)

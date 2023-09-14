@@ -17,18 +17,17 @@
 from __future__ import annotations
 from typing import Optional, List, Sequence
 
-from gi.overrides.Gtk import TreeViewColumn
 from gi.repository import Gtk
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptGameVar
-from skytemple_ssb_emulator import emulator_sync_local_vars
 
 from skytemple_ssb_debugger.controller.debugger import DebuggerController
 from skytemple_ssb_debugger.controller.ground_state import resizable
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
-from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_files.common.i18n_util import _
+
+from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_column
 
 
 class LocalVariableController:
@@ -37,22 +36,22 @@ class LocalVariableController:
         self.builder = builder
         self.debugger = debugger
 
-        self._local__sw: Gtk.ScrolledWindow = builder.get_object('local_variables_sw')
-        self._macro__sw: Gtk.ScrolledWindow = builder.get_object('macro_variables_sw')
+        self._local__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'local_variables_sw')
+        self._macro__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'macro_variables_sw')
 
-        self._local__not_loaded: Gtk.Viewport = builder.get_object('local_vars_ges_not_loaded')
-        self._macro__not_loaded: Gtk.Viewport = builder.get_object('macro_vars_ges_not_loaded')
+        self._local__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'local_vars_ges_not_loaded')
+        self._macro__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'macro_vars_ges_not_loaded')
 
-        self._local__list_store: Gtk.ListStore = builder.get_object('local_variables_store')
-        self._macro__list_store: Gtk.ListStore = builder.get_object('macro_variables_store')
+        self._local__list_store = builder_get_assert(builder, Gtk.ListStore, 'local_variables_store')
+        self._macro__list_store = builder_get_assert(builder, Gtk.ListStore, 'macro_variables_store')
 
-        self._local__tree: Gtk.TreeView = builder.get_object('local_variables_list')
-        self._local__tree.append_column(resizable(TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=0)))
-        self._local__tree.append_column(resizable(TreeViewColumn(_("Value"), Gtk.CellRendererText(), text=1)))
+        self._local__tree = builder_get_assert(builder, Gtk.TreeView, 'local_variables_list')
+        self._local__tree.append_column(resizable(create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)))
+        self._local__tree.append_column(resizable(create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)))
 
-        self._macro__tree: Gtk.TreeView = builder.get_object('macro_variables_list')
-        self._macro__tree.append_column(resizable(TreeViewColumn(_("Name"), Gtk.CellRendererText(), text=0)))
-        self._macro__tree.append_column(resizable(TreeViewColumn(_("Value"), Gtk.CellRendererText(), text=1)))
+        self._macro__tree = builder_get_assert(builder, Gtk.TreeView, 'macro_variables_list')
+        self._macro__tree.append_column(resizable(create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)))
+        self._macro__tree.append_column(resizable(create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)))
 
         self._local_vars_specs: Optional[List[Pmd2ScriptGameVar]] = None
         self._local_vars_values: Sequence[int] = []

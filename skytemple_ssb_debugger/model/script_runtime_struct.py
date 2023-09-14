@@ -42,7 +42,12 @@ class ScriptRuntimeStruct:
 
     @classmethod
     def from_data(cls, rom_data: Pmd2Data, pnt_to_block_start: u32, data: bytes, target_slot_id: u32):
-        slf = cls(rom_data, pnt_to_block_start, None, _do_not_refresh=True)  # type: ignore
+        slf = cls(
+            rom_data,
+            pnt_to_block_start,
+            None,  # type: ignore
+            _do_not_refresh=True
+        )
         slf.buffer = data
         slf._cached_target_id = target_slot_id
         return slf

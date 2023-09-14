@@ -24,7 +24,7 @@ from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, pos_in_map_coord, AbstractEntity
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
-EVENT_EXISTS_CHECK_OFFSET = 0x02
+EVENT_EXISTS_CHECK_OFFSET = u32(0x02)
 
 
 class Event(AbstractEntity):
@@ -35,7 +35,7 @@ class Event(AbstractEntity):
 
     @property
     def _validity_offset(self) -> Optional[u32]:
-        return EVENT_EXISTS_CHECK_OFFSET  # type: ignore
+        return EVENT_EXISTS_CHECK_OFFSET
 
     @property
     def valid(self):

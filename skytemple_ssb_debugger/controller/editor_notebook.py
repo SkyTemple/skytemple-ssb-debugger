@@ -26,15 +26,17 @@ from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.controller.script_editor import ScriptEditorController
 from skytemple_ssb_emulator import BreakpointState, BreakpointStateType, emulator_debug_register_breakpoint_callbacks
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
-from ..context.abstract import AbstractDebuggerControlContext
-from ..model.breakpoint_file_state import BreakpointFileState
-from ..model.script_file_context.abstract import AbstractScriptFileContext
-from ..model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
-from ..model.script_file_context.ssb_file import SsbFileScriptFileContext
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
+from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
+from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
+from skytemple_ssb_debugger.model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
+from skytemple_ssb_debugger.model.script_file_context.ssb_file import SsbFileScriptFileContext
+from skytemple_ssb_debugger.ui_util import builder_get_assert
 from skytemple_files.common.i18n_util import f, _
 
+
 if TYPE_CHECKING:
-    from .main import MainController
+    from skytemple_ssb_debugger.main import MainController
 
 
 class EditorNotebookController:
@@ -45,7 +47,7 @@ class EditorNotebookController:
         self.file_manager: Optional[SsbFileManager] = None
         self.rom_data: Optional[Pmd2Data] = None
         self._open_editors: Dict[str, ScriptEditorController] = {}
-        self._notebook: Gtk.Notebook = builder.get_object('code_editor_notebook')
+        self._notebook = builder_get_assert(builder, Gtk.Notebook, 'code_editor_notebook')
         self._cached_hanger_halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]] = {}
         self._cached_file_bpnt_state: Optional[BreakpointFileState] = None
         self.enable_explorerscript = enable_explorerscript
@@ -92,7 +94,7 @@ class EditorNotebookController:
             else:
                 assert self.rom_data
                 editor_controller = ScriptEditorController(
-                    self, self._main_window, file_context,  # type: ignore
+                    self, self._main_window, file_context,
                     self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript,
                     not self.get_context().show_ssb_script_editor()
                 )
@@ -236,8 +238,8 @@ class EditorNotebookController:
             editor.on_breakpoint_removed(filename, opcode_offset)
 
     def on_ssb_editor_modified(self, controller: ScriptEditorController, modified: bool):
-        lbl_box: Gtk.Box = self._notebook.get_tab_label(controller.get_root_object())
-        lbl: Gtk.Label = lbl_box.get_children()[0]
+        lbl_box = cast(Gtk.Box, self._notebook.get_tab_label(controller.get_root_object()))
+        lbl = cast(Gtk.Label, lbl_box.get_children()[0])
         pathsep = os.path.sep
         if controller.filename.endswith('.ssb'):
             pathsep = '/'
@@ -317,7 +319,7 @@ class EditorNotebookController:
             self.get_context().on_script_edit(current_open.filename)
 
     def _show_are_you_sure(self, filename):
-        dialog: Gtk.MessageDialog = self.parent.context.message_dialog_cls()(
+        dialog: Gtk.MessageDialog = self.parent.context.message_dialog(
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
@@ -333,7 +335,7 @@ class EditorNotebookController:
         return response
 
     def _show_warning_breaking(self):
-        md = self.parent.context.message_dialog_cls()(
+        md = self.parent.context.message_dialog(
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,

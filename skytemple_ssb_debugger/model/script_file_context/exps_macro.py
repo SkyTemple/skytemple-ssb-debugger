@@ -250,7 +250,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
 
     def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
         # We can't open a scene for a macro.
-        md = self._editor_notebook_controller.parent.context.message_dialog_cls()(
+        md = self._editor_notebook_controller.parent.context.message_dialog(
             None,
             Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
             Gtk.ButtonsType.OK,

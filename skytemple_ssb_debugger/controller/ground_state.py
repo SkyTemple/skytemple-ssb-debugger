@@ -28,6 +28,8 @@ from skytemple_ssb_debugger.model.ground_engine_state import TALK_HANGER_OFFSET
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 from skytemple_files.common.i18n_util import _
 
+from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_column
+
 GE_FILE_STORE_SCRIPT = _('Script')
 
 gi.require_version('Gtk', '3.0')
@@ -49,32 +51,32 @@ class GroundStateController:
 
         self._was_running_last_sync = False
 
-        self._files__sw: Gtk.ScrolledWindow = builder.get_object('ground_state_files_tree_sw')
-        self._entities__sw: Gtk.ScrolledWindow = builder.get_object('ground_state_entities_tree_sw')
+        self._files__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'ground_state_files_tree_sw')
+        self._entities__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'ground_state_entities_tree_sw')
 
-        self._files__not_loaded: Gtk.Viewport = builder.get_object('ground_state_files_tree_engine_not_loaded')
-        self._entities__not_loaded: Gtk.Viewport = builder.get_object('ground_state_entities_tree_engine_not_loaded')
+        self._files__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'ground_state_files_tree_engine_not_loaded')
+        self._entities__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'ground_state_entities_tree_engine_not_loaded')
 
         self._ssb_tree_store_iters: Dict[int, Gtk.TreeIter] = {}
 
-        self._files__tree: Gtk.TreeView = builder.get_object('ground_state_files_tree')
+        self._files__tree = builder_get_assert(builder, Gtk.TreeView, 'ground_state_files_tree')
         icon = Gtk.CellRendererPixbuf()
         path = Gtk.CellRendererText()
-        column = TreeViewColumn(_("Path"))
+        column = TreeViewColumn(title=_("Path"))
         column.pack_start(icon, True)
         column.pack_start(path, True)
         column.add_attribute(icon, "icon_name", 0)
         column.add_attribute(path, "text", 1)
         self._files__tree.append_column(resizable(column))
-        self._files__tree.append_column(resizable(TreeViewColumn(_("Hanger"), Gtk.CellRendererText(), text=3)))  # TRANSLATOR: Special context of a loaded script... the weird is engrish.
-        self._files__tree.append_column(resizable(TreeViewColumn(_("Type"), Gtk.CellRendererText(), text=2)))
+        self._files__tree.append_column(resizable(create_tree_view_column(_("Hanger"), Gtk.CellRendererText(), text=3)))  # TRANSLATOR: Special context of a loaded script... the weird is engrish.
+        self._files__tree.append_column(resizable(create_tree_view_column(_("Type"), Gtk.CellRendererText(), text=2)))
 
-        self._entities__tree: Gtk.TreeView = builder.get_object('ground_state_entities_tree')
+        self._entities__tree = builder_get_assert(builder, Gtk.TreeView, 'ground_state_entities_tree')
         #self._files__tree.append_column(resizable(TreeViewColumn("Preview", Gtk.CellRendererPixbuf(), xxx=4)))
         icon = Gtk.CellRendererPixbuf()
         debug_icon = Gtk.CellRendererPixbuf()
         slot_id = Gtk.CellRendererText()
-        column = TreeViewColumn(_("ID"))
+        column = TreeViewColumn(title=_("ID"))
         column.pack_start(icon, True)
         column.pack_start(debug_icon, True)
         column.pack_start(slot_id, True)
@@ -82,15 +84,15 @@ class GroundStateController:
         column.add_attribute(icon, "icon_name", 7)
         column.add_attribute(slot_id, "text", 0)
         self._entities__tree.append_column(resizable(column))
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("Kind"), Gtk.CellRendererText(), text=5)))
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("Hanger"), Gtk.CellRendererText(), text=1)))  # TRANSLATOR: Special context of a loaded script... the weird is engris
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("X"), Gtk.CellRendererText(), text=8)))
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("Y"), Gtk.CellRendererText(), text=9)))
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("Sector"), Gtk.CellRendererText(), text=2)))  # TRANSLATOR: Engrish for 'Layer'
-        self._entities__tree.append_column(resizable(TreeViewColumn(_("Script"), Gtk.CellRendererText(), text=3)))
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("Kind"), Gtk.CellRendererText(), text=5)))
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("Hanger"), Gtk.CellRendererText(), text=1)))  # TRANSLATOR: Special context of a loaded script... the weird is engris
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("X"), Gtk.CellRendererText(), text=8)))
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("Y"), Gtk.CellRendererText(), text=9)))
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("Sector"), Gtk.CellRendererText(), text=2)))  # TRANSLATOR: Engrish for 'Layer'
+        self._entities__tree.append_column(resizable(create_tree_view_column(_("Script"), Gtk.CellRendererText(), text=3)))
 
-        self._files__tree_store: Gtk.TreeStore = builder.get_object('ground_state_files_tree_store')
-        self._entities__tree_store: Gtk.TreeStore = builder.get_object('ground_state_entities_store')
+        self._files__tree_store = builder_get_assert(builder, Gtk.TreeStore, 'ground_state_files_tree_store')
+        self._entities__tree_store = builder_get_assert(builder, Gtk.TreeStore, 'ground_state_entities_store')
 
     def sync_break_hanger(self):
         """
@@ -299,15 +301,18 @@ class GroundStateController:
                 pos_marks_node = self._entities__tree_store.append(None, [
                     _('Pos. Marks'), '', '', '', None, '', '', ICON_POSITION_MARKER, '', '', -1  # TRANSLATORS: Position Marks
                 ])
-                for ssb in ground_state.loaded_ssb_files:
-                    if ssb is not None:
-                        for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:  # type: ignore
-                            self._entities__tree_store.append(pos_marks_node, [
-                                f'{mark.name}', '', '',
-                                ssb.file_name.split('/')[-1], None,  # type: ignore
-                                '', '', '',
-                                f'{mark.x_with_offset}', f'{mark.y_with_offset}', -1
-                            ])
+                assert ground_state.loaded_ssb_files is not None
+                for ssbf in ground_state.loaded_ssb_files:
+                    if ssbf is not None:
+                        marks = ground_state.ssb_file_manager.get(ssbf.file_name).position_markers
+                        if marks is not None:
+                            for mark in marks:
+                                self._entities__tree_store.append(pos_marks_node, [
+                                    f'{mark.name}', '', '',
+                                    ssbf.file_name.split('/')[-1], None,
+                                    '', '', '',
+                                    f'{mark.x_with_offset}', f'{mark.y_with_offset}', -1
+                                ])
 
                 self._files__tree.expand_all()
                 self._entities__tree.expand_all()
