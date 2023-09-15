@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, List, Optional, Callable
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.script.ssb.model import Ssb
-from skytemple_ssb_emulator import emulator_debug_set_loaded_ssb_breakable
+from skytemple_ssb_emulator import emulator_is_initialized, emulator_debug_set_loaded_ssb_breakable
 
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
@@ -54,7 +54,10 @@ class SsbLoadedFile:
         # loaded in RAM and old breakpoint mappings
         # are not available (because the source view for it was closed).
         self._not_breakable_cache = False
-        emulator_debug_set_loaded_ssb_breakable(self.filename, True)
+        # This check is needed because this model may be created without the emulator actually being loaded.
+        # SkyTemple for example creates this model when creating new scripts.
+        if emulator_is_initialized():
+            emulator_debug_set_loaded_ssb_breakable(self.filename, True)
 
         # Called once, then removed.
         self._event_handlers_manager: List[Callable] = []
