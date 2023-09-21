@@ -100,13 +100,13 @@ class GroundStateController:
         The views must be built already.
         """
         ground_state = self.debugger.ground_engine_state
-        assert ground_state is not None
-        for ssb in ground_state.loaded_ssb_files:
-            if ssb is not None and ssb.hanger in self._ssb_tree_store_iters:
-                if ssb.breaked:
-                    self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = 'media-playback-pause'
-                else:
-                    self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = ''
+        if ground_state is not None:
+            for ssb in ground_state.loaded_ssb_files:
+                if ssb is not None and ssb.hanger in self._ssb_tree_store_iters:
+                    if ssb.breaked:
+                        self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = 'media-playback-pause'
+                    else:
+                        self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = ''
 
     def sync(self, code_editor=None, breaked_for: Optional[ScriptRuntimeStruct] = None):
         """
