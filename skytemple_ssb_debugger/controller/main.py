@@ -340,7 +340,7 @@ class MainController:
         except Exception as ex:
             self.context.display_error(
                 sys.exc_info(),
-                f(_("The emulator reported an internal error:\n\n")),
+                f(_("The emulator reported an internal error:\n\n") + ex.__class__.__name__ + ": " + str(ex)),
                 _("Emulator Error")
             )
         return True
