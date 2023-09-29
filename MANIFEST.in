@@ -1,0 +1,5 @@
+include skytemple_ssb_debugger/*.lang
+include skytemple_ssb_debugger/*.css
+recursive-include skytemple_ssb_debugger *.glade
+graft skytemple_ssb_debugger/data
+include skytemple_ssb_debugger/py.typed
