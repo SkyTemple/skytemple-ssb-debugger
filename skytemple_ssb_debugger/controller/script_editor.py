@@ -897,7 +897,7 @@ class ScriptEditorController:
         CalltipEmitter(
             self._ssb_script_view,
             self.rom_data.script_data.op_codes,
-            assert_not_none(self.mapname),
+            self.mapname,
             *self.file_context.get_scene_name_and_type(),  # type: ignore
             self.parent.get_context(),  # type: ignore
             is_ssbs=True

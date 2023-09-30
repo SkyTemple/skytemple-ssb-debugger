@@ -28,7 +28,7 @@ from skytemple_ssb_debugger.model.completion.util import backward_until_space
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
     def __init__(self, view: GtkSource.View, opcodes: List[Pmd2ScriptOpCode],
-                 mapname: str, scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
+                 mapname: Optional[str], scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.opcodes = opcodes
