@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import Tuple, Optional, Iterable
+from typing import Tuple, Optional
+from collections.abc import Iterable
 
 from gi.repository import GObject
 from gi.repository import GtkSource, Gtk
@@ -59,7 +60,7 @@ class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.Comp
     def do_get_icon_name(self):
         return None
 
-    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> Tuple[bool, Optional[Gtk.TextIter]]:
+    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> tuple[bool, Gtk.TextIter | None]:
         return False, None
 
     def do_match(self, context: GtkSource.CompletionContext) -> bool:

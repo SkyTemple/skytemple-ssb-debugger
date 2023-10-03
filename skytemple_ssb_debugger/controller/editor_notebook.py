@@ -40,16 +40,16 @@ if TYPE_CHECKING:
 
 
 class EditorNotebookController:
-    def __init__(self, builder: Gtk.Builder, parent: 'MainController',
+    def __init__(self, builder: Gtk.Builder, parent: MainController,
                  main_window: Gtk.Window, enable_explorerscript=True):
         self.builder = builder
         self.parent = parent
-        self.file_manager: Optional[SsbFileManager] = None
-        self.rom_data: Optional[Pmd2Data] = None
-        self._open_editors: Dict[str, ScriptEditorController] = {}
+        self.file_manager: SsbFileManager | None = None
+        self.rom_data: Pmd2Data | None = None
+        self._open_editors: dict[str, ScriptEditorController] = {}
         self._notebook = builder_get_assert(builder, Gtk.Notebook, 'code_editor_notebook')
-        self._cached_hanger_halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]] = {}
-        self._cached_file_bpnt_state: Optional[BreakpointFileState] = None
+        self._cached_hanger_halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]] = {}
+        self._cached_file_bpnt_state: BreakpointFileState | None = None
         self.enable_explorerscript = enable_explorerscript
         self._main_window = main_window
 
@@ -59,7 +59,7 @@ class EditorNotebookController:
         emulator_debug_register_breakpoint_callbacks(self.on_breakpoint_added, self.on_breakpoint_removed)
 
     @property
-    def currently_open(self) -> Optional[ScriptEditorController]:
+    def currently_open(self) -> ScriptEditorController | None:
         if self._notebook.get_current_page() > -1:
             wdg = self._notebook.get_nth_page(self._notebook.get_current_page())
             for c in self._open_editors.values():
@@ -84,7 +84,7 @@ class EditorNotebookController:
         )
         return self._open_common(abs_path, context)
 
-    def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: Optional[str] = None):
+    def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: str | None = None):
         assert self.file_manager
         if self.file_manager:
             if registered_fname in self._open_editors:
@@ -216,7 +216,7 @@ class EditorNotebookController:
             editor.on_break_released()
         self._cached_file_bpnt_state = None
 
-    def insert_hanger_halt_lines(self, halt_lines: Dict[str, List[Tuple[SsbRoutineType, int, int]]]):
+    def insert_hanger_halt_lines(self, halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]]):
         """Mark the current execution position for all running scripts. Dict filename -> list (type, id, opcode_addr)"""
         for filename, lines in halt_lines.items():
             self._cached_hanger_halt_lines[filename] = lines

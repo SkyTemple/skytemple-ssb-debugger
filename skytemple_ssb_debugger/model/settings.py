@@ -18,7 +18,8 @@ from __future__ import annotations
 import configparser
 import logging
 import os
-from typing import Optional, Tuple, List, Sequence
+from typing import Optional, Tuple, List
+from collections.abc import Sequence
 
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.common.util import open_utf8
@@ -59,7 +60,7 @@ class DebuggerSettingsStore:
             except BaseException as err:
                 logger.error("Error reading config, falling back to default.", exc_info=err)
 
-    def get_style_scheme(self) -> Optional[str]:
+    def get_style_scheme(self) -> str | None:
         if SECT_GENERAL in self.loaded_config:
             if KEY_STYLE_SCHEME in self.loaded_config[SECT_GENERAL]:
                 return self.loaded_config[SECT_GENERAL][KEY_STYLE_SCHEME]
@@ -83,33 +84,33 @@ class DebuggerSettingsStore:
         self.loaded_config[SECT_GENERAL][KEY_ASSISTANT_SHOWN] = '1' if value else '0'
         self._save()
 
-    def get_window_size(self) -> Optional[Tuple[int, int]]:
+    def get_window_size(self) -> tuple[int, int] | None:
         if SECT_WINDOW in self.loaded_config:
             if KEY_WINDOW_SIZE_X in self.loaded_config[SECT_WINDOW] and KEY_WINDOW_SIZE_Y in self.loaded_config[SECT_WINDOW]:
                 return int(self.loaded_config[SECT_WINDOW][KEY_WINDOW_SIZE_X]), int(self.loaded_config[SECT_WINDOW][KEY_WINDOW_SIZE_Y])
         return None
 
-    def set_window_size(self, dim: Tuple[int, int]):
+    def set_window_size(self, dim: tuple[int, int]):
         if SECT_WINDOW not in self.loaded_config:
             self.loaded_config[SECT_WINDOW] = {}
         self.loaded_config[SECT_WINDOW][KEY_WINDOW_SIZE_X] = str(dim[0])
         self.loaded_config[SECT_WINDOW][KEY_WINDOW_SIZE_Y] = str(dim[1])
         self._save()
 
-    def get_window_position(self) -> Optional[Tuple[int, int]]:
+    def get_window_position(self) -> tuple[int, int] | None:
         if SECT_WINDOW in self.loaded_config:
             if KEY_WINDOW_POS_X in self.loaded_config[SECT_WINDOW] and KEY_WINDOW_POS_Y in self.loaded_config[SECT_WINDOW]:
                 return int(self.loaded_config[SECT_WINDOW][KEY_WINDOW_POS_X]), int(self.loaded_config[SECT_WINDOW][KEY_WINDOW_POS_Y])
         return None
 
-    def set_window_position(self, pos: Tuple[int, int]):
+    def set_window_position(self, pos: tuple[int, int]):
         if SECT_WINDOW not in self.loaded_config:
             self.loaded_config[SECT_WINDOW] = {}
         self.loaded_config[SECT_WINDOW][KEY_WINDOW_POS_X] = str(pos[0])
         self.loaded_config[SECT_WINDOW][KEY_WINDOW_POS_Y] = str(pos[1])
         self._save()
 
-    def get_emulator_keyboard_cfg(self) -> Optional[List[int]]:
+    def get_emulator_keyboard_cfg(self) -> list[int] | None:
         if SECT_KEYS in self.loaded_config:
             cfg = []
             for key_name in emulator_get_key_names():
@@ -117,7 +118,7 @@ class DebuggerSettingsStore:
             return cfg
         return None
 
-    def set_emulator_keyboard_cfg(self, keys: List[int]):
+    def set_emulator_keyboard_cfg(self, keys: list[int]):
         if SECT_KEYS not in self.loaded_config:
             self.loaded_config[SECT_KEYS] = {}
         for key_name, key_value in zip(emulator_get_key_names(), keys):
@@ -139,7 +140,7 @@ class DebuggerSettingsStore:
             self.loaded_config[SECT_JOYKEYS][key_name] = str(key_value)
         self._save()
 
-    def get_emulator_language(self) -> Optional[Language]:
+    def get_emulator_language(self) -> Language | None:
         if SECT_GENERAL in self.loaded_config:
             if KEY_EMULATOR_LANG in self.loaded_config[SECT_GENERAL]:
                 return Language(int(self.loaded_config[SECT_GENERAL][KEY_EMULATOR_LANG]))

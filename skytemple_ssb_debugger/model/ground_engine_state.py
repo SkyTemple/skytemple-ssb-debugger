@@ -17,7 +17,8 @@
 from __future__ import annotations
 import warnings
 from itertools import chain
-from typing import Optional, List, Tuple, Iterable, Callable, cast, no_type_check
+from typing import Optional, List, Tuple, Callable, cast, no_type_check
+from collections.abc import Iterable
 
 from gi.repository import Gtk, GLib
 from range_typed_integers import u32
@@ -78,7 +79,7 @@ class GroundEngineState:
         self.pnt_events = base_pnt + 20
         self.pnt_unionall_load_addr = rom_data.bin_sections.overlay11.data.UNIONALL_RAM_ADDRESS.absolute_address
 
-        self._load_ssb_for: Optional[int] = None
+        self._load_ssb_for: int | None = None
 
         self._running = False
         self._print_callback = print_callback
@@ -108,8 +109,8 @@ class GroundEngineState:
         for i in range(0, info.maxentries):
             self._events.append(Event(self.pnt_events, u32(i * info.entrylength), self.rom_data))
 
-        self._loaded_ssx_files: List[Optional[SsxFileInRam]] = []
-        self._loaded_ssb_files: List[Optional[SsbFileInRam]] = []
+        self._loaded_ssx_files: list[SsxFileInRam | None] = []
+        self._loaded_ssb_files: list[SsbFileInRam | None] = []
         self.reset()
 
     @no_type_check
@@ -173,25 +174,25 @@ class GroundEngineState:
         for i in range(0, self.rom_data.script_data.ground_state_structs['Events'].maxentries):
             yield self.get_event(i)
 
-    def get_actor(self, index: int) -> Optional[Actor]:
+    def get_actor(self, index: int) -> Actor | None:
         actor = self._actors[index]
         if actor.valid:
             return actor
         return None
 
-    def get_object(self, index: int) -> Optional[Object]:
+    def get_object(self, index: int) -> Object | None:
         obj = self._objects[index]
         if obj.valid:
             return obj
         return None
 
-    def get_performer(self, index: int) -> Optional[Performer]:
+    def get_performer(self, index: int) -> Performer | None:
         prf = self._performers[index]
         if prf.valid:
             return prf
         return None
 
-    def get_event(self, index: int) -> Optional[Event]:
+    def get_event(self, index: int) -> Event | None:
         evt = self._events[index]
         if evt.valid:
             return evt
@@ -211,7 +212,7 @@ class GroundEngineState:
         self._poll_emulator()
 
 
-    def collect(self) -> Tuple[GlobalScript, List[SsbFileInRam], List[SsxFileInRam], List[Actor], List[Object], List[Performer], List[Event], Map]:
+    def collect(self) -> tuple[GlobalScript, list[SsbFileInRam], list[SsxFileInRam], list[Actor], list[Object], list[Performer], list[Event], Map]:
         loaded_ssb_files = self.loaded_ssb_files
         loaded_ssx_files = self.loaded_ssx_files
 

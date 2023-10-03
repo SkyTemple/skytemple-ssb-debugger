@@ -38,7 +38,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     """Context for a script file that directly represents a single compiled SSB script."""
 
     def __init__(self, ssb_loaded_file: SsbLoadedFile, scene_type: str, scene_name: str,
-                 editor_notebook_controller: 'EditorNotebookController'):
+                 editor_notebook_controller: EditorNotebookController):
         super().__init__()
         self._ssb_file = ssb_loaded_file
         self.scene_type = scene_type
@@ -50,7 +50,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
         super().destroy()
 
     @property
-    def ssb_filepath(self) -> Optional[str]:
+    def ssb_filepath(self) -> str | None:
         return self._ssb_file.filename
 
     @property
@@ -233,5 +233,5 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def goto_scene(self, debugger_context: AbstractDebuggerControlContext):
         debugger_context.open_scene_editor(self.scene_type, self.scene_name)
 
-    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_scene_name_and_type(self) -> tuple[str | None, str | None]:
         return self.scene_name, self.scene_type

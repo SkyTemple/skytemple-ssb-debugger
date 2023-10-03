@@ -25,17 +25,17 @@ from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 class AbstractScriptFileContext(ABC):
     """TODO Doc"""
     def __init__(self):
-        self._registered_ssbs: List[SsbLoadedFile] = []
+        self._registered_ssbs: list[SsbLoadedFile] = []
 
         # Sends the general state of the ssb files for this context
         # (breakable, ram_state_up_to_date) -> None
-        self._on_ssbs_state_change: Optional[Callable[[bool, bool], None]] = None
+        self._on_ssbs_state_change: Callable[[bool, bool], None] | None = None
         # Notifies of a ssb being reloaded in RAM
         # (ssb_filename) -> None
-        self._on_ssbs_reload: Optional[Callable[[str], None]] = None
+        self._on_ssbs_reload: Callable[[str], None] | None = None
         # Notifies of added opcodes to create markers for
         # (is_exps, ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call) -> None
-        self._do_insert_opcode_text_mark: Optional[Callable[[bool, str, int, int, int, bool, bool], None]] = None
+        self._do_insert_opcode_text_mark: Callable[[bool, str, int, int, int, bool, bool], None] | None = None
 
     def destroy(self):
         self._unregister_ssb_handlers()
@@ -47,12 +47,12 @@ class AbstractScriptFileContext(ABC):
         self._on_ssbs_reload = on_ssbs_reload
 
     def register_insert_opcode_text_mark_handler(self,
-                                                 handler: Optional[Callable[[bool, str, int, int, int, bool, bool], None]]):
+                                                 handler: Callable[[bool, str, int, int, int, bool, bool], None] | None):
         self._do_insert_opcode_text_mark = handler
 
     @property
     @abstractmethod
-    def ssb_filepath(self) -> Optional[str]:
+    def ssb_filepath(self) -> str | None:
         pass
 
     @property
@@ -118,5 +118,5 @@ class AbstractScriptFileContext(ABC):
             loaded_ssb.unregister_property_callback(self.on_ssb_property_change)
 
     @abstractmethod
-    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_scene_name_and_type(self) -> tuple[str | None, str | None]:
         pass

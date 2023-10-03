@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import Iterable, List, Tuple
+from typing import List, Tuple
+from collections.abc import Iterable
 
 import cairo
 from gi.repository import GLib
@@ -43,10 +44,10 @@ class DebugOverlayController:
         self._refresh_cache = True
         self._cache_running = False
         self._cache_redrawing_registered = False
-        self._actor_bbox_cache: List[Tuple[int, int, int, int]] = []
-        self._object_bbox_cache: List[Tuple[int, int, int, int]] = []
-        self._perf_bbox_cache: List[Tuple[int, int, int, int]] = []
-        self._event_bbox_cache: List[Tuple[int, int, int, int]] = []
+        self._actor_bbox_cache: list[tuple[int, int, int, int]] = []
+        self._object_bbox_cache: list[tuple[int, int, int, int]] = []
+        self._perf_bbox_cache: list[tuple[int, int, int, int]] = []
+        self._event_bbox_cache: list[tuple[int, int, int, int]] = []
         self._camera_pos_cache = (0, 0)
         self._boost = False
 

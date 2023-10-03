@@ -48,8 +48,8 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
         self.scene_type = scene_type
         self.context = context
 
-        self._active_widget: Optional[Gtk.Button] = None
-        self._active_pos: Optional[Tuple[int, int]] = None
+        self._active_widget: Gtk.Button | None = None
+        self._active_pos: tuple[int, int] | None = None
 
     def reset(self, box):
         if self._active_widget and box is not None:
@@ -92,7 +92,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
             md.destroy()
             return
 
-        pos_marks: List[SourceMapPositionMark] = PositionMarkVisitor().visit(tree)
+        pos_marks: list[SourceMapPositionMark] = PositionMarkVisitor().visit(tree)
         pos_mark_to_edit = None
         active_line, active_col = self._active_pos
         for i, mark in enumerate(pos_marks):
@@ -113,7 +113,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
         self.buffer.end_user_action()
 
     @staticmethod
-    def _get_start_pos_mark(textiter: Gtk.TextIter) -> Optional[Tuple[int, int]]:
+    def _get_start_pos_mark(textiter: Gtk.TextIter) -> tuple[int, int] | None:
         cursor: Gtk.TextIter = textiter.copy()
         limit = 50
         i = 0

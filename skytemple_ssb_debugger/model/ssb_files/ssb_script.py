@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 class SsbScriptFile(AbstractScriptFile):
-    def __init__(self, parent: 'SsbLoadedFile'):
+    def __init__(self, parent: SsbLoadedFile):
         super().__init__(parent)
         self._text: str = ''
-        self._source_map: Optional[SourceMap] = None
+        self._source_map: SourceMap | None = None
         self._loaded = False
 
     def load(self):

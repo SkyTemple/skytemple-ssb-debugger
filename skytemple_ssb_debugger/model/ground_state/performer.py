@@ -35,7 +35,7 @@ class Performer(AbstractEntityWithScriptStruct):
         return u32(0x140)
 
     @property
-    def _validity_offset(self) -> Optional[u32]:
+    def _validity_offset(self) -> u32 | None:
         return self._script_struct_offset
 
     @property

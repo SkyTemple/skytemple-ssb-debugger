@@ -27,8 +27,8 @@ from skytemple_ssb_debugger.model.completion.util import backward_until_space
 
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
-    def __init__(self, view: GtkSource.View, opcodes: List[Pmd2ScriptOpCode],
-                 mapname: Optional[str], scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
+    def __init__(self, view: GtkSource.View, opcodes: list[Pmd2ScriptOpCode],
+                 mapname: str | None, scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.opcodes = opcodes
@@ -39,9 +39,9 @@ class CalltipEmitter:
                 view, mapname, scene_name, scene_type, context
             )
 
-        self._active_widget: Optional[GtkSource.CompletionInfo] = None
-        self._active_op: Optional[Pmd2ScriptOpCode] = None
-        self._active_arg: Optional[int] = None
+        self._active_widget: GtkSource.CompletionInfo | None = None
+        self._active_op: Pmd2ScriptOpCode | None = None
+        self._active_arg: int | None = None
 
     def on_buffer_notify_cursor_position(self, buffer: GtkSource.Buffer, *args):
         textiter = buffer.get_iter_at_offset(buffer.props.cursor_position)

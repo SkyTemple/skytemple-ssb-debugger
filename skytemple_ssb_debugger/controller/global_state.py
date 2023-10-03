@@ -54,8 +54,8 @@ class GlobalStateController:
     def __init__(self, builder: Gtk.Builder):
         super().__init__()
         self.builder = builder
-        self.rom_data: Optional[Pmd2Data] = None
-        self._tables: List[EmulatorMemTable] = []
+        self.rom_data: Pmd2Data | None = None
+        self._tables: list[EmulatorMemTable] = []
         self._current_table = 0
 
     def change_current_table(self, current_table):

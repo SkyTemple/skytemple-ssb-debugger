@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import List, Iterable, Tuple, Optional
+from typing import List, Tuple, Optional
+from collections.abc import Iterable
 
 from gi.repository import GObject, GtkSource, Gtk
 
@@ -25,7 +26,7 @@ from skytemple_files.common.i18n_util import _
 
 
 class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvider):
-    def __init__(self, opcodes: List[Pmd2ScriptOpCode]):
+    def __init__(self, opcodes: list[Pmd2ScriptOpCode]):
         super().__init__()
         self.opcodes = opcodes
 
@@ -59,7 +60,7 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
     def do_get_icon_name(self):
         return None
 
-    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> Tuple[bool, Optional[Gtk.TextIter]]:
+    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> tuple[bool, Gtk.TextIter | None]:
         return False, None
 
     def do_match(self, context: GtkSource.CompletionContext) -> bool:

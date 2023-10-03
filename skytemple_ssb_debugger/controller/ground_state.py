@@ -57,7 +57,7 @@ class GroundStateController:
         self._files__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'ground_state_files_tree_engine_not_loaded')
         self._entities__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'ground_state_entities_tree_engine_not_loaded')
 
-        self._ssb_tree_store_iters: Dict[int, Gtk.TreeIter] = {}
+        self._ssb_tree_store_iters: dict[int, Gtk.TreeIter] = {}
 
         self._files__tree = builder_get_assert(builder, Gtk.TreeView, 'ground_state_files_tree')
         icon = Gtk.CellRendererPixbuf()
@@ -108,7 +108,7 @@ class GroundStateController:
                     else:
                         self._entities__tree_store[self._ssb_tree_store_iters[ssb.hanger]][6] = ''
 
-    def sync(self, code_editor=None, breaked_for: Optional[ScriptRuntimeStruct] = None):
+    def sync(self, code_editor=None, breaked_for: ScriptRuntimeStruct | None = None):
         """
         Synchronize the ground engine state to the UI. If code_editor is set, send the opcodes that currently being
         run by the engine to the editor.
@@ -136,7 +136,7 @@ class GroundStateController:
 
                 if code_editor:
                     # Sync the code editor execution lines
-                    files: Dict[str, List[Tuple[SsbRoutineType, int, int]]] = {}
+                    files: dict[str, list[tuple[SsbRoutineType, int, int]]] = {}
                     try:
                         if global_script.script_struct.hanger_ssb > -1 and ssb[global_script.script_struct.hanger_ssb] is not None:
                             if ssb[global_script.script_struct.hanger_ssb].file_name not in files:

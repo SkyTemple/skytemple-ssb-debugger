@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import Optional, List, Sequence
+from typing import Optional, List
+from collections.abc import Sequence
 
 from gi.repository import Gtk
 
@@ -32,7 +33,7 @@ from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_
 
 class LocalVariableController:
     """Controller for showing both local and macro variables"""
-    def __init__(self, builder: Gtk.Builder, debugger: Optional[DebuggerController]):
+    def __init__(self, builder: Gtk.Builder, debugger: DebuggerController | None):
         self.builder = builder
         self.debugger = debugger
 
@@ -53,9 +54,9 @@ class LocalVariableController:
         self._macro__tree.append_column(resizable(create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)))
         self._macro__tree.append_column(resizable(create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)))
 
-        self._local_vars_specs: Optional[List[Pmd2ScriptGameVar]] = None
+        self._local_vars_specs: list[Pmd2ScriptGameVar] | None = None
         self._local_vars_values: Sequence[int] = []
-        self._rom_data: Optional[Pmd2Data] = None
+        self._rom_data: Pmd2Data | None = None
         self._was_disabled = True
 
     def init(self, rom_data: Pmd2Data):
@@ -65,7 +66,7 @@ class LocalVariableController:
             if var.is_local:
                 self._local_vars_specs.append(var)
 
-    def sync(self, local_vars_values: Sequence[int], file_state: Optional[BreakpointFileState] = None):
+    def sync(self, local_vars_values: Sequence[int], file_state: BreakpointFileState | None = None):
         if not self.debugger or not self.debugger.ground_engine_state or not self._local_vars_specs:
             return self.disable()
 

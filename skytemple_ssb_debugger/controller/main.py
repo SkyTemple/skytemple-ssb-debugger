@@ -22,7 +22,8 @@ import shutil
 import sys
 import webbrowser
 from functools import partial
-from typing import Optional, Dict, List, Sequence, cast, TypeVar
+from typing import Optional, Dict, List, cast, TypeVar
+from collections.abc import Sequence
 
 import cairo
 import gi
@@ -84,24 +85,24 @@ class MainController:
         self.window = window
         self.context: AbstractDebuggerControlContext = control_context
         self.settings = DebuggerSettingsStore()
-        self.ssb_fm: Optional[SsbFileManager] = None
+        self.ssb_fm: SsbFileManager | None = None
         self.rom_was_loaded = False
         self._emu_is_running = False
 
         self._enable_explorerscript = True
 
-        self.debugger: Optional[DebuggerController] = None
-        self.debug_overlay: Optional[DebugOverlayController] = None
-        self.breakpoint_state: Optional[BreakpointState] = None
+        self.debugger: DebuggerController | None = None
+        self.debug_overlay: DebugOverlayController | None = None
+        self.breakpoint_state: BreakpointState | None = None
 
         self._click = False
         self._debug_log_scroll_to_bottom = False
         self._suppress_event = False
         self._stopped = False
-        self._resize_timeout_id: Optional[int] = None
+        self._resize_timeout_id: int | None = None
 
-        self._search_text: Optional[str] = None
-        self._ssb_item_filter: Optional[Gtk.TreeModelFilter] = None
+        self._search_text: str | None = None
+        self._ssb_item_filter: Gtk.TreeModelFilter | None = None
 
         self._log_stdout_io_source = None
 
@@ -112,14 +113,14 @@ class MainController:
 
         # A mapping for ssb filenames and their scene types ('ssa'/'sse'/'sss'/''[if n/a])
         # - For opening the scene editor.
-        self._scene_types: Dict[str, str] = {}
-        self._scene_names: Dict[str, str] = {}
+        self._scene_types: dict[str, str] = {}
+        self._scene_names: dict[str, str] = {}
         # Significant sub-branches of the file list. Contains entries in the form:
         # mapname_{enter,acting,subroot,{sss_name_with_extension}}
-        self._tree_branches: Dict[str, Gtk.TreeIter] = {}
+        self._tree_branches: dict[str, Gtk.TreeIter] = {}
         # Root branches for the maps. Contains entries in the form:
         # mapname
-        self._registered_maps: Dict[str, Gtk.TreeIter] = {}
+        self._registered_maps: dict[str, Gtk.TreeIter] = {}
 
         spellcheck_enabled_item = builder_get_assert(self.builder, Gtk.CheckMenuItem, 'menu_spellcheck_enabled')
         spellcheck_enabled_item.set_active(self.settings.get_spellcheck_enabled())
@@ -128,7 +129,7 @@ class MainController:
         self.style_scheme_manager = StyleSchemeManager()
         self.selected_style_scheme_id: str = self.settings.get_style_scheme()  # type: ignore
         was_none_before = self.selected_style_scheme_id is None
-        style_dict: Dict[str, str] = {}
+        style_dict: dict[str, str] = {}
         for style_id in assert_not_none(self.style_scheme_manager.get_scheme_ids()):
             if not self.selected_style_scheme_id or (was_none_before and style_id == 'oblivion'):
                 self.selected_style_scheme_id = style_id
@@ -161,7 +162,7 @@ class MainController:
         self._filter_any.set_name(_("All files"))
         self._filter_any.add_pattern("*")
 
-        self._poll_emulator_event_id: Optional[int] = None
+        self._poll_emulator_event_id: int | None = None
 
         self.main_draw = builder_get_assert(builder, Gtk.DrawingArea, "draw_main")
         self.main_draw.set_events(Gdk.EventMask.ALL_EVENTS_MASK)
@@ -682,7 +683,7 @@ class MainController:
             return True
 
         about.connect("activate-link", activate_link)
-        header_bar: Optional[Gtk.HeaderBar] = about.get_header_bar()
+        header_bar: Gtk.HeaderBar | None = about.get_header_bar()
         if header_bar is not None:
             # Cool bug??? And it only works on the left as well, wtf?
             header_bar.set_decoration_layout('close')
@@ -979,7 +980,7 @@ class MainController:
         self.global_state_controller.sync()
         
     def on_global_state_alloc_dump_clicked(self, *args):
-        active_rows: List[Gtk.TreePath] = builder_get_assert(self.builder, Gtk.TreeView, 'global_state_alloc_treeview').get_selection().get_selected_rows()[1]
+        active_rows: list[Gtk.TreePath] = builder_get_assert(self.builder, Gtk.TreeView, 'global_state_alloc_treeview').get_selection().get_selected_rows()[1]
         if len(active_rows) >= 1:
             def do_dump(data):
                 dialog = Gtk.FileChooserNative.new(
@@ -1183,9 +1184,9 @@ class MainController:
 
     def load_debugger_state(
             self,
-            breaked_for: Optional[ScriptRuntimeStruct] = None,
-            file_state: Optional[BreakpointFileState] = None,
-            local_vars_values: Optional[Sequence[int]] = None
+            breaked_for: ScriptRuntimeStruct | None = None,
+            file_state: BreakpointFileState | None = None,
+            local_vars_values: Sequence[int] | None = None
     ):
         self.toggle_paused_debugging_features(True)
         # Load Ground State
@@ -1735,5 +1736,5 @@ class MainController:
 T = TypeVar('T')
 
 
-def not_none(x: Optional[T]) -> T:
+def not_none(x: T | None) -> T:
     return cast(T, x)

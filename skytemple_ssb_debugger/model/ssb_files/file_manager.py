@@ -66,7 +66,7 @@ class SsbFileManager:
         # After save:
         return self._handle_after_save(filename)
 
-    def save_from_explorerscript(self, ssb_filename: str, code: str) -> Tuple[bool, Set[str]]:
+    def save_from_explorerscript(self, ssb_filename: str, code: str) -> tuple[bool, set[str]]:
         """
         Save an SSB model from ExplorerScript. It's existing model and source map will be updated.
 
@@ -138,7 +138,7 @@ class SsbFileManager:
         return result
 
     def save_explorerscript_macro(self, abs_exps_path: str, code: str,
-                                  changed_ssbs: List[SsbLoadedFile]) -> Tuple[List[bool], List[Set[str]]]:
+                                  changed_ssbs: list[SsbLoadedFile]) -> tuple[list[bool], list[set[str]]]:
         """
         Saves an ExplorerScript macro file. This will save the source file for the macro and also recompile all SSB
         models in the list of changed_ssbs.
@@ -151,7 +151,7 @@ class SsbFileManager:
             f.write(code)
 
         ready_to_reloads = []
-        included_files_list: List[Set[str]] = []
+        included_files_list: list[set[str]] = []
         project_fm = self.context.get_project_filemanager()
         for ssb in changed_ssbs:
             # Skip non-existing or not up to date exps:

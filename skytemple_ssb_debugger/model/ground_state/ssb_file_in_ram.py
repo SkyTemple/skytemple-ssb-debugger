@@ -19,7 +19,7 @@ from typing import Optional
 
 
 class SsbFileInRam:
-    def __init__(self, file_name: str, hanger: int, hash: Optional[str] = None):
+    def __init__(self, file_name: str, hanger: int, hash: str | None = None):
         self.file_name = file_name
         self.hanger = hanger
         # If true, the debugger is currently breaking at this file.
@@ -28,6 +28,6 @@ class SsbFileInRam:
         # May either be the same as file_name, then the SsbScript or ExplorerScript file for the SSB itself
         # handles the breakpoint, or the absolute path to an ExplorerScript source file that contains a macro
         # that is halted at.
-        self.breaked__handler_file: Optional[str] = None
+        self.breaked__handler_file: str | None = None
         # Stored hash if loaded from a serialized state, only temporary and valid during deserialization!
         self.hash = hash

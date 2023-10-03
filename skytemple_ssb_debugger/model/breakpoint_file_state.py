@@ -36,14 +36,14 @@ class BreakpointFileState:
     pressing the UI buttons for it.
     """
 
-    def __init__(self, ssb_filename: str, opcode_addr: int, parent: Optional['BreakpointState']):
+    def __init__(self, ssb_filename: str, opcode_addr: int, parent: BreakpointState | None):
         self.ssb_filename = ssb_filename
         self.opcode_addr = opcode_addr
         self.parent = parent
         self._halted_on_call = False
         self._handler_filename = ssb_filename
         self._inside_call_handler_filename = ssb_filename
-        self._current_macro_variables: Optional[Dict[str, Union[str, int]]] = None
+        self._current_macro_variables: dict[str, str | int] | None = None
         self._step_over_addr = None
         self._step_out_addr = None
 
@@ -60,17 +60,17 @@ class BreakpointFileState:
         return self._handler_filename
 
     @property
-    def current_macro_variables(self) -> Optional[Dict[str, Union[str, int]]]:
+    def current_macro_variables(self) -> dict[str, str | int] | None:
         return self._current_macro_variables
 
     @property
-    def step_over_addr(self) -> Optional[int]:
+    def step_over_addr(self) -> int | None:
         """If set, the debugger should be instructed to do a STEP_MANUAL to this address when stepping over,
         instead of the regular STEP_OVER instruction."""
         return self._step_over_addr
 
     @property
-    def step_out_addr(self) -> Optional[int]:
+    def step_out_addr(self) -> int | None:
         """If set, the debugger should be instructed to do a STEP_MANUAL to this address when stepping out,
         instead of the regular STEP_OUT instruction."""
         return self._step_out_addr
