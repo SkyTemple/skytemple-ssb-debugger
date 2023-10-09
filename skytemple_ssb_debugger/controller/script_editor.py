@@ -734,7 +734,7 @@ class ScriptEditorController:
 
     def menu__undo(self):
         um = self._active_view().get_buffer().get_undo_manager()
-        if um and um.can_redo():
+        if um and um.can_undo():
             um.undo()
 
     def menu__redo(self):
