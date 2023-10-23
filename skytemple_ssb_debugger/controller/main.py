@@ -75,6 +75,7 @@ logger = logging.getLogger(__name__)
 SAVESTATE_EXT_DESUME = 'ds'
 SAVESTATE_EXT_GROUND_ENGINE = 'ge.json'
 COL_VISIBLE = 3
+SKYTEMPLE_WIKI_LINK = 'https://wiki.skytemple.org'
 
 
 class MainController:
@@ -668,6 +669,9 @@ class MainController:
     # MENU HELP
     def on_menu_help_exps_docs_activate(self, btn: Gtk.MenuItem, *args):
         webbrowser.open_new_tab("https://explorerscript.readthedocs.io/en/latest/language_spec.html")
+
+    def on_menu_help_wiki_activate(self, *args):
+        webbrowser.open(f"{SKYTEMPLE_WIKI_LINK}/index.php/SkyTemple:UI-Link/skytemple-ssb-debugger")
 
     def on_menu_help_textbox_tool_activate(self, btn: Gtk.MenuItem, *args):
         webbrowser.open_new_tab(TEXTBOX_TOOL_URL)

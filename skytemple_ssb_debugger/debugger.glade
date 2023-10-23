@@ -714,6 +714,15 @@
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <child>
+                      <object class="GtkMenuItem" id="menu_help_wiki">
+                        <property name="visible">True</property>
+                        <property name="can-focus">False</property>
+                        <property name="label" translatable="yes">Wiki</property>
+                        <property name="use-underline">True</property>
+                        <signal name="activate" handler="on_menu_help_wiki_activate" swapped="no"/>
+                      </object>
+                    </child>
+                    <child>
                       <object class="GtkMenuItem" id="menu_help_exps_docs">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
