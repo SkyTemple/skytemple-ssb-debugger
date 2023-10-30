@@ -17,7 +17,8 @@
 from __future__ import annotations
 import os
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Optional, List, Iterable, Dict
+from typing import TYPE_CHECKING, Optional, List, Dict
+from collections.abc import Iterable
 
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -175,7 +176,7 @@ class AbstractDebuggerControlContext(ABC):
         """Returns the project file manager for the currently open ROM."""
 
     @abstractmethod
-    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
+    def get_ssb(self, filename, ssb_file_manager: SsbFileManager) -> SsbLoadedFile:
         """Returns the SSB with the given filename from the ROM."""
 
     @abstractmethod
@@ -183,7 +184,7 @@ class AbstractDebuggerControlContext(ABC):
         """Event handler for when the debugger starts editing the specified script"""
 
     @abstractmethod
-    def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
+    def save_ssb(self, filename, ssb_model, ssb_file_manager: SsbFileManager):
         """Updates an SSB model in the ROM and then saves the ROM."""
 
     @abstractmethod
@@ -203,7 +204,7 @@ class AbstractDebuggerControlContext(ABC):
 
     @abstractmethod
     def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str,
-                           pos_marks: List[SourceMapPositionMark], pos_mark_to_edit: int) -> bool:
+                           pos_marks: list[SourceMapPositionMark], pos_mark_to_edit: int) -> bool:
         """
         Edit position marks of an SSB file inside a scene editor, using mapname as a
         background and the scene's entities for reference.
@@ -216,7 +217,7 @@ class AbstractDebuggerControlContext(ABC):
     def display_error(
             self, exc_info, error_message,
             error_title='SkyTemple Script Engine Debugger - Error',
-            *, context: Optional[Dict[str, Capturable]] = None
+            *, context: dict[str, Capturable] | None = None
     ):
         """
         Display an error dialog for the user.
@@ -230,7 +231,7 @@ class AbstractDebuggerControlContext(ABC):
     @abstractmethod
     def capture_error(
             self, exc_info,
-            *, context: Optional[Dict[str, Capturable]] = None
+            *, context: dict[str, Capturable] | None = None
     ):
         """
         Same as display_error, but not intended to be shown to the user or logged to the main log
@@ -249,7 +250,7 @@ class AbstractDebuggerControlContext(ABC):
     @staticmethod
     @abstractmethod
     def message_dialog(
-        parent: Optional[Gtk.Window],
+        parent: Gtk.Window | None,
         dialog_flags: Gtk.DialogFlags,
         message_type: Gtk.MessageType,
         buttons_type: Gtk.ButtonsType,

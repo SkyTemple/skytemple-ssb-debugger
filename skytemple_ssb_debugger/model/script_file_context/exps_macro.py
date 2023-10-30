@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
     """A file context for an exps macro file. Keeps track of all macros that use the file."""
     def __init__(self, absolute_path: str, ssb_fm: SsbFileManager,
-                 editor_notebook_controller: 'EditorNotebookController'):
+                 editor_notebook_controller: EditorNotebookController):
         super().__init__()
         self._ssb_fm = ssb_fm
         self._absolute_path = absolute_path
@@ -53,11 +53,11 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
             assert self._absolute_path != self._relative_path
         self._editor_notebook_controller = editor_notebook_controller
         # A map of all managed ssb states (breakable, ram_state_up_to_date)
-        self._ssbs_states: Dict[str, Tuple[bool, bool]] = {}
+        self._ssbs_states: dict[str, tuple[bool, bool]] = {}
         self._we_triggered_the_reload = False
 
     @property
-    def ssb_filepath(self) -> Optional[str]:
+    def ssb_filepath(self) -> str | None:
         return None
 
     @property
@@ -270,5 +270,5 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
         relpath_of_us_to_ssb_source = os.path.relpath(self._absolute_path, os.path.dirname(loaded_ssb.exps.full_path))
         return cmp_path == relpath_of_us_to_ssb_source
 
-    def get_scene_name_and_type(self) -> Tuple[Optional[str], Optional[str]]:
+    def get_scene_name_and_type(self) -> tuple[str | None, str | None]:
         return None, None

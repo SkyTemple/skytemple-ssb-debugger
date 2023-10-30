@@ -34,13 +34,13 @@ logger = logging.getLogger(__name__)
 
 class SsbLoadedFile:
     def __init__(self, filename: str, model: Ssb,
-                 ssb_file_manager: Optional['SsbFileManager'], project_file_manager: 'ProjectFileManager'):
+                 ssb_file_manager: SsbFileManager | None, project_file_manager: ProjectFileManager):
         self.filename = filename
         self.ssb_model = model
         # TODO: we really have to fix this weird coupling. SsbLoadedFile should not need a file manager reference
         #       and the saving of SsbScript and ExplorerScript should not be within the SSBS/EXPS sub models.
-        self.file_manager: Optional['SsbFileManager'] = ssb_file_manager
-        self.project_file_manager: 'ProjectFileManager' = project_file_manager
+        self.file_manager: SsbFileManager | None = ssb_file_manager
+        self.project_file_manager: ProjectFileManager = project_file_manager
         self.ssbs: SsbScriptFile = SsbScriptFile(self)
         self.exps: ExplorerScriptFile = ExplorerScriptFile(self)
 
@@ -60,14 +60,14 @@ class SsbLoadedFile:
             emulator_debug_set_loaded_ssb_breakable(self.filename, True)
 
         # Called once, then removed.
-        self._event_handlers_manager: List[Callable] = []
+        self._event_handlers_manager: list[Callable] = []
         # Called once, kept.
-        self._event_handlers_editor: List[Callable] = []
+        self._event_handlers_editor: list[Callable] = []
 
-        self._event_handlers_property_change: List[Callable] = []
+        self._event_handlers_property_change: list[Callable] = []
 
     @property
-    def position_markers(self) -> Optional[List[SourceMapPositionMark]]:
+    def position_markers(self) -> list[SourceMapPositionMark] | None:
         """
         Returns the position markers. Either from the ExplorerScript file or the SSB model,
         if ExplorerScript is not available.

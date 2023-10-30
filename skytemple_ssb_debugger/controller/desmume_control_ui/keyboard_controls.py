@@ -39,11 +39,11 @@ class KeyboardControlsDialogController:
         self.window = builder_get_assert(self.builder, Gtk.Dialog, 'wKeybConfDlg')
         self.window.set_transient_for(parent_window)
         self.window.set_attached_to(parent_window)
-        self._keyboard_cfg: Optional[List[int]] = None
-        self._tmp_key: Optional[int] = None
+        self._keyboard_cfg: list[int] | None = None
+        self._tmp_key: int | None = None
         self.builder.connect_signals(self)
 
-    def run(self, keyboard_cfg: List[int]) -> Optional[List[int]]:
+    def run(self, keyboard_cfg: list[int]) -> list[int] | None:
         """Configure the keyboard configuration provided using the dialog,
         returns the new keyboard config if changed, else None."""
         self._keyboard_cfg = keyboard_cfg.copy()

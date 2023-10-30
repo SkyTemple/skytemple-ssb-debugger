@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import TYPE_CHECKING, Optional, Iterable
+from typing import TYPE_CHECKING, Optional
+from collections.abc import Iterable
 
 from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
@@ -38,11 +39,11 @@ NB_DEBUG_FLAGS_2 = 0x10
 
 
 class DebuggerController:
-    def __init__(self, print_callback, parent: 'MainController'):
-        self.rom_data: Optional[Pmd2Data] = None
+    def __init__(self, print_callback, parent: MainController):
+        self.rom_data: Pmd2Data | None = None
         self._print_callback_fn = print_callback
-        self.ground_engine_state: Optional[GroundEngineState] = None
-        self.parent: 'MainController' = parent
+        self.ground_engine_state: GroundEngineState | None = None
+        self.parent: MainController = parent
 
         self._debug_flags_1 = [0]*NB_DEBUG_FLAGS_1
         self._debug_flags_2 = [0]*NB_DEBUG_FLAGS_2
@@ -129,7 +130,7 @@ class DebuggerController:
 
     def hook__breaking_point(
         self,
-        break_state: Optional[BreakpointState],
+        break_state: BreakpointState | None,
         srs_mem: bytes,
         script_target_slot_id: u32,
         current_opcode: u32

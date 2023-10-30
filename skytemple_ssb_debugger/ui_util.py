@@ -22,10 +22,7 @@ from typing import TypeVar, Any
 
 from gi.repository import GObject, Gtk
 
-if sys.version_info >= (3, 9):
-    import importlib.metadata as importlib_metadata
-else:
-    import importlib_metadata
+import importlib.metadata as importlib_metadata
 
 
 T = TypeVar("T", bound=GObject.Object)

@@ -71,7 +71,7 @@ class AbstractEntity(ABC):
 
     @property
     @abstractmethod
-    def _validity_offset(self) -> Optional[u32]:
+    def _validity_offset(self) -> u32 | None:
         """If defined, only refresh the memory if the i16 at the given offset starting at the block start is > 0."""
 
 

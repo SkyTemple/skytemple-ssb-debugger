@@ -21,7 +21,8 @@ import os
 import re
 import webbrowser
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, Iterable, cast
+from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, cast
+from collections.abc import Iterable
 
 from gi.repository import GtkSource, Gtk
 from gi.repository.GtkSource import LanguageManager
@@ -60,8 +61,8 @@ EXECUTION_LINE_PATTERN = re.compile('execution_(\\d+)_(\\d+)_(\\d+)')
 
 class ScriptEditorController:
     def __init__(
-            self, parent: 'EditorNotebookController', main_window: Gtk.Window, file_context: AbstractScriptFileContext,
-            rom_data: Pmd2Data, modified_handler, mapname: Optional[str],
+            self, parent: EditorNotebookController, main_window: Gtk.Window, file_context: AbstractScriptFileContext,
+            rom_data: Pmd2Data, modified_handler, mapname: str | None,
             enable_explorerscript=True, hide_ssb_script=False
     ):
         path = os.path.abspath(os.path.dirname(__file__))
@@ -107,16 +108,16 @@ class ScriptEditorController:
         self._explorerscript_search: Gtk.SearchEntry = None  # type: ignore
         self._ssb_script_search_context: GtkSource.SearchContext = None  # type: ignore
         self._explorerscript_search_context: GtkSource.SearchContext = None  # type: ignore
-        self._saving_dialog: Optional[Gtk.Dialog] = None
+        self._saving_dialog: Gtk.Dialog | None = None
 
         self._still_loading = True
-        self._foucs_opcode_after_load: Optional[Tuple[str, int]] = None
-        self._on_break_pulled_after_load: Optional[Tuple[str, int, bool]] = None
-        self._hanger_halt_lines_after_load: Optional[Tuple[str, List[Tuple[SsbRoutineType, int, int]]]] = None
+        self._foucs_opcode_after_load: tuple[str, int] | None = None
+        self._on_break_pulled_after_load: tuple[str, int, bool] | None = None
+        self._hanger_halt_lines_after_load: tuple[str, list[tuple[SsbRoutineType, int, int]]] | None = None
         self._spellchecker_loaded = False
 
-        self._loaded_search_window: Optional[Gtk.Dialog] = None
-        self._active_search_context: Optional[GtkSource.SearchContext] = None
+        self._loaded_search_window: Gtk.Dialog | None = None
+        self._active_search_context: GtkSource.SearchContext | None = None
 
         self._mrk_attrs__breakpoint: GtkSource.MarkAttributes = GtkSource.MarkAttributes.new()
         self._mrk_attrs__breakpoint.set_pixbuf(create_breakpoint_icon())
@@ -207,7 +208,7 @@ class ScriptEditorController:
         """
         self.file_context.on_exps_macro_ssb_changed(exps_abs_path, ssb_filename)
 
-    def insert_hanger_halt_lines(self, ssb_filename: str, lines: List[Tuple[SsbRoutineType, int, int]]):
+    def insert_hanger_halt_lines(self, ssb_filename: str, lines: list[tuple[SsbRoutineType, int, int]]):
         """Mark the current execution position for all running scripts.
         List is tuples (type, id, filename, opcode_addr)"""
         if self._still_loading:
@@ -307,7 +308,7 @@ class ScriptEditorController:
         # Resync the breakpoints at the Breakpoint Manager.
         # Collect all line marks and check which is the first temporary opcode text mark in it, this is
         # the opcode to break on.
-        breakpoints_to_resync: Dict[str, List[int]] = {}
+        breakpoints_to_resync: dict[str, list[int]] = {}
         for line in range(0, modified_buffer.get_line_count()):
             marks = EditorTextMarkUtil.get_line_marks_for(modified_buffer, line, 'breakpoint')
             if len(marks) > 0:
@@ -320,7 +321,7 @@ class ScriptEditorController:
             assert self.parent.file_manager is not None
             emulator_debug_breakpoints_resync(ssb_filename, b_points, self.parent.file_manager.get(ssb_filename))
 
-    def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Optional[Gtk.Box]):
+    def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Gtk.Box | None):
         self._activate_spinner(ssbs_bx)
         if exps_bx:
             self._activate_spinner(exps_bx)
@@ -809,7 +810,7 @@ class ScriptEditorController:
             breakpoint_bg, text_bg
         ))
 
-    def _create_editor(self) -> Tuple[Gtk.Overlay, GtkSource.View, Gtk.Revealer, Gtk.SearchEntry, GtkSource.SearchContext]:
+    def _create_editor(self) -> tuple[Gtk.Overlay, GtkSource.View, Gtk.Revealer, Gtk.SearchEntry, GtkSource.SearchContext]:
         ovl: Gtk.Overlay = Gtk.Overlay.new()
         sw: Gtk.ScrolledWindow = Gtk.ScrolledWindow.new()
         view: GtkSource.View = GtkSource.View.new()

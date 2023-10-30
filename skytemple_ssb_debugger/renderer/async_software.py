@@ -27,10 +27,10 @@ FRAMES_PER_SECOND = 60
 
 class AsyncSoftwareRenderer:
     def __init__(self, top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
-                 after_render_hook: Optional[Callable[[cairo.Context, int], None]] = None):
+                 after_render_hook: Callable[[cairo.Context, int], None] | None = None):
         self._boost = False
-        self._upper_image: Optional[cairo.ImageSurface] = None
-        self._lower_image: Optional[cairo.ImageSurface] = None
+        self._upper_image: cairo.ImageSurface | None = None
+        self._lower_image: cairo.ImageSurface | None = None
         self._after_render_hook = after_render_hook
         self.top_screen = top_screen
         self.bottom_screen = bottom_screen

@@ -16,7 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import re
-from typing import List, Iterable, Tuple, Optional, TypeVar, cast
+from typing import List, Tuple, Optional, TypeVar, cast
+from collections.abc import Iterable
 
 from gi.repository import GtkSource, Gtk
 
@@ -46,19 +47,19 @@ class EditorTextMarkUtil:
             b.place_cursor(b.get_iter_at_mark(m))
 
     @classmethod
-    def get_line_marks_for(cls, b: GtkSource.Buffer, line: int, category: str) -> List[GtkSource.Mark]:
+    def get_line_marks_for(cls, b: GtkSource.Buffer, line: int, category: str) -> list[GtkSource.Mark]:
         return b.get_source_marks_at_line(line, category)
 
     @classmethod
-    def get_tmp_opcodes_in_line(cls, b: GtkSource.Buffer, line: int) -> Iterable[Tuple[str, int]]:
+    def get_tmp_opcodes_in_line(cls, b: GtkSource.Buffer, line: int) -> Iterable[tuple[str, int]]:
         return cls._get_opcode_in_line(b, line, True)
 
     @classmethod
-    def get_opcodes_in_line(cls, b: GtkSource.Buffer, line: int) -> Iterable[Tuple[str, int]]:
+    def get_opcodes_in_line(cls, b: GtkSource.Buffer, line: int) -> Iterable[tuple[str, int]]:
         return cls._get_opcode_in_line(b, line, False)
 
     @classmethod
-    def extract_opcode_data_from_line_mark(cls, mark: GtkSource.Mark) -> Tuple[str, int]:
+    def extract_opcode_data_from_line_mark(cls, mark: GtkSource.Mark) -> tuple[str, int]:
         name = mark.get_name()
         assert name is not None
         match = MARK_PATTERN.match(name[4:])
@@ -131,14 +132,14 @@ class EditorTextMarkUtil:
                     b.delete_mark(m)
 
     @classmethod
-    def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool) -> Optional[Gtk.TextMark]:
+    def _get_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str, opcode_addr: int, is_for_macro_call: bool) -> Gtk.TextMark | None:
         if is_for_macro_call:
             return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}_call')
         else:
             return b.get_mark(f'opcode_<<<{ssb_filename}>>>_{opcode_addr}')
 
     @classmethod
-    def _get_opcode_in_line(cls, buffer: Gtk.TextBuffer, line, use_temp_markers=False) -> List[Tuple[str, int]]:
+    def _get_opcode_in_line(cls, buffer: Gtk.TextBuffer, line, use_temp_markers=False) -> list[tuple[str, int]]:
         marker_prefix = 'opcode_'
         marker_pattern = MARK_PATTERN
         if use_temp_markers:
@@ -162,5 +163,5 @@ class EditorTextMarkUtil:
 T = TypeVar('T')
 
 
-def not_none(x: Optional[T]) -> T:
+def not_none(x: T | None) -> T:
     return cast(T, x)

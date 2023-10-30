@@ -31,7 +31,7 @@ class Map(AbstractEntity):
         return u32(0x208)
 
     @property
-    def _validity_offset(self) -> Optional[u32]:
+    def _validity_offset(self) -> u32 | None:
         return None
 
     @property

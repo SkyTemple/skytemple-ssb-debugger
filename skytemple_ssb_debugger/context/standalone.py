@@ -18,7 +18,8 @@ from __future__ import annotations
 import logging
 import traceback
 from threading import Lock
-from typing import Optional, TYPE_CHECKING, Dict, List, Iterable
+from typing import Optional, TYPE_CHECKING, Dict, List
+from collections.abc import Iterable
 
 import gi
 
@@ -48,11 +49,11 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     """Context for running the debugger as a standalone application."""
 
     def __init__(self, main_window: Gtk.Window):
-        self._rom: Optional[NintendoDSRom] = None
-        self._rom_filename: Optional[str] = None
-        self._project_fm: Optional[ProjectFileManager] = None
-        self._static_data: Optional[Pmd2Data] = None
-        self._open_files: Dict[str, SsbLoadedFile] = {}
+        self._rom: NintendoDSRom | None = None
+        self._rom_filename: str | None = None
+        self._project_fm: ProjectFileManager | None = None
+        self._static_data: Pmd2Data | None = None
+        self._open_files: dict[str, SsbLoadedFile] = {}
         self._main_window = main_window
 
     def allows_interactive_file_management(self) -> bool:
@@ -117,7 +118,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         assert self._project_fm is not None
         return self._project_fm
 
-    def get_ssb(self, filename, ssb_file_manager: 'SsbFileManager') -> 'SsbLoadedFile':
+    def get_ssb(self, filename, ssb_file_manager: SsbFileManager) -> SsbLoadedFile:
         assert self._project_fm is not None and self._rom is not None
         with file_load_lock:
             self._check_loaded()
@@ -136,7 +137,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def on_script_edit(self, filename):
         pass
 
-    def save_ssb(self, filename, ssb_model, ssb_file_manager: 'SsbFileManager'):
+    def save_ssb(self, filename, ssb_model, ssb_file_manager: SsbFileManager):
         assert self._rom is not None
         with file_load_lock:
             self._check_loaded()
@@ -155,7 +156,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def open_scene_editor_for_map(self, map_name):
         self._scene_editing_not_supported()
 
-    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: List[SourceMapPositionMark],
+    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: list[SourceMapPositionMark],
                            pos_mark_to_edit: int) -> bool:
         self.display_error(
             None,
@@ -179,7 +180,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def display_error(
             self, exc_info, error_message,
             error_title='SkyTemple Script Engine Debugger - Error',
-            *, context: Optional[Dict[str, Capturable]] = None
+            *, context: dict[str, Capturable] | None = None
     ):
         logger.error(error_message, exc_info=exc_info)
         exc_info_str = ''
@@ -196,7 +197,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def capture_error(
             self, exc_info,
-            *, context: Optional[Dict[str, Capturable]] = None
+            *, context: dict[str, Capturable] | None = None
     ):
         pass
 
@@ -212,7 +213,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     @staticmethod
     def message_dialog(
-        parent: Optional[Gtk.Window],
+        parent: Gtk.Window | None,
         dialog_flags: Gtk.DialogFlags,
         message_type: Gtk.MessageType,
         buttons_type: Gtk.ButtonsType,

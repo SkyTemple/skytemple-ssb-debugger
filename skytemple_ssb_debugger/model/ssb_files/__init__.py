@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class AbstractScriptFile:
-    def __init__(self, parent: 'SsbLoadedFile'):
+    def __init__(self, parent: SsbLoadedFile):
         self.parent = parent
 
     @abstractmethod

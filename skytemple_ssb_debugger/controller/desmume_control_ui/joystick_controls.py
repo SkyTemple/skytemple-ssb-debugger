@@ -43,15 +43,15 @@ class JoystickControlsDialogController:
         self.window = builder_get_assert(self.builder, Gtk.Dialog, 'wJoyConfDlg')
         self.window.set_transient_for(parent_window)
         self.window.set_attached_to(parent_window)
-        self._joystick_cfg: Optional[List[int]] = None
+        self._joystick_cfg: list[int] | None = None
         self.builder.connect_signals(self)
         self.context = context
 
     def run(self,
             poll_emulator: Callable[[], Any],
-            joystick_cfg: List[int],
+            joystick_cfg: list[int],
             emulator_is_running: bool,
-            callback: Callable[[List[int]], None]
+            callback: Callable[[list[int]], None]
         ):
         """Configure the joystick configuration provided using the dialog,
         is immediately changed in the debugger The new/old (if canceled) config is also returned."""

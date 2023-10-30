@@ -21,7 +21,8 @@ import math
 import os
 import sys
 from functools import partial
-from typing import Optional, List, Dict, Mapping, Sequence, cast
+from typing import Optional, List, Dict, cast
+from collections.abc import Mapping, Sequence
 
 import gi
 
@@ -87,12 +88,12 @@ class VariableController:
         super().__init__()
         self.builder = builder
         self.context = context
-        self.rom_data: Optional[Pmd2Data] = None
-        self.var_form_elements: Optional[List[Optional[List[Optional[Gtk.Widget]]]]] = None
+        self.rom_data: Pmd2Data | None = None
+        self.var_form_elements: list[list[Gtk.Widget | None] | None] | None = None
         self._suppress_events = False
         self._boost = False
         # Cached variable values
-        self._variable_cache: Dict[Pmd2ScriptGameVar, List[int]] = {}
+        self._variable_cache: dict[Pmd2ScriptGameVar, list[int]] = {}
         self._pending_sync = False
 
         self.variables_changed_but_not_saved = False
@@ -197,7 +198,7 @@ class VariableController:
 
         emulator_unregister_script_variable_set()
 
-    def create_var_form_element(self, var: Pmd2ScriptGameVar, offset: int, label: Optional[str] = None, no_label=False):
+    def create_var_form_element(self, var: Pmd2ScriptGameVar, offset: int, label: str | None = None, no_label=False):
         box: Gtk.ButtonBox = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         box.set_margin_bottom(2)
         box.set_halign(Gtk.Align.END)
