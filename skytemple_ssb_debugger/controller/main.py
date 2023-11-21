@@ -30,7 +30,7 @@ import gi
 from PIL import Image
 from range_typed_integers import u32
 
-from skytemple_files.common.util import open_utf8, add_extension_if_missing
+from skytemple_files.common.util import open_utf8, add_extension_if_missing, chunks
 from skytemple_ssb_emulator import SCREEN_WIDTH, SCREEN_HEIGHT, emulator_load_controls, Language, emulator_poll, \
     emulator_get_kbcfg, emulator_set_kbcfg, emulator_get_jscfg, emulator_set_jscfg, emulator_keypad_add_key, \
     emulator_keymask, EmulatorKeys, emulator_keypad_rm_key, emulator_touch_release, emulator_supports_joystick, \
@@ -661,10 +661,15 @@ class MainController:
 
         if response == Gtk.ResponseType.ACCEPT:
             fn = add_extension_if_missing(fn, 'png')
+            raw = emulator_display_buffer_as_rgbx()
+            imgdata = bytearray([0] * len(raw))
+            for i, (a, b, c, _d) in enumerate(chunks(raw, 4)):
+                imgdata[i*4:(i+1)*4] = [c, b, a, 255]
+
             Image.frombuffer(
                 'RGBA',
                 (SCREEN_WIDTH, SCREEN_HEIGHT_BOTH),
-                emulator_display_buffer_as_rgbx(), 'raw', 'RGBA', 0, 1
+                imgdata, 'raw', 'RGBA', 0, 1
             ).save(fn)
 
     # MENU HELP
