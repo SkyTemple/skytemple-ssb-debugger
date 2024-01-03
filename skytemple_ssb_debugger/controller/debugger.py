@@ -135,8 +135,10 @@ class DebuggerController:
         script_target_slot_id: u32,
         current_opcode: u32
     ):
-        if not self._boost:
-            assert self.rom_data is not None and self.ground_engine_state is not None
+        # XXX: #121: self.ground_engine_state should never be None in this position...? This may just move the issue
+        #      somewhere else.
+        if not self._boost and self.ground_engine_state is not None:
+            assert self.rom_data is not None
             if self._log_operations:
                 srs = ScriptRuntimeStruct.from_data(
                     self.rom_data, u32(0), srs_mem, script_target_slot_id
