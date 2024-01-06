@@ -5,7 +5,7 @@ skytemple-ssb-emulator==1.6.1.post1
 explorerscript==0.1.5
 range-typed-integers >= 1.0.0
 nest-asyncio==1.5.7
-pygtkspellcheck==5.0.2
+pygtkspellcheck==5.0.3
 git+https://github.com/skytemple/skytemple-files@master#egg=skytemple_files
 pmdsky-debug-py
 git+https://github.com/skytemple/skytemple-icons@main#egg=skytemple_icons
