@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skytemple-ssb-debugger"
-version = "1.6.1"
+version = "1.6.2"
 authors = [
     {name = 'Marco "Capypara" Köpcke', email = "hello@capypara.de"},
     # see About dialog or GitHub contributors list for additional people.
@@ -25,14 +25,14 @@ classifiers = [
 ]
 dependencies = [
     "ndspy >= 3.0.0",
-    "skytemple-files >= 1.6.1, < 1.7.0",
+    "skytemple-files >= 1.6.2, < 1.7.0",
     "pmdsky-debug-py",  #  Whatever version skytemple-files requires.
     "skytemple-icons >= 0.1.0",
     "range-typed-integers >= 1.0.0",
     "pygobject >= 3.26.0",
     "pycairo >= 1.16.0",
     "skytemple-ssb-emulator >= 1.6.1, < 1.7.0",
-    "explorerscript >= 0.1.4",
+    "explorerscript >= 0.1.5",
     "nest-asyncio >= 1.4.1",
     "pygtkspellcheck >= 5.0",
     "importlib_metadata>=4.6; python_version < '3.10'"
