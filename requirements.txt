@@ -1,7 +1,7 @@
 ndspy==3.0.0
 pygobject==3.48.1
 pycairo==1.18.2
-skytemple-ssb-emulator==1.6.1.post1
+skytemple-ssb-emulator==1.6.4
 explorerscript==0.1.5
 range-typed-integers >= 1.0.0
 nest-asyncio==1.5.7
