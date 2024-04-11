@@ -33,10 +33,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     name: Build the Python wheel
+    container:
+      image: ghcr.io/skytemple/gtk4-build-image:1
     steps:
       # For tags we assume the version in pyproject.toml is correct!
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Rewrite version for dev if not tag
         if: "!startsWith(github.ref, 'refs/tags/')"
         run: |
@@ -44,6 +48,8 @@ jobs:
       - name: Note version
         run: |
           echo "PACKAGE_VERSION=$(tomlq '.project.version' pyproject.toml -r)" >> $GITHUB_ENV
+      - name: Run make
+        run: make
       - name: Build Python wheels
         run: |
           python3 -m pip install --upgrade build
