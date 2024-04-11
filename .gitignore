@@ -108,3 +108,5 @@ venv.bak/
 .idea/
 ### skytemple
 *.glade~
+
+*.ui
