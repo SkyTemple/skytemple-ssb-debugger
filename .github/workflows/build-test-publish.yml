@@ -29,7 +29,40 @@ jobs:
     - name: Run type checks
       run: |
         mypy --config-file mypy.ini
-        
+
+  linting:
+    runs-on: ubuntu-latest
+    name: Linting
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install gobject-introspection
+      run: sudo apt-get install -y gobject-introspection libgirepository1.0-dev
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt ruff
+    - name: Lint with ruff
+      run: ruff check --output-format=github skytemple_ssb_debugger
+
+  code-formatting:
+    runs-on: ubuntu-latest
+    name: Code Format
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install ruff
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+      - name: Check with ruff
+        run: ruff format --check skytemple_ssb_debugger
   build:
     runs-on: ubuntu-latest
     name: Build the Python wheel
