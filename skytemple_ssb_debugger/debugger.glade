@@ -1745,7 +1745,7 @@ not halting.</property>
                                                       <object class="GtkLabel" id="debug_flag_1_7_text">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">False</property>
-                                                        <property name="label" translatable="yes">No cheat-check (?)</property>
+                                                        <property name="label" translatable="yes">No Cheat Check (does nothing)</property>
                                                         <attributes>
                                                           <attribute name="style" value="italic"/>
                                                         </attributes>
@@ -1770,7 +1770,7 @@ not halting.</property>
                                                       <object class="GtkLabel" id="debug_flag_1_8_text">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">False</property>
-                                                        <property name="label" translatable="yes">No plunge-check (?)</property>
+                                                        <property name="label" translatable="yes">No Plunge Check (does nothing)</property>
                                                         <attributes>
                                                           <attribute name="style" value="italic"/>
                                                         </attributes>
@@ -1795,7 +1795,7 @@ not halting.</property>
                                                       <object class="GtkLabel" id="debug_flag_1_9_text">
                                                         <property name="visible">True</property>
                                                         <property name="can-focus">False</property>
-                                                        <property name="label" translatable="yes">Dungeon Infinite Comeback (?)</property>
+                                                        <property name="label" translatable="yes">Reuse Dungeon Quicksaves</property>
                                                         <attributes>
                                                           <attribute name="style" value="italic"/>
                                                         </attributes>
