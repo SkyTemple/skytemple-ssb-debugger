@@ -73,13 +73,13 @@ class DebuggerController:
         arm9 = self.rom_data.bin_sections.arm9
         ov11 = self.rom_data.bin_sections.overlay11
         emulator_register_script_debug(
-            [ov11.functions.FuncThatCallsCommandParsing.absolute_address + 0x58],
+            [ov11.functions.FuncThatCallsRunNextOpcode.absolute_address + 0x58],
             self.hook__breaking_point,
         )
         emulator_register_debug_print(
             arm9.functions.DebugPrint0.absolute_addresses,  # register offset = 0: -> registers[register_offset + i + 1]
             arm9.functions.DebugPrint.absolute_addresses,   # register offset = 1
-            [ov11.functions.ScriptCommandParsing.absolute_address + 0x3C40],
+            [ov11.functions.RunNextOpcode.absolute_address + 0x3C40],
             self.hook__log_msg
         )
         emulator_register_debug_flag(
@@ -87,7 +87,7 @@ class DebuggerController:
             arm9.functions.GetDebugLogFlag.absolute_addresses,
             arm9.functions.SetDebugFlag.absolute_addresses,
             arm9.functions.SetDebugLogFlag.absolute_addresses,
-            [ov11.functions.ScriptCommandParsing.absolute_address + 0x15C8],
+            [ov11.functions.RunNextOpcode.absolute_address + 0x15C8],
             self.hook__set_debug_flag
         )
 
