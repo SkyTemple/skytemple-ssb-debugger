@@ -32,6 +32,7 @@ from __future__ import annotations
   <styles>
     <style id="keyword"           name="Keyword"               map-to="def:keyword"/>
     <style id="string"            name="String"                map-to="def:string"/>
+    <style id="multiline-string"  name="Multiline string"      map-to="def:string"/>
     <style id="decimal"           name="Decimal number"        map-to="def:decimal"/>
     <style id="base-n-integer"    name="Base-N number"         map-to="def:base-n-integer"/>
     <style id="constant"          name="Constant"              map-to="def:constant"/>
@@ -61,6 +62,16 @@ from __future__ import annotations
       <include>
         <context ref="def:in-line-comment"/>
       </include>
+    </context>
+
+    <context id="multiline-double-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>"""</start>
+      <end>"""</end>
+    </context>
+
+    <context id="multiline-single-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>'''</start>
+      <end>'''</end>
     </context>
 
     <context id="double-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
@@ -141,6 +152,8 @@ from __future__ import annotations
       <include>
         <context ref="cpp-line-comment"/>
         <context ref="c-block-comment"/>
+        <context ref="multiline-double-quoted-string"/>
+        <context ref="multiline-single-quoted-string"/>
         <context ref="double-quoted-string"/>
         <context ref="single-quoted-string"/>
         <context ref="fixed-point"/>
