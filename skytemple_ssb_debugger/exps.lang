@@ -92,8 +92,11 @@ from __future__ import annotations
       <include>
         <context ref="ssbs:cpp-line-comment"/>
         <context ref="ssbs:c-block-comment"/>
+        <context ref="ssbs:multiline-double-quoted-string"/>
+        <context ref="ssbs:multiline-single-quoted-string"/>
         <context ref="ssbs:double-quoted-string"/>
         <context ref="ssbs:single-quoted-string"/>
+        <context ref="ssbs:fixed-point"/>
         <context ref="ssbs:decimal"/>
         <context ref="ssbs:octal"/>
         <context ref="ssbs:hex"/>
