@@ -32,6 +32,7 @@ from __future__ import annotations
   <styles>
     <style id="keyword"           name="Keyword"               map-to="def:keyword"/>
     <style id="weak-keyword"      name="Weak Keyword"          map-to="def:special-constant"/>
+    <style id="multiline-string"  name="Multiline string"      map-to="def:string"/>
   </styles>
   <definitions>
     <context id="keywords" style-ref="keyword">
@@ -92,6 +93,8 @@ from __future__ import annotations
       <include>
         <context ref="ssbs:cpp-line-comment"/>
         <context ref="ssbs:c-block-comment"/>
+        <context ref="multiline-double-quoted-string"/>
+        <context ref="multiline-single-quoted-string"/>
         <context ref="ssbs:double-quoted-string"/>
         <context ref="ssbs:single-quoted-string"/>
         <context ref="ssbs:fixed-point"/>
@@ -108,6 +111,16 @@ from __future__ import annotations
         <context ref="ssbs:constant"/>
         <context ref="ssbs:variable"/>
       </include>
+    </context>
+
+    <context id="multiline-double-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>"""</start>
+      <end>"""</end>
+    </context>
+
+    <context id="multiline-single-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>'''</start>
+      <end>'''</end>
     </context>
   </definitions>
 </language>

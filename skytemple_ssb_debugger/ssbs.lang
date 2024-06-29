@@ -66,17 +66,11 @@ from __future__ import annotations
     <context id="double-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>"</start>
       <end>"</end>
-      <include>
-        <context ref="def:line-continue"/>
-      </include>
     </context>
 
     <context id="single-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>'</start>
       <end>'</end>
-      <include>
-        <context ref="def:line-continue"/>
-      </include>
     </context>
 
     <context id="position-marker" style-ref="position-marker">
