@@ -135,7 +135,7 @@ from __future__ import annotations
     </context>
 
     <context id="variable" style-ref="variable">
-      <match>(?&lt;![\w\.])([$]\%{identifier})(?![\w\.])</match>
+      <match>(?&lt;![\w\.])([$|%]\%{identifier})(?![\w\.])</match>
     </context>
 
     <context id="keywords" style-ref="keyword">
