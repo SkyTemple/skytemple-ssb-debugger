@@ -104,7 +104,6 @@ from __future__ import annotations
         <context ref="keywords"/>
         <context ref="weak-keywords"/>
         <context ref="ssbs:lang-string-key"/>
-        <context ref="ssbs:position-marker"/>
         <context ref="ssbs:label"/>
         <context ref="ssbs:label-jump"/>
         <context ref="ssbs:constant"/>

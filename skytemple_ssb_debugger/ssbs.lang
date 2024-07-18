@@ -84,20 +84,6 @@ from __future__ import annotations
       <end>'</end>
     </context>
 
-    <context id="position-marker" style-ref="position-marker">
-      <start>Position&lt;</start>
-      <end>&gt;</end>
-      <include>
-          <context ref="single-quoted-string"/>
-          <context ref="double-quoted-string"/>
-          <context ref="fixed-point"/>
-          <context ref="decimal"/>
-          <context ref="octal"/>
-          <context ref="hex"/>
-          <context ref="binary"/>
-      </include>
-    </context>
-
     <context id="fixed-point" style-ref="fixed-point">
       <match>([1-9][0-9]*|0)?\.([1-9][0-9]*|0)(?![\w\.])</match>
     </context>
@@ -163,7 +149,6 @@ from __future__ import annotations
         <context ref="binary"/>
         <context ref="keywords"/>
         <context ref="lang-string-key"/>
-        <context ref="position-marker"/>
         <context ref="label"/>
         <context ref="label-jump"/>
         <context ref="constant"/>
