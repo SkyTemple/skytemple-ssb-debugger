@@ -32,13 +32,14 @@ from __future__ import annotations
   <styles>
     <style id="keyword"           name="Keyword"               map-to="def:keyword"/>
     <style id="string"            name="String"                map-to="def:string"/>
+    <style id="multiline-string"  name="Multiline string"      map-to="def:string"/>
     <style id="decimal"           name="Decimal number"        map-to="def:decimal"/>
     <style id="base-n-integer"    name="Base-N number"         map-to="def:base-n-integer"/>
     <style id="constant"          name="Constant"              map-to="def:constant"/>
     <style id="variable"          name="Variable"              map-to="def:identifier"/>
     <style id="lang-string-key"   name="Language String Key"   map-to="def:special-constant"/>
     <style id="position-marker"   name="Position Marker"       map-to="def:special-constant"/>
-    <style id="position-marker-5" name="Position Marker .5"    map-to="def:decimal"/>
+    <style id="fixed-point"       name="Fixed Point Number"    map-to="def:decimal"/>
     <style id="label"             name="Label"                 map-to="def:preprocessor"/>
     <style id="label-jump"        name="Label Jump"            map-to="def:preprocessor"/>
     <style id="comment"           name="Comment"               map-to="def:comment"/>
@@ -63,20 +64,24 @@ from __future__ import annotations
       </include>
     </context>
 
+    <context id="multiline-double-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>"""</start>
+      <end>"""</end>
+    </context>
+
+    <context id="multiline-single-quoted-string" style-ref="multiline-string" class="string" class-disabled="no-spell-check">
+      <start>'''</start>
+      <end>'''</end>
+    </context>
+
     <context id="double-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>"</start>
       <end>"</end>
-      <include>
-        <context ref="def:line-continue"/>
-      </include>
     </context>
 
     <context id="single-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>'</start>
       <end>'</end>
-      <include>
-        <context ref="def:line-continue"/>
-      </include>
     </context>
 
     <context id="position-marker" style-ref="position-marker">
@@ -85,15 +90,16 @@ from __future__ import annotations
       <include>
           <context ref="single-quoted-string"/>
           <context ref="double-quoted-string"/>
-          <context ref="position-marker-5"/>
+          <context ref="fixed-point"/>
+          <context ref="decimal"/>
           <context ref="octal"/>
           <context ref="hex"/>
           <context ref="binary"/>
       </include>
     </context>
 
-    <context id="position-marker-5" style-ref="position-marker-5">
-      <match>([1-9][0-9]*|0)(\.5)?(?![\w\.])</match>
+    <context id="fixed-point" style-ref="fixed-point">
+      <match>([1-9][0-9]*|0)?\.([1-9][0-9]*|0)(?![\w\.])</match>
     </context>
 
     <context id="lang-string-key" style-ref="lang-string-key">
@@ -129,7 +135,7 @@ from __future__ import annotations
     </context>
 
     <context id="variable" style-ref="variable">
-      <match>(?&lt;![\w\.])([$]\%{identifier})(?![\w\.])</match>
+      <match>(?&lt;![\w\.])([$|%]\%{identifier})(?![\w\.])</match>
     </context>
 
     <context id="keywords" style-ref="keyword">
@@ -146,8 +152,11 @@ from __future__ import annotations
       <include>
         <context ref="cpp-line-comment"/>
         <context ref="c-block-comment"/>
+        <context ref="multiline-double-quoted-string"/>
+        <context ref="multiline-single-quoted-string"/>
         <context ref="double-quoted-string"/>
         <context ref="single-quoted-string"/>
+        <context ref="fixed-point"/>
         <context ref="decimal"/>
         <context ref="octal"/>
         <context ref="hex"/>
