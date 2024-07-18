@@ -1,4 +1,4 @@
-"""Controller for a single SSB script editor (SSBScript + ExplorerScript)."""
+"""Controller for a single SSB script editor (ExplorerScript)."""
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -63,7 +63,6 @@ class ScriptEditorController:
     def __init__(
             self, parent: EditorNotebookController, main_window: Gtk.Window, file_context: AbstractScriptFileContext,
             rom_data: Pmd2Data, modified_handler, mapname: str | None,
-            enable_explorerscript=True, hide_ssb_script=False
     ):
         path = os.path.abspath(os.path.dirname(__file__))
         try:
@@ -87,26 +86,12 @@ class ScriptEditorController:
         self._lm = LanguageManager()
         self._lm.set_search_path(self._lm.get_search_path() + [os.path.join(path, '..')])
 
-        # If True, the ExplorerScript view should be editable but not the SSBScript view
-        # If False, the other way around.
-        self._explorerscript_active = enable_explorerscript
         self._waiting_for_reload = False
 
-        # If True, the SSBScript view is hidden (including it's ta
-        self._hide_ssb_script = hide_ssb_script
-        if self._hide_ssb_script:
-            notebook = builder_get_assert(self.builder, Gtk.Notebook, 'code_editor_notebook')
-            notebook.set_show_tabs(False)
-
-        self._ssb_script_view: GtkSource.View = None  # type: ignore
         self._explorerscript_view: GtkSource.View = None  # type: ignore
-        self._ssb_script_spellcheck: SpellChecker = None  # type: ignore
         self._explorerscript_spellcheck: SpellChecker = None  # type: ignore
-        self._ssb_script_revealer: Gtk.Revealer = None  # type: ignore
         self._explorerscript_revealer: Gtk.Revealer = None  # type: ignore
-        self._ssb_script_search: Gtk.SearchEntry = None  # type: ignore
         self._explorerscript_search: Gtk.SearchEntry = None  # type: ignore
-        self._ssb_script_search_context: GtkSource.SearchContext = None  # type: ignore
         self._explorerscript_search_context: GtkSource.SearchContext = None  # type: ignore
         self._saving_dialog: Gtk.Dialog | None = None
 
@@ -133,7 +118,6 @@ class ScriptEditorController:
         self.file_context.register_insert_opcode_text_mark_handler(self.insert_opcode_text_mark)
 
         self.load_views(
-            builder_get_assert(self.builder, Gtk.Box, 'page_ssbscript'),
             builder_get_assert(self.builder, Gtk.Box, 'page_explorerscript')
         )
 
@@ -152,8 +136,6 @@ class ScriptEditorController:
 
     @property
     def has_changes(self):
-        if self._ssb_script_view and self._ssb_script_view.get_buffer().get_modified():
-            return True
         if self._explorerscript_view and self._explorerscript_view.get_buffer().get_modified():
             return True
         return False
@@ -177,21 +159,17 @@ class ScriptEditorController:
             self._on_break_pulled_after_load = (ssb_filename, opcode_addr, halted_on_call)
         else:
             self.on_break_released()
-            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
             expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
             if ssb_filename is not None and opcode_addr != -1:
-                for buff in (ssbsb, expsb):
-                    EditorTextMarkUtil.add_line_mark_for_op(
-                        buff, ssb_filename, opcode_addr, 'breaked-line', 'breaked-line',
-                        halted_on_call
-                    )
+                EditorTextMarkUtil.add_line_mark_for_op(
+                    expsb, ssb_filename, opcode_addr, 'breaked-line', 'breaked-line',
+                    halted_on_call
+                )
 
     def on_break_released(self):
         """Remove the marks for the current breaked line."""
-        ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
         expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-        for buff in (ssbsb, expsb):
-            EditorTextMarkUtil.remove_all_line_marks(buff, 'breaked-line')
+        EditorTextMarkUtil.remove_all_line_marks(expsb, 'breaked-line')
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
         """
@@ -214,39 +192,33 @@ class ScriptEditorController:
         if self._still_loading:
             self._hanger_halt_lines_after_load = (ssb_filename, lines)
         else:
-            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
             expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            for buff in (ssbsb, expsb):
-                EditorTextMarkUtil.remove_all_line_marks(buff, 'execution-line')
-                for type, slot_id, opcode_addr in lines:
-                    EditorTextMarkUtil.add_line_mark_for_op(
-                        buff, ssb_filename, opcode_addr,
-                        f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line',
-                        False  # TODO: Call breaking
-                    )
+            EditorTextMarkUtil.remove_all_line_marks(expsb, 'execution-line')
+            for type, slot_id, opcode_addr in lines:
+                EditorTextMarkUtil.add_line_mark_for_op(
+                    expsb, ssb_filename, opcode_addr,
+                    f'execution_{type.value}_{type.value}_{slot_id}', 'execution-line',
+                    False  # TODO: Call breaking
+                )
 
     def remove_hanger_halt_lines(self):
         """Remove the marks for the current script execution points"""
         if self._still_loading:
             self._hanger_halt_lines_after_load = None
         else:
-            ssbsb: GtkSource.Buffer = self._ssb_script_view.get_buffer()
             expsb: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-            for buff in (ssbsb, expsb):
-                EditorTextMarkUtil.remove_all_line_marks(buff, 'execution-line')
+            EditorTextMarkUtil.remove_all_line_marks(expsb, 'execution-line')
 
     def focus_opcode(self, ssb_filename, opcode_addr):
         """Put a textmark representing an opcode into the center of view."""
         if self._still_loading:
             self._foucs_opcode_after_load = (ssb_filename, opcode_addr)
         else:
-            ssbsb = self._ssb_script_view
-            expsb = self._explorerscript_view
-            for view in (ssbsb, expsb):
-                EditorTextMarkUtil.scroll_to_op(
-                    view.get_buffer(), view, ssb_filename, opcode_addr,
-                    False  # TODO: Call breaking
-                )
+            expsv = self._explorerscript_view
+            EditorTextMarkUtil.scroll_to_op(
+                expsv.get_buffer(), expsv, ssb_filename, opcode_addr,
+                False  # TODO: Call breaking
+            )
 
     def save(self):
         """
@@ -254,16 +226,10 @@ class ScriptEditorController:
         have changes... - we save that one!
         """
         modified_buffer: GtkSource.Buffer
-        save_exps = False
         save_text = None
 
-        if not self._explorerscript_active and self._ssb_script_view.get_buffer().get_modified():
-            modified_buffer = self._ssb_script_view.get_buffer()
-            save_exps = False
-            save_text = modified_buffer.props.text
-        elif self._explorerscript_view.get_buffer().get_modified():
+        if self._explorerscript_view.get_buffer().get_modified():
             modified_buffer = self._explorerscript_view.get_buffer()
-            save_exps = True
             save_text = modified_buffer.props.text
         if not save_text:
             return
@@ -275,7 +241,6 @@ class ScriptEditorController:
         )
 
         self.file_context.save(save_text=save_text,
-                               save_exps=save_exps,
                                error_callback=self._save_done_error,
                                success_callback=partial(self._save_done, modified_buffer))
 
@@ -321,34 +286,21 @@ class ScriptEditorController:
             assert self.parent.file_manager is not None
             emulator_debug_breakpoints_resync(ssb_filename, b_points, self.parent.file_manager.get(ssb_filename))
 
-    def load_views(self, ssbs_bx: Gtk.Box, exps_bx: Gtk.Box | None):
-        self._activate_spinner(ssbs_bx)
-        if exps_bx:
-            self._activate_spinner(exps_bx)
+    def load_views(self, exps_bx: Gtk.Box):
+        self._activate_spinner(exps_bx)
 
-        (ssbs_ovl, self._ssb_script_view, self._ssb_script_revealer,
-         self._ssb_script_search, self._ssb_script_search_context) = self._create_editor()
-        if exps_bx:
-            (exps_ovl, self._explorerscript_view, self._explorerscript_revealer,
-             self._explorerscript_search, self._explorerscript_search_context) = self._create_editor()
+        (exps_ovl, self._explorerscript_view, self._explorerscript_revealer,
+         self._explorerscript_search, self._explorerscript_search_context) = self._create_editor()
 
         # SPELL CHECK
         self.toggle_spellchecker(self.parent.parent.settings.get_spellcheck_enabled())
 
-        self._load_ssbs_completion()
-        if exps_bx:
-            self._load_explorerscript_completion()
+        self._load_explorerscript_completion()
 
-        self._update_view_editable_state()
-
-        def load__gtk__process_loaded(text, is_explorerscript, language):
-            ovl = ssbs_ovl
-            bx = ssbs_bx
-            view = self._ssb_script_view
-            if is_explorerscript:
-                ovl = exps_ovl
-                bx = assert_not_none(exps_bx)
-                view = self._explorerscript_view
+        def load__gtk__process_loaded(text, language):
+            ovl = exps_ovl
+            bx = assert_not_none(exps_bx)
+            view = self._explorerscript_view
             for child in bx.get_children():
                 bx.remove(child)
             buffer: GtkSource.Buffer = view.get_buffer()
@@ -379,27 +331,15 @@ class ScriptEditorController:
                     "{exception}"))
             )
 
-        def load__gtk__ssbs_not_available():
-            for child in ssbs_bx.get_children():
-                ssbs_bx.remove(child)
-            self._refill_info_bar(
-                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar'), Gtk.MessageType.WARNING,
-                _("SSBScript is not available for this file.")
-            )
-            self._ssb_script_view.set_editable(False)
-
         def load_gtk__after():
             self.file_context.request_ssbs_state()
             if self._still_loading:
                 self._after_views_loaded()
 
-        self.file_context.load(load_exps=exps_bx is not None,
-                               load_ssbs=not self._hide_ssb_script,
-                               load_view_callback=load__gtk__process_loaded,
+        self.file_context.load(load_view_callback=load__gtk__process_loaded,
                                after_callback=load_gtk__after,
                                exps_exception_callback=load__gtk__exps_exception,
-                               exps_hash_changed_callback=load__gtk__exps_hash_error,
-                               ssbs_not_available_callback=load__gtk__ssbs_not_available)
+                               exps_hash_changed_callback=load__gtk__exps_hash_error,)
 
     def _after_views_loaded(self):
         self._still_loading = False
@@ -421,18 +361,12 @@ class ScriptEditorController:
 
     def on_breakpoint_added(self, ssb_filename, opcode_offset, also_update_explorerscript=True):
         view_list: Iterable[GtkSource.View]
-        if also_update_explorerscript:
-            view_list = (self._ssb_script_view, self._explorerscript_view)
-        else:
-            view_list = (self._ssb_script_view, )
-        for view in view_list:
-            buffer: GtkSource.Buffer = view.get_buffer()
-            EditorTextMarkUtil.add_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
+        buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+        EditorTextMarkUtil.add_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
 
     def on_breakpoint_removed(self, ssb_filename, opcode_offset):
-        for view in (self._ssb_script_view, self._explorerscript_view):
-            buffer: GtkSource.Buffer = view.get_buffer()
-            EditorTextMarkUtil.remove_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
+        buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+        EditorTextMarkUtil.remove_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
 
     def switch_to_new_op_marks(self, ssb_filename):
         """
@@ -441,25 +375,22 @@ class ScriptEditorController:
         If we have temporary text marks:
             Move the temporary text marks to be the new regular ones.
         """
-        for view in (self._ssb_script_view, self._explorerscript_view):
-            buffer: GtkSource.Buffer = view.get_buffer()
-            # Remove all breakpoints
-            EditorTextMarkUtil.remove_all_line_marks(buffer, 'breakpoint')
+        buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
+        # Remove all breakpoints
+        EditorTextMarkUtil.remove_all_line_marks(buffer, 'breakpoint')
 
-            # Remove all regular text marks and rename temporary
-            # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
-            if self._waiting_for_reload:
-                EditorTextMarkUtil.switch_to_new_op_marks(buffer, ssb_filename)
+        # Remove all regular text marks and rename temporary
+        # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
+        if self._waiting_for_reload:
+            EditorTextMarkUtil.switch_to_new_op_marks(buffer, ssb_filename)
 
         # Re-add all breakpoints
         for opcode_offset in emulator_breakpoints_get_saved_in_ram_for(ssb_filename):
             self.on_breakpoint_added(ssb_filename, opcode_offset)
 
-    def insert_opcode_text_mark(self, is_exps: bool, ssb_filename: str,
+    def insert_opcode_text_mark(self, ssb_filename: str,
                                 opcode_offset: int, line: int, column: int, is_temp: bool, is_for_macro_call=False):
-        view = self._ssb_script_view
-        if is_exps:
-            view = self._explorerscript_view
+        view = self._explorerscript_view
         EditorTextMarkUtil.create_opcode_mark(
             view.get_buffer(), ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call
         )
@@ -467,9 +398,7 @@ class ScriptEditorController:
     # Signal & event handlers
     def on_ssbs_state_change(self, breakable, ram_state_up_to_date):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
-        info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar')
-        if self._explorerscript_active:
-            info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar')
+        info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar')
 
         if not breakable:
             self._refill_info_bar(
@@ -492,12 +421,6 @@ class ScriptEditorController:
 
     def on_sourceview_line_mark_activated(self, widget: GtkSource.View, textiter: Gtk.TextIter, event: Gdk.Event):
         marks = widget.get_buffer().get_source_marks_at_iter(textiter)
-
-        # Only allow editing one view.
-        if self._explorerscript_active and widget == self._ssb_script_view:
-            return
-        if not self._explorerscript_active and widget == self._explorerscript_view:
-            return
 
         # No mark? Add!
         if len(marks) < 1:
@@ -523,18 +446,12 @@ class ScriptEditorController:
     def on_search_entry_focus_out_event(self, widget: Gtk.SearchEntry, *args):
         view = self._explorerscript_view
         revealer = self._explorerscript_revealer
-        if widget == self._ssb_script_search:
-            view = self._ssb_script_view
-            revealer = self._ssb_script_revealer
         revealer.set_reveal_child(False)
         view.grab_focus()
 
     def on_search_entry_search_changed(self, widget: Gtk.SearchEntry):
         view = self._explorerscript_view
         context = self._explorerscript_search_context
-        if widget == self._ssb_script_search:
-            view = self._ssb_script_view
-            context = self._ssb_script_search_context
         buffer: Gtk.TextBuffer = view.get_buffer()
 
         settings: GtkSource.SearchSettings = context.get_settings()
@@ -542,17 +459,11 @@ class ScriptEditorController:
         found, match_start, match_end = context.forward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:3]
         if found:
             buffer.select_range(match_start, match_end)
-            if buffer == self._ssb_script_view.get_buffer():
-                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
-            else:
-                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_search_up_button_clicked(self, widget: Gtk.Button, search: Gtk.SearchEntry):
         view = self._explorerscript_view
         context = self._explorerscript_search_context
-        if search == self._ssb_script_search:
-            view = self._ssb_script_view
-            context = self._ssb_script_search_context
         buffer: Gtk.TextBuffer = view.get_buffer()
 
         settings: GtkSource.SearchSettings = context.get_settings()
@@ -560,17 +471,11 @@ class ScriptEditorController:
         found, match_start, match_end, wrap = context.backward(buffer.get_iter_at_offset(buffer.props.cursor_position))[:4]
         if found:
             buffer.select_range(match_start, match_end)
-            if buffer == self._ssb_script_view.get_buffer():
-                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
-            else:
-                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_search_down_button_clicked(self, widget: Gtk.Button, search: Gtk.SearchEntry):
         view = self._explorerscript_view
         context = self._explorerscript_search_context
-        if search == self._ssb_script_search:
-            view = self._ssb_script_view
-            context = self._ssb_script_search_context
         buffer: Gtk.TextBuffer = view.get_buffer()
 
         settings: GtkSource.SearchSettings = context.get_settings()
@@ -583,10 +488,7 @@ class ScriptEditorController:
                 found, match_start, match_end, wrap = context.forward(match_end)
             if found:
                 buffer.select_range(match_start, match_end)
-                if buffer == self._ssb_script_view.get_buffer():
-                    self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
-                else:
-                    self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_sr_dialog_close(self, dialog: Gtk.Dialog, *args):
         self._loaded_search_window = None
@@ -630,10 +532,7 @@ class ScriptEditorController:
                 # Repeat once, to really get down
                 found, match_start, match_end, wrap = self._active_search_context.forward(match_end)
             buffer.select_range(match_start, match_end)
-            if buffer == self._ssb_script_view.get_buffer():
-                self._ssb_script_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
-            else:
-                self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
+            self._explorerscript_view.scroll_to_iter(match_start, 0.1, False, 0.5, 0.5)
 
     def on_sr_replace_clicked(self, btn: Gtk.Button, *args):
         assert self._active_search_context
@@ -694,21 +593,14 @@ class ScriptEditorController:
         try:
             if self._spellchecker_loaded:
                 if value:
-                    if self._ssb_script_spellcheck:
-                        self._ssb_script_spellcheck.enable()
                     if self._explorerscript_spellcheck:
                         self._explorerscript_spellcheck.enable()
                 else:
-                    if self._ssb_script_spellcheck:
-                        self._ssb_script_spellcheck.disable()
                     if self._explorerscript_spellcheck:
                         self._explorerscript_spellcheck.disable()
             elif value:
                 self._spellchecker_loaded = True
-                if self._ssb_script_view:
-                    self._ssb_script_spellcheck = SpellChecker(self._ssb_script_view, 'en_US')
-                if self._explorerscript_view:
-                    self._explorerscript_spellcheck = SpellChecker(self._explorerscript_view, 'en_US')
+                self._explorerscript_spellcheck = SpellChecker(self._explorerscript_view, 'en_US')
                 # Do not correct any special words (Operations, keywords, Pokémon names, constants, etc.)
                 # TODO THIS IS SUPER SLOW UNDER WINDOWS.
                 #for word in self.parent.get_context().get_special_words():
@@ -719,48 +611,43 @@ class ScriptEditorController:
 
     # Menu actions
     def menu__cut(self):
-        v = self._active_view()
+        v = self._explorerscript_view
         b: GtkSource.Buffer = v.get_buffer()
         b.cut_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)), v.get_editable())
 
     def menu__copy(self):
-        v = self._active_view()
+        v = self._explorerscript_view
         b: GtkSource.Buffer = v.get_buffer()
         b.copy_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)))
 
     def menu__paste(self):
-        v = self._active_view()
+        v = self._explorerscript_view
         b: GtkSource.Buffer = v.get_buffer()
         b.paste_clipboard(Gtk.Clipboard.get(Gdk.Atom.intern('CLIPBOARD', False)), None, v.get_editable())
 
     def menu__undo(self):
-        um = self._active_view().get_buffer().get_undo_manager()
+        um = self._explorerscript_view.get_buffer().get_undo_manager()
         if um and um.can_undo():
             um.undo()
 
     def menu__redo(self):
-        um = self._active_view().get_buffer().get_undo_manager()
+        um = self._explorerscript_view.get_buffer().get_undo_manager()
         if um and um.can_redo():
             um.redo()
 
     def menu__search(self):
-        widget = self._active_view()
+        widget = self._explorerscript_view
         # SEARCH
         revealer = self._explorerscript_revealer
         search = self._explorerscript_search
-        if widget == self._ssb_script_view:
-            revealer = self._ssb_script_revealer
-            search = self._ssb_script_search
         revealer.set_reveal_child(True)
         search.grab_focus()
 
     def menu__replace(self):
-        widget = self._active_view()
+        widget = self._explorerscript_view
         # REPLACE
         if not self._loaded_search_window:
             self._active_search_context = self._explorerscript_search_context
-            if widget == self._ssb_script_view:
-                self._active_search_context = self._ssb_script_search_context
             search_settings: GtkSource.SearchSettings = self._active_search_context.get_settings()
             self._loaded_search_window = builder_get_assert(self.builder, Gtk.Dialog, 'sr_dialog')
             builder_get_assert(self.builder, Gtk.CheckButton, 'sr_search_setting_case_sensitive').set_active(
@@ -774,20 +661,13 @@ class ScriptEditorController:
 
     def switch_style_scheme(self, scheme):
         self._active_scheme = scheme
-        for view in (self._ssb_script_view, self._explorerscript_view):
-            if view is not None:
-                view.get_buffer().set_style_scheme(self._active_scheme)
+        if self._explorerscript_view is not None:
+            self._explorerscript_view.get_buffer().set_style_scheme(self._active_scheme)
         self._mrk_attrs__execution_line.set_background(self._mix_breakpoint_colors('def:note', 21, 234, '#6D5900'))
         self._mrk_attrs__breaked_line.set_background(self._mix_breakpoint_colors('def:note', 81, 174, '#6D5900'))
         self._mrk_attrs__breakpoint.set_background(self._mix_breakpoint_colors('def:error', 51, 204, '#6D0D00'))
 
     # Utility
-    def _active_view(self) -> GtkSource.View:
-        ntbk = builder_get_assert(self.builder, Gtk.Notebook, 'code_editor_notebook')
-        if ntbk.get_nth_page(ntbk.get_current_page()) == builder_get_assert(self.builder, Gtk.Box, 'code_editor_box_es'):
-            return self._explorerscript_view
-        return self._ssb_script_view
-
     def _mix_breakpoint_colors(self, mix_style_name, mix_style_alpha, text_style_alpha, fallback_color):
         """Mix the default background color with the error color to get a nice breakpoint bg color"""
         background_mix_style = None
@@ -889,22 +769,6 @@ class ScriptEditorController:
         spinner.start()
         bx.pack_start(spinner, True, False, 0)
 
-    def _load_ssbs_completion(self):
-        view = self._ssb_script_view
-        completion: GtkSource.Completion = view.get_completion()
-
-        completion.add_provider(GtkSourceCompletionSsbConstants(self.rom_data))
-        completion.add_provider(GtkSourceCompletionSsbFunctions(self.rom_data.script_data.op_codes))
-        CalltipEmitter(
-            self._ssb_script_view,
-            self.rom_data.script_data.op_codes,
-            self.mapname,
-            *self.file_context.get_scene_name_and_type(),  # type: ignore
-            self.parent.get_context(),  # type: ignore
-            is_ssbs=True
-        )
-        StringEventEmitter(self._ssb_script_view, self.parent.get_context())
-
     def _load_explorerscript_completion(self):
         view = self._explorerscript_view
         completion: GtkSource.Completion = view.get_completion()
@@ -922,31 +786,6 @@ class ScriptEditorController:
             self.parent.get_context()  # type: ignore
         )
         StringEventEmitter(self._explorerscript_view, self.parent.get_context())
-
-    def _update_view_editable_state(self):
-        """Update which view is editable based on self._explorerscript_active"""
-        if self._explorerscript_active:
-            # Enable ES editing
-            self._explorerscript_view.set_editable(True)
-            # Disable SSBS editing
-            self._ssb_script_view.set_editable(False)
-            # Show notice on SSBS info bar
-            self._refill_info_bar(
-                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_ssbscript_bar'), Gtk.MessageType.INFO,
-                _("This is a read-only representation of the compiled ExplorerScript.")
-            )
-            # Force refresh of ES info bar
-        else:
-            # Enable SSBS editing
-            self._ssb_script_view.set_editable(True)
-            # Disable ES editing
-            self._explorerscript_view.set_editable(False)
-            # Show notice on ES info bar
-            self._refill_info_bar(
-                builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar'), Gtk.MessageType.INFO,
-                _("ExplorerScript is not available for this file.")
-            )
-            # Force refresh of ES info bar
 
     @staticmethod
     def _refill_info_bar(info_bar: Gtk.InfoBar, message_type: Gtk.MessageType, text: str):

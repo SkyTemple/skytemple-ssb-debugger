@@ -90,8 +90,6 @@ class MainController:
         self.rom_was_loaded = False
         self._emu_is_running = False
 
-        self._enable_explorerscript = True
-
         self.debugger: DebuggerController | None = None
         self.debug_overlay: DebugOverlayController | None = None
         self.breakpoint_state: BreakpointState | None = None
@@ -204,7 +202,7 @@ class MainController:
             self._suppress_event = False
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
-            self.builder, self, self.window, self._enable_explorerscript
+            self.builder, self, self.window
         )
         self.variable_controller: VariableController = VariableController(self.builder, self.context)
         self.global_state_controller: GlobalStateController = GlobalStateController(self.builder)
@@ -1487,7 +1485,7 @@ class MainController:
         # and whether we are currently halted on a macro call
         breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr, state)
         breakpoint_file_state.process(
-            self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript,
+            self.ssb_fm.get(ssb.file_name), opcode_addr,
             self.context.get_project_filemanager()
         )
         state.file_state = breakpoint_file_state

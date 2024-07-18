@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 
 class EditorNotebookController:
     def __init__(self, builder: Gtk.Builder, parent: MainController,
-                 main_window: Gtk.Window, enable_explorerscript=True):
+                 main_window: Gtk.Window):
         self.builder = builder
         self.parent = parent
         self.file_manager: SsbFileManager | None = None
@@ -50,7 +50,6 @@ class EditorNotebookController:
         self._notebook = builder_get_assert(builder, Gtk.Notebook, 'code_editor_notebook')
         self._cached_hanger_halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]] = {}
         self._cached_file_bpnt_state: BreakpointFileState | None = None
-        self.enable_explorerscript = enable_explorerscript
         self._main_window = main_window
 
     def init(self, file_manager: SsbFileManager, rom_data: Pmd2Data):
@@ -95,8 +94,7 @@ class EditorNotebookController:
                 assert self.rom_data
                 editor_controller = ScriptEditorController(
                     self, self._main_window, file_context,
-                    self.rom_data, self.on_ssb_editor_modified, mapname, self.enable_explorerscript,
-                    not self.get_context().show_ssb_script_editor()
+                    self.rom_data, self.on_ssb_editor_modified, mapname,
                 )
                 for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
                     editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)

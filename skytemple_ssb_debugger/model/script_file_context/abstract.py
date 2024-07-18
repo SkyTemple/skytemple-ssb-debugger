@@ -34,8 +34,8 @@ class AbstractScriptFileContext(ABC):
         # (ssb_filename) -> None
         self._on_ssbs_reload: Callable[[str], None] | None = None
         # Notifies of added opcodes to create markers for
-        # (is_exps, ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call) -> None
-        self._do_insert_opcode_text_mark: Callable[[bool, str, int, int, int, bool, bool], None] | None = None
+        # (ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call) -> None
+        self._do_insert_opcode_text_mark: Callable[[str, int, int, int, bool, bool], None] | None = None
 
     def destroy(self):
         self._unregister_ssb_handlers()
@@ -47,7 +47,7 @@ class AbstractScriptFileContext(ABC):
         self._on_ssbs_reload = on_ssbs_reload
 
     def register_insert_opcode_text_mark_handler(self,
-                                                 handler: Callable[[bool, str, int, int, int, bool, bool], None] | None):
+                                                 handler: Callable[[str, int, int, int, bool, bool], None] | None):
         self._do_insert_opcode_text_mark = handler
 
     @property
@@ -75,17 +75,15 @@ class AbstractScriptFileContext(ABC):
     @abstractmethod
     def load(
         self,
-        load_exps: bool, load_ssbs: bool,
-        load_view_callback: Callable[[str, bool, str], None],
+        load_view_callback: Callable[[str, str], None],
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[Any, BaseException], None],
         exps_hash_changed_callback: Callable[[Callable, Callable], None],
-        ssbs_not_available_callback: Callable[[], None]
     ):
         pass
 
     @abstractmethod
-    def save(self, save_text: str, save_exps: bool,
+    def save(self, save_text: str,
              error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
         pass

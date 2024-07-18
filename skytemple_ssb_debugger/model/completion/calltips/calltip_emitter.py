@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import List, Optional, cast
+from typing import List, Optional, cast, Sequence
 
 from gi.repository import GtkSource, Gtk
 
@@ -27,7 +27,7 @@ from skytemple_ssb_debugger.model.completion.util import backward_until_space
 
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
-    def __init__(self, view: GtkSource.View, opcodes: list[Pmd2ScriptOpCode],
+    def __init__(self, view: GtkSource.View, opcodes: Sequence[Pmd2ScriptOpCode],
                  mapname: str | None, scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()

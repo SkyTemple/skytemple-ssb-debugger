@@ -89,16 +89,11 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
 
     def load(
         self,
-        load_exps: bool, load_ssbs: bool,
-        load_view_callback: Callable[[str, bool, str], None],
+        load_view_callback: Callable[[str, str], None],
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[Any, BaseException], None],
-        exps_hash_changed_callback: Callable[[Callable, Callable], None],
-        ssbs_not_available_callback: Callable[[], None]
+        exps_hash_changed_callback: Callable[[Callable, Callable], None]
     ):
-        ssbs_not_available_callback()
-        if not load_exps:
-            return  # SsbScript not supported.
         logger.debug(f"Loading ExplorerScript file.")
 
         def load_thread():
@@ -128,7 +123,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 GLib.idle_add(partial(exps_exception_callback, exc_info, ex))
             else:
                 GLib.idle_add(partial(
-                    load_view_callback, exps_source, True, 'exps'
+                    load_view_callback, exps_source, 'exps'
                 ))
 
             GLib.idle_add(partial(self._after_load, after_callback))
@@ -148,7 +143,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                                 loaded_ssb, source_mapping.relpath_included_file
                         ):
                             self._do_insert_opcode_text_mark(
-                                True, loaded_ssb.filename, opcode_offset,
+                                loaded_ssb.filename, opcode_offset,
                                 source_mapping.line, source_mapping.column, False, False
                             )
                         # Also insert opcode text marks for macro calls
@@ -156,17 +151,14 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                             cin_fn, cin_line, cin_col = source_mapping.called_in
                             if self._sm_entry_is_for_us(loaded_ssb, cin_fn):
                                 self._do_insert_opcode_text_mark(
-                                    True, loaded_ssb.filename, opcode_offset,
+                                    loaded_ssb.filename, opcode_offset,
                                     cin_line, cin_col, False, True
                                 )
         logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
-    def save(self, save_text: str, save_exps: bool, error_callback: Callable[[Any, BaseException], None],
+    def save(self, save_text: str, error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
-        if not save_exps:
-            return  # not supported.
-
         logger.debug(f"Saving ExlorerScript macro.")
 
         def save_thread():
@@ -220,7 +212,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                             loaded_ssb, source_mapping.relpath_included_file
                     ):
                         self._do_insert_opcode_text_mark(
-                            True, ssb_filename, opcode_offset,
+                            ssb_filename, opcode_offset,
                             source_mapping.line, source_mapping.column, True, False
                         )
                     # Also insert opcode text marks for macro calls
@@ -228,7 +220,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                         cin_fn, cin_line, cin_col = source_mapping.called_in
                         if self._sm_entry_is_for_us(loaded_ssb, cin_fn):
                             self._do_insert_opcode_text_mark(
-                                True, loaded_ssb.filename, opcode_offset,
+                                loaded_ssb.filename, opcode_offset,
                                 cin_line, cin_col, True, True
                             )
             if ready_to_reload and not self._we_triggered_the_reload:
@@ -266,7 +258,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
             loaded_ssb.filename, loaded_ssb.exps.ssb_hash
         )
 
-    def _sm_entry_is_for_us(self, loaded_ssb: SsbLoadedFile, cmp_path: str):
+    def _sm_entry_is_for_us(self, loaded_ssb: SsbLoadedFile, cmp_path: str | None):
         relpath_of_us_to_ssb_source = os.path.relpath(self._absolute_path, os.path.dirname(loaded_ssb.exps.full_path))
         return cmp_path == relpath_of_us_to_ssb_source
 

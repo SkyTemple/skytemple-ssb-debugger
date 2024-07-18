@@ -126,7 +126,11 @@ class AbstractDebuggerControlContext(ABC):
 
     @abstractmethod
     def show_ssb_script_editor(self) -> bool:
-        """Whether or not the tab for SSBScript editing should be shown in the editor."""
+        """
+        Whether or not the tab for SSBScript editing should be shown in the editor.
+
+        :deprecated: Not used anymore.
+        """
 
     @abstractmethod
     def open_rom(self, filename: str):

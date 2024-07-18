@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import string
-from typing import List
+from typing import List, Sequence
 
 from gi.repository import GtkSource, Gtk
 
@@ -78,7 +78,7 @@ def common_do_populate(obj, filter_func, all_func, context: GtkSource.Completion
     context.add_proposals(obj, all_func(), True)
 
 
-def filter_special_exps_opcodes(op_codes: list[Pmd2ScriptOpCode]):
+def filter_special_exps_opcodes(op_codes: Sequence[Pmd2ScriptOpCode]):
     filtered = []
     for op_code in op_codes:
         if op_code.name not in OPS_ALL_SPECIAL:

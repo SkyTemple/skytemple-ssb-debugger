@@ -24,7 +24,6 @@ from skytemple_files.script.ssb.model import Ssb
 from skytemple_ssb_emulator import emulator_is_initialized, emulator_debug_set_loaded_ssb_breakable
 
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
-from skytemple_ssb_debugger.model.ssb_files.ssb_script import SsbScriptFile
 
 if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
@@ -38,10 +37,9 @@ class SsbLoadedFile:
         self.filename = filename
         self.ssb_model = model
         # TODO: we really have to fix this weird coupling. SsbLoadedFile should not need a file manager reference
-        #       and the saving of SsbScript and ExplorerScript should not be within the SSBS/EXPS sub models.
+        #       and the saving of ExplorerScript should not be within the SSBS/EXPS sub models.
         self.file_manager: SsbFileManager | None = ssb_file_manager
         self.project_file_manager: ProjectFileManager = project_file_manager
-        self.ssbs: SsbScriptFile = SsbScriptFile(self)
         self.exps: ExplorerScriptFile = ExplorerScriptFile(self)
 
         # The SSB file is currently open in an editor.
@@ -75,10 +73,8 @@ class SsbLoadedFile:
         exps_sm = self.exps.source_map
         if not exps_sm.is_empty:
             return exps_sm.get_position_marks__direct()
-        if not self.ssbs.source_map:
-            self.ssbs.load()
         # TODO: From Macros
-        return self.ssbs.source_map.get_position_marks__direct()
+        return None
 
 
     @property

@@ -25,7 +25,7 @@ class SsbFileInRam:
         # If true, the debugger is currently breaking at this file.
         self.breaked = False
         # If breaked is true: This contains the path of the file that handles the breakpoint.
-        # May either be the same as file_name, then the SsbScript or ExplorerScript file for the SSB itself
+        # May either be the same as file_name, then the ExplorerScript file for the SSB itself
         # handles the breakpoint, or the absolute path to an ExplorerScript source file that contains a macro
         # that is halted at.
         self.breaked__handler_file: str | None = None
