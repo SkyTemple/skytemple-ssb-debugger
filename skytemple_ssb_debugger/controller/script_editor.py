@@ -30,6 +30,8 @@ from gtkspellcheck import SpellChecker
 
 from explorerscript.error import ParseError
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
+
+from skytemple_ssb_debugger.model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
 from skytemple_ssb_debugger.ui_util import assert_not_none
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_emulator import emulator_debug_breakpoints_resync, emulator_debug_breakpoint_add, \
@@ -235,23 +237,17 @@ class ScriptEditorController:
         if not save_text:
             return
 
-        self._saving_dialog = builder_get_assert(self.builder, Gtk.Dialog, 'file_saving_dialog')
-        self._saving_dialog.set_transient_for(self._main_window)
-        builder_get_assert(self.builder, Gtk.Label, 'file_saving_dialog_label').set_label(
-            f(_('Compiling script "{self.filename}"...'))
-        )
+        if modified_buffer.get_line_count() > 4000 or isinstance(self.file_context, ExpsMacroFileScriptFileContext):
+            self._main_window.set_sensitive(False)
 
         self.file_context.save(save_text=save_text,
                                error_callback=self._save_done_error,
                                success_callback=partial(self._save_done, modified_buffer))
 
-        self._saving_dialog.run()
 
     def _save_done_error(self, exc_info, err):
         """Gtk callback after the saving has been done, but an error occured."""
-        if self._saving_dialog is not None:
-            self._saving_dialog.hide()
-            self._saving_dialog = None
+        self._main_window.set_sensitive(True)
         prefix = ''
         if isinstance(err, ParseError):
             prefix = _('Parse error: ')
@@ -264,10 +260,6 @@ class ScriptEditorController:
 
     def _save_done(self, modified_buffer: GtkSource.Buffer):
         """Gtk callback after the saving has been done."""
-        if self._saving_dialog is not None:
-            self._saving_dialog.hide()
-            self._saving_dialog = None
-
         modified_buffer.set_modified(False)
         self._waiting_for_reload = True
 
@@ -284,6 +276,8 @@ class ScriptEditorController:
         for ssb_filename, b_points in breakpoints_to_resync.items():
             assert self.parent.file_manager is not None
             emulator_debug_breakpoints_resync(ssb_filename, b_points, self.parent.file_manager.get(ssb_filename))
+
+        self._main_window.set_sensitive(True)
 
     def load_views(self, exps_bx: Gtk.Box):
         self._activate_spinner(exps_bx)
