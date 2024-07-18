@@ -172,18 +172,15 @@ class SsbFileManager:
 
         return self.get(filename)
 
-    def close_in_editor(self, filename: str, warning_callback):
+    def close_in_editor(self, filename: str):
         """
         # - If the file was closed and the old text marks are no longer available, disable
         #   debugging for that file until reload [show warning before close]
         """
         if not self.get(filename).ram_state_up_to_date:
-            if not warning_callback():
-                return False
             self.get(filename).not_breakable = True
         logger.debug(f"{filename}: Closed in editor")
         self.get(filename).opened_in_editor = False
-        return True
 
     def close_in_ground_engine(self, filename: str):
         """
@@ -205,6 +202,7 @@ class SsbFileManager:
         """
         def set_ram_state(state):
             self.get(filename).ram_state_up_to_date = state
+            self.get(filename).not_breakable = not state
 
         if not self.get(filename).opened_in_ground_engine:
             set_ram_state(True)

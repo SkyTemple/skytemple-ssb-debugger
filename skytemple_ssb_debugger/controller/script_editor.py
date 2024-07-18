@@ -42,7 +42,7 @@ from skytemple_ssb_debugger.model.completion.exps_statements import GtkSourceCom
 from skytemple_ssb_debugger.model.completion.functions import GtkSourceCompletionSsbFunctions
 from skytemple_ssb_debugger.model.completion.util import filter_special_exps_opcodes
 from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_PERFORMER, ICON_GLOBAL_SCRIPT
-from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUtil
+from skytemple_ssb_debugger.model.editor_text_mark_util import EditorTextMarkUtil, CATEGORY_OPCODE, CATEGORY_BREAKPOINT
 from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
 from skytemple_ssb_debugger.model.settings import TEXTBOX_TOOL_URL
 from skytemple_ssb_debugger.pixbuf.icons import *
@@ -114,8 +114,9 @@ class ScriptEditorController:
         self.switch_style_scheme(self._active_scheme)
 
         self.file_context.register_ssbs_state_change_handler(self.on_ssbs_state_change)
-        self.file_context.register_ssbs_reload_handler(self.switch_to_new_op_marks)
+        self.file_context.register_ssbs_reload_handler(self.reload_breakpoints)
         self.file_context.register_insert_opcode_text_mark_handler(self.insert_opcode_text_mark)
+        self.file_context.register_clear_opcode_text_mark_handler(self.clear_opcode_text_marks)
 
         self.load_views(
             builder_get_assert(self.builder, Gtk.Box, 'page_explorerscript')
@@ -271,13 +272,11 @@ class ScriptEditorController:
         self._waiting_for_reload = True
 
         # Resync the breakpoints at the Breakpoint Manager.
-        # Collect all line marks and check which is the first temporary opcode text mark in it, this is
-        # the opcode to break on.
         breakpoints_to_resync: dict[str, list[int]] = {}
         for line in range(0, modified_buffer.get_line_count()):
             marks = EditorTextMarkUtil.get_line_marks_for(modified_buffer, line, 'breakpoint')
             if len(marks) > 0:
-                for ssb_filename, opcode_offset in EditorTextMarkUtil.get_tmp_opcodes_in_line(modified_buffer, line):
+                for ssb_filename, opcode_offset in EditorTextMarkUtil.get_opcodes_in_line(modified_buffer, line):
                     if ssb_filename not in breakpoints_to_resync:
                         breakpoints_to_resync[ssb_filename] = []
                     breakpoints_to_resync[ssb_filename].append(opcode_offset)
@@ -359,60 +358,47 @@ class ScriptEditorController:
         ssb_filename, opcode_offset = EditorTextMarkUtil.extract_opcode_data_from_line_mark(mark)
         emulator_debug_breakpoint_remove(ssb_filename, opcode_offset)
 
-    def on_breakpoint_added(self, ssb_filename, opcode_offset, also_update_explorerscript=True):
-        view_list: Iterable[GtkSource.View]
+    def on_breakpoint_added(self, ssb_filename, opcode_offset):
         buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-        EditorTextMarkUtil.add_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
+        EditorTextMarkUtil.add_breakpoint_line_mark(buffer, ssb_filename, opcode_offset)
 
     def on_breakpoint_removed(self, ssb_filename, opcode_offset):
         buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
-        EditorTextMarkUtil.remove_breakpoint_line_mark(buffer, ssb_filename, opcode_offset, 'breakpoint')
+        EditorTextMarkUtil.remove_breakpoint_line_mark(buffer, ssb_filename, opcode_offset)
 
-    def switch_to_new_op_marks(self, ssb_filename):
+    def reload_breakpoints(self, ssb_filename):
         """
         The given ssb file is clear for reload (saved & no longer loaded in Ground Engine).
-        Delete all breakpoint line marks and all regular text marks.
-        If we have temporary text marks:
-            Move the temporary text marks to be the new regular ones.
+        Reload all breakpoints.
         """
         buffer: GtkSource.Buffer = self._explorerscript_view.get_buffer()
         # Remove all breakpoints
-        EditorTextMarkUtil.remove_all_line_marks(buffer, 'breakpoint')
-
-        # Remove all regular text marks and rename temporary
-        # Only do this, if we are actively waiting for a reload, because only then, the breakpoint markers exist.
-        if self._waiting_for_reload:
-            EditorTextMarkUtil.switch_to_new_op_marks(buffer, ssb_filename)
+        EditorTextMarkUtil.remove_all_line_marks(buffer, CATEGORY_BREAKPOINT)
 
         # Re-add all breakpoints
         for opcode_offset in emulator_breakpoints_get_saved_in_ram_for(ssb_filename):
             self.on_breakpoint_added(ssb_filename, opcode_offset)
 
     def insert_opcode_text_mark(self, ssb_filename: str,
-                                opcode_offset: int, line: int, column: int, is_temp: bool, is_for_macro_call=False):
+                                opcode_offset: int, line: int, column: int, is_for_macro_call=False):
         view = self._explorerscript_view
         EditorTextMarkUtil.create_opcode_mark(
-            view.get_buffer(), ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call
+            view.get_buffer(), ssb_filename, opcode_offset, line, column, is_for_macro_call
         )
 
+    def clear_opcode_text_marks(self):
+        view = self._explorerscript_view
+        EditorTextMarkUtil.remove_all_line_marks(view.get_buffer(), CATEGORY_OPCODE)
+
     # Signal & event handlers
-    def on_ssbs_state_change(self, breakable, ram_state_up_to_date):
+    def on_ssbs_state_change(self, breakable: bool, _ram_state_up_to_date: bool):
         """Fully rebuild the active info bar message based on the current state of the SSB."""
         info_bar = builder_get_assert(self.builder, Gtk.InfoBar, 'code_editor_box_es_bar')
 
         if not breakable:
             self._refill_info_bar(
                 info_bar, Gtk.MessageType.WARNING,
-                _("An old version of this script is still loaded in RAM, but breakpoints are not available.\n"
-                  "Debugging is disabled for this file, until it is reloaded.")
-            )
-            return
-
-        if not ram_state_up_to_date:
-            self._refill_info_bar(
-                info_bar, Gtk.MessageType.INFO,
-                _("An old version of this script is still loaded in RAM, old breakpoints are still used, until "
-                  "the file is reloaded.")
+                _("An old version of this script is still loaded in RAM. Debugging is disabled for this file, until it is reloaded.")
             )
             return
 

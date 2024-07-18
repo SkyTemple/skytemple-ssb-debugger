@@ -144,7 +144,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                         ):
                             self._do_insert_opcode_text_mark(
                                 loaded_ssb.filename, opcode_offset,
-                                source_mapping.line, source_mapping.column, False, False
+                                source_mapping.line, source_mapping.column, False
                             )
                         # Also insert opcode text marks for macro calls
                         if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in and source_mapping.called_in:
@@ -152,7 +152,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                             if self._sm_entry_is_for_us(loaded_ssb, cin_fn):
                                 self._do_insert_opcode_text_mark(
                                     loaded_ssb.filename, opcode_offset,
-                                    cin_line, cin_col, False, True
+                                    cin_line, cin_col, True
                                 )
         logger.debug(f"Loaded. Triggering callback.")
         after_callback()
@@ -203,17 +203,17 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                 loaded_ssb = candidate
                 break
         if loaded_ssb is not None:
-            logger.error(f"SSB file {ssb_filename} for Macro {self.exps_filepath} was changed externally... Loading temporary opcodes...")
-            # Build temporary text marks for the new source map. We will replace
-            # the real ones with those in on_ssb_reloaded
-            if self._do_insert_opcode_text_mark:
+            logger.error(f"SSB file {ssb_filename} for Macro {self.exps_filepath} was changed externally... Loading opcodes...")
+            # Insert the new text marks
+            if self._do_insert_opcode_text_mark and self._do_clear_opcode_text_marks:
+                self._do_clear_opcode_text_marks()
                 for opcode_offset, source_mapping in loaded_ssb.exps.source_map:
                     if isinstance(source_mapping, MacroSourceMapping) and self._sm_entry_is_for_us(
                             loaded_ssb, source_mapping.relpath_included_file
                     ):
                         self._do_insert_opcode_text_mark(
                             ssb_filename, opcode_offset,
-                            source_mapping.line, source_mapping.column, True, False
+                            source_mapping.line, source_mapping.column, False
                         )
                     # Also insert opcode text marks for macro calls
                     if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in and source_mapping.called_in:
@@ -221,7 +221,7 @@ class ExpsMacroFileScriptFileContext(AbstractScriptFileContext):
                         if self._sm_entry_is_for_us(loaded_ssb, cin_fn):
                             self._do_insert_opcode_text_mark(
                                 loaded_ssb.filename, opcode_offset,
-                                cin_line, cin_col, True, True
+                                cin_line, cin_col, True
                             )
             if ready_to_reload and not self._we_triggered_the_reload:
                 logger.error(f"READY TO RELOAD.")

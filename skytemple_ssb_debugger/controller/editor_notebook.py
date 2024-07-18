@@ -154,16 +154,9 @@ class EditorNotebookController:
                 else:
                     return False
 
-            # Signal closing to file manager and check if breaking will still be possible.
-            def warning_callback():
-                if self._show_warning_breaking() != Gtk.ResponseType.YES:
-                    return False
-                return True
-
             if filename[-4:] == '.ssb':
                 assert self.file_manager
-                if not self.file_manager.close_in_editor(filename, warning_callback):
-                    return False
+                self.file_manager.close_in_editor(filename)
 
             self._notebook.remove_page(pnum)
             controller.destroy()

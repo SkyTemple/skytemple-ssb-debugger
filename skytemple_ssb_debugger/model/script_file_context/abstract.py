@@ -34,8 +34,11 @@ class AbstractScriptFileContext(ABC):
         # (ssb_filename) -> None
         self._on_ssbs_reload: Callable[[str], None] | None = None
         # Notifies of added opcodes to create markers for
-        # (ssb_filename, opcode_offset, line, column, is_temp, is_for_macro_call) -> None
-        self._do_insert_opcode_text_mark: Callable[[str, int, int, int, bool, bool], None] | None = None
+        # (ssb_filename, opcode_offset, line, column, is_for_macro_call) -> None
+        self._do_insert_opcode_text_mark: Callable[[str, int, int, int, bool], None] | None = None
+        # Requests opcode text marks to be deleted
+        # () -> None
+        self._do_clear_opcode_text_marks: Callable[[], None] | None = None
 
     def destroy(self):
         self._unregister_ssb_handlers()
@@ -46,8 +49,11 @@ class AbstractScriptFileContext(ABC):
     def register_ssbs_reload_handler(self, on_ssbs_reload: Callable[[str], None]):
         self._on_ssbs_reload = on_ssbs_reload
 
+    def register_clear_opcode_text_mark_handler(self, handler: Callable[[], None] | None):
+        self._do_clear_opcode_text_marks = handler
+
     def register_insert_opcode_text_mark_handler(self,
-                                                 handler: Callable[[str, int, int, int, bool, bool], None] | None):
+                                                 handler: Callable[[str, int, int, int, bool], None] | None):
         self._do_insert_opcode_text_mark = handler
 
     @property

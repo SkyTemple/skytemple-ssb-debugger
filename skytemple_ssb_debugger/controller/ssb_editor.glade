@@ -188,6 +188,7 @@
       <object class="GtkNotebook" id="code_editor_notebook">
         <property name="visible">True</property>
         <property name="can-focus">True</property>
+        <property name="show-tabs">False</property>
         <child>
           <object class="GtkBox" id="code_editor_box_es">
             <property name="visible">True</property>
