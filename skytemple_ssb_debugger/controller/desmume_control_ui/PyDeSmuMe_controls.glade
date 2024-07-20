@@ -8,7 +8,6 @@
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <property name="icon">DeSmuME.xpm</property>
     <property name="type_hint">dialog</property>
     <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
     <child type="titlebar">
@@ -385,7 +384,6 @@
     <property name="resizable">False</property>
     <property name="modal">True</property>
     <property name="window_position">center-always</property>
-    <property name="icon">DeSmuME.xpm</property>
     <property name="type_hint">dialog</property>
     <property name="decorated">False</property>
     <signal name="key-press-event" handler="on_button_joy_key_clicked" swapped="no"/>
@@ -444,7 +442,6 @@
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <property name="icon">DeSmuME.xpm</property>
     <property name="type_hint">dialog</property>
     <signal name="key-press-event" handler="on_wKeyDlg_key_press_event" swapped="no"/>
     <child type="titlebar">
@@ -540,7 +537,6 @@
     <property name="modal">True</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <property name="icon">DeSmuME.xpm</property>
     <property name="type_hint">dialog</property>
     <signal name="delete-event" handler="gtk_widget_hide_on_delete" swapped="no"/>
     <child type="titlebar">
