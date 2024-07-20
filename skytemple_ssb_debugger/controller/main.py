@@ -830,9 +830,9 @@ class MainController:
                     if model[treepath][2] == 'exps_macro_dir':
                         menu = Gtk.Menu.new()
                         create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
-                        create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
-                        create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         menu.attach_to_widget(tree, None)
                         menu.add(create_dir)
                         menu.add(create_file)
@@ -840,7 +840,7 @@ class MainController:
                             # prevent main dir from being deleted
                             # todo: this is a bit lazy and obviously flawed...
                             delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete directory..."))
-                            delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                            delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                             menu.add(Gtk.SeparatorMenuItem.new())
                             menu.add(delete_dir)
                         menu.show_all()
@@ -848,7 +848,7 @@ class MainController:
                     elif model[treepath][2] == 'exps_macro':
                         menu = Gtk.Menu.new()
                         delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
-                        delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         menu.attach_to_widget(tree, None)
                         menu.add(delete_file)
                         menu.show_all()
