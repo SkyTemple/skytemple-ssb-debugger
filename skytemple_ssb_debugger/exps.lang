@@ -73,6 +73,7 @@
       <keyword>call</keyword>
       <keyword>while</keyword>
       <keyword>for</keyword>
+      <keyword>const</keyword>
     </context>
 
     <context id="weak-keywords" style-ref="weak-keyword">
