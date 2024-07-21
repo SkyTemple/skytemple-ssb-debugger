@@ -90,8 +90,6 @@ class MainController:
         self.rom_was_loaded = False
         self._emu_is_running = False
 
-        self._enable_explorerscript = True
-
         self.debugger: DebuggerController | None = None
         self.debug_overlay: DebugOverlayController | None = None
         self.breakpoint_state: BreakpointState | None = None
@@ -204,7 +202,7 @@ class MainController:
             self._suppress_event = False
 
         self.editor_notebook: EditorNotebookController = EditorNotebookController(
-            self.builder, self, self.window, self._enable_explorerscript
+            self.builder, self, self.window
         )
         self.variable_controller: VariableController = VariableController(self.builder, self.context)
         self.global_state_controller: GlobalStateController = GlobalStateController(self.builder)
@@ -832,9 +830,9 @@ class MainController:
                     if model[treepath][2] == 'exps_macro_dir':
                         menu = Gtk.Menu.new()
                         create_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create directory..."))
-                        create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        create_dir.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_dir, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         create_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Create new script file..."))
-                        create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        create_file.connect('activate', partial(self.on_ssb_file_tree__menu_create_macro_file, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         menu.attach_to_widget(tree, None)
                         menu.add(create_dir)
                         menu.add(create_file)
@@ -842,7 +840,7 @@ class MainController:
                             # prevent main dir from being deleted
                             # todo: this is a bit lazy and obviously flawed...
                             delete_dir: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete directory..."))
-                            delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))
+                            delete_dir.connect('activate', partial(self.on_ssb_file_tree__menu_delete_dir, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                             menu.add(Gtk.SeparatorMenuItem.new())
                             menu.add(delete_dir)
                         menu.show_all()
@@ -850,7 +848,7 @@ class MainController:
                     elif model[treepath][2] == 'exps_macro':
                         menu = Gtk.Menu.new()
                         delete_file: Gtk.MenuItem = Gtk.MenuItem.new_with_label(_("Delete script file..."))
-                        delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))
+                        delete_file.connect('activate', partial(self.on_ssb_file_tree__menu_delete_file, model.get_model(), model.convert_path_to_child_path(treepath)))  # type: ignore
                         menu.attach_to_widget(tree, None)
                         menu.add(delete_file)
                         menu.show_all()
@@ -1487,7 +1485,7 @@ class MainController:
         # and whether we are currently halted on a macro call
         breakpoint_file_state = BreakpointFileState(ssb.file_name, opcode_addr, state)
         breakpoint_file_state.process(
-            self.ssb_fm.get(ssb.file_name), opcode_addr, self._enable_explorerscript,
+            self.ssb_fm.get(ssb.file_name), opcode_addr,
             self.context.get_project_filemanager()
         )
         state.file_state = breakpoint_file_state

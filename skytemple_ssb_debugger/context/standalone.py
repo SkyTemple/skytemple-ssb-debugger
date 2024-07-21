@@ -76,7 +76,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         pass
 
     def show_ssb_script_editor(self) -> bool:
-        return True
+        return False
 
     def open_rom(self, filename: str):
         self._rom = NintendoDSRom.fromFile(filename)

@@ -188,6 +188,7 @@
       <object class="GtkNotebook" id="code_editor_notebook">
         <property name="visible">True</property>
         <property name="can-focus">True</property>
+        <property name="show-tabs">False</property>
         <child>
           <object class="GtkBox" id="code_editor_box_es">
             <property name="visible">True</property>
@@ -259,84 +260,6 @@
             <property name="label" translatable="yes">ExplorerScript</property>
           </object>
           <packing>
-            <property name="tab-fill">False</property>
-          </packing>
-        </child>
-        <child>
-          <object class="GtkBox" id="code_editor_box_ssbscript">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="orientation">vertical</property>
-            <child>
-              <object class="GtkInfoBar" id="code_editor_box_ssbscript_bar">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="message-type">other</property>
-                <property name="revealed">False</property>
-                <child internal-child="action_area">
-                  <object class="GtkButtonBox">
-                    <property name="can-focus">False</property>
-                    <property name="spacing">6</property>
-                    <property name="layout-style">end</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-                <child internal-child="content_area">
-                  <object class="GtkBox">
-                    <property name="can-focus">False</property>
-                    <property name="spacing">16</property>
-                    <child>
-                      <placeholder/>
-                    </child>
-                  </object>
-                  <packing>
-                    <property name="expand">False</property>
-                    <property name="fill">False</property>
-                    <property name="position">0</property>
-                  </packing>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkBox" id="page_ssbscript">
-                <property name="visible">True</property>
-                <property name="can-focus">False</property>
-                <property name="orientation">vertical</property>
-                <child>
-                  <placeholder/>
-                </child>
-              </object>
-              <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
-              </packing>
-            </child>
-          </object>
-          <packing>
-            <property name="position">1</property>
-          </packing>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="label" translatable="yes">SSBScript</property>
-          </object>
-          <packing>
-            <property name="position">1</property>
             <property name="tab-fill">False</property>
           </packing>
         </child>

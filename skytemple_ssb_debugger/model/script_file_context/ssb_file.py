@@ -76,12 +76,10 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
 
     def load(
         self,
-        load_exps: bool, load_ssbs: bool,
-        load_view_callback: Callable[[str, bool, str], None],
+        load_view_callback: Callable[[str, str], None],
         after_callback: Callable[[], None],
         exps_exception_callback: Callable[[Any, BaseException], None],
-        exps_hash_changed_callback: Callable[[Callable, Callable], None],
-        ssbs_not_available_callback: Callable[[], None]
+        exps_hash_changed_callback: Callable[[Callable, Callable], None]
     ):
         logger.debug(f"Loading SSB file.")
         def gtk__chose_force_decompile():
@@ -93,7 +91,7 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 logger.error(f"Error on load.", exc_info=ex)
                 exps_exception_callback(sys.exc_info(), ex)
             else:
-                load_view_callback(self._ssb_file.exps.text, True, 'exps')
+                load_view_callback(self._ssb_file.exps.text, 'exps')
 
         def gtk__chose_force_load():
             # we lazily load in the GTK thread now:
@@ -104,33 +102,23 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 logger.error(f"Error on load.", exc_info=ex)
                 exps_exception_callback(sys.exc_info(), ex)
             else:
-                load_view_callback(self._ssb_file.exps.text, True, 'exps')
+                load_view_callback(self._ssb_file.exps.text, 'exps')
 
         def load_thread():
-            # SSBS Load
-            if load_ssbs:
-                logger.debug(f"Loading SSBScript.")
-                self._ssb_file.ssbs.load()
+            try:
+                logger.debug(f"Loading ExplorerScript.")
+                self._ssb_file.exps.load()
+            except SsbHashError:
+                logger.warning(f"Hash error on load.")
+                GLib.idle_add(partial(exps_hash_changed_callback, gtk__chose_force_decompile, gtk__chose_force_load))
+            except Exception as ex:
+                logger.error(f"Error on load.", exc_info=ex)
+                exc_info = sys.exc_info()
+                GLib.idle_add(partial(exps_exception_callback, exc_info, ex))
+            else:
                 GLib.idle_add(partial(
-                    load_view_callback, self._ssb_file.ssbs.text, False, 'ssbs'
+                    load_view_callback, self._ssb_file.exps.text, 'exps'
                 ))
-
-            # ExplorerScript Load
-            if load_exps:
-                try:
-                    logger.debug(f"Loading ExplorerScript.")
-                    self._ssb_file.exps.load()
-                except SsbHashError:
-                    logger.warning(f"Hash error on load.")
-                    GLib.idle_add(partial(exps_hash_changed_callback, gtk__chose_force_decompile, gtk__chose_force_load))
-                except Exception as ex:
-                    logger.error(f"Error on load.", exc_info=ex)
-                    exc_info = sys.exc_info()
-                    GLib.idle_add(partial(exps_exception_callback, exc_info, ex))
-                else:
-                    GLib.idle_add(partial(
-                        load_view_callback, self._ssb_file.exps.text, True, 'exps'
-                    ))
             GLib.idle_add(partial(self._after_load, after_callback))
 
         threading.Thread(target=load_thread).start()
@@ -138,44 +126,38 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
     def _after_load(self, after_callback: Callable[[], None]):
         logger.debug(f"Loaded. Loading in opcode marks.")
         if self._do_insert_opcode_text_mark:
-            for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
-                if source_map is not None:
-                    for opcode_offset, source_mapping in source_map:
-                        if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
+            source_map = self._ssb_file.exps.source_map
+            if source_map is not None:
+                for opcode_offset, source_mapping in source_map:
+                    if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
+                        self._do_insert_opcode_text_mark(
+                            self._ssb_file.filename, opcode_offset,
+                            source_mapping.line, source_mapping.column, False
+                        )
+                    # Also insert opcode text marks for macro calls
+                    if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
+                        cin_fn, cin_line, cin_col = source_mapping.called_in
+                        if cin_fn is None:
                             self._do_insert_opcode_text_mark(
-                                is_exps, self._ssb_file.filename, opcode_offset,
-                                source_mapping.line, source_mapping.column, False, False
-                            )
-                        # Also insert opcode text marks for macro calls
-                        if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
-                            cin_fn, cin_line, cin_col = source_mapping.called_in
-                            if cin_fn is None:
-                                self._do_insert_opcode_text_mark(
-                                    is_exps, self._ssb_file.filename, opcode_offset,
-                                    cin_line, cin_col, False, True
+                                self._ssb_file.filename, opcode_offset,
+                                cin_line, cin_col, True
                                 )
         logger.debug(f"Loaded. Triggering callback.")
         after_callback()
 
-    def save(self, save_text: str, save_exps: bool,
+    def save(self, save_text: str,
              error_callback: Callable[[Any, BaseException], None],
              success_callback: Callable[[], None]):
 
-        logger.debug(f"Saving SSB. From exps? {save_exps}")
+        logger.debug(f"Saving SSB.")
 
         def save_thread():
             logger.debug(f"Saving SSB: In thread.")
             try:
                 assert self._ssb_file is not None and self._ssb_file.file_manager is not None
-                included_exps_files = None
-                if save_exps:
-                    ready_to_reload, included_exps_files = self._ssb_file.file_manager.save_from_explorerscript(
-                        self._ssb_file.filename, save_text
-                    )
-                else:
-                    ready_to_reload = self._ssb_file.file_manager.save_from_ssb_script(
-                        self._ssb_file.filename, save_text
-                    )
+                ready_to_reload, included_exps_files = self._ssb_file.file_manager.save_from_explorerscript(
+                    self._ssb_file.filename, save_text
+                )
             except Exception as err:
                 logger.error(f"Error on save.", exc_info=err)
                 exc_info = sys.exc_info()
@@ -193,25 +175,25 @@ class SsbFileScriptFileContext(AbstractScriptFileContext):
                 logger.debug(f"After save: Inform inclusion of macro {exps_abs_path}.")
                 self._editor_notebook_controller.on_exps_macro_ssb_changed(exps_abs_path, self._ssb_file.filename)
 
-        logger.debug(f"After save: Build temporary text marks for opcodes...")
-        # Build temporary text marks for the new source map. We will replace
-        # the real ones with those in on_ssb_reloaded
-        if self._do_insert_opcode_text_mark:
-            for is_exps, source_map in ((False, self._ssb_file.ssbs.source_map), (True, self._ssb_file.exps.source_map)):
-                if source_map is not None:
-                    for opcode_offset, source_mapping in source_map:
-                        if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
+        logger.debug(f"After save: Build text marks for opcodes...")
+        # Insert the new text marks
+        if self._do_insert_opcode_text_mark and self._do_clear_opcode_text_marks:
+            self._do_clear_opcode_text_marks()
+            source_map = self._ssb_file.exps.source_map
+            if source_map is not None:
+                for opcode_offset, source_mapping in source_map:
+                    if not isinstance(source_mapping, MacroSourceMapping) or source_mapping.relpath_included_file is None:
+                        self._do_insert_opcode_text_mark(
+                            self._ssb_file.filename, opcode_offset,
+                            source_mapping.line, source_mapping.column, False
+                        )
+                    # Also insert opcode text marks for macro calls
+                    if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
+                        cin_fn, cin_line, cin_col = source_mapping.called_in
+                        if cin_fn is None:
                             self._do_insert_opcode_text_mark(
-                                is_exps, self._ssb_file.filename, opcode_offset,
-                                source_mapping.line, source_mapping.column, True, False
-                            )
-                        # Also insert opcode text marks for macro calls
-                        if isinstance(source_mapping, MacroSourceMapping) and source_mapping.called_in:
-                            cin_fn, cin_line, cin_col = source_mapping.called_in
-                            if cin_fn is None:
-                                self._do_insert_opcode_text_mark(
-                                    is_exps, self._ssb_file.filename, opcode_offset,
-                                    cin_line, cin_col, True, True
+                                self._ssb_file.filename, opcode_offset,
+                                cin_line, cin_col, True
                                 )
 
         logger.debug(f"After save: Triggering callback...")

@@ -45,27 +45,6 @@ class SsbFileManager:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
         return self.context.get_ssb(filename, self)
 
-    def save_from_ssb_script(self, filename: str, code: str) -> bool:
-        """
-        Save an SSB model from SSBScript. It's existing model and source map will be updated.
-        If the file was not loaded in the ground engine, and is thus ready
-        to reload for the editors, True is returned. You may call self.force_reload()
-        when you are ready (to trigger ssb reload event).
-        Otherwise False is returned and the event will be triggered later automatically.
-
-        :raises: ParseError: On parsing errors
-        :raises: SsbCompilerError: On logical compiling errors (eg. unknown opcodes / constants)
-        """
-        logger.debug(f"{filename}: Saving from SSBScript")
-        self.get(filename)
-        compiler = ScriptCompiler(self.context.get_static_data())
-        f = self.get(filename)
-        f.ssb_model, f.ssbs.source_map = compiler.compile_ssbscript(code)
-        logger.debug(f"{filename}: Saving to ROM")
-        self.context.save_ssb(filename, f.ssb_model, self)
-        # After save:
-        return self._handle_after_save(filename)
-
     def save_from_explorerscript(self, ssb_filename: str, code: str) -> tuple[bool, set[str]]:
         """
         Save an SSB model from ExplorerScript. It's existing model and source map will be updated.
@@ -193,18 +172,15 @@ class SsbFileManager:
 
         return self.get(filename)
 
-    def close_in_editor(self, filename: str, warning_callback):
+    def close_in_editor(self, filename: str):
         """
         # - If the file was closed and the old text marks are no longer available, disable
         #   debugging for that file until reload [show warning before close]
         """
         if not self.get(filename).ram_state_up_to_date:
-            if not warning_callback():
-                return False
             self.get(filename).not_breakable = True
         logger.debug(f"{filename}: Closed in editor")
         self.get(filename).opened_in_editor = False
-        return True
 
     def close_in_ground_engine(self, filename: str):
         """
@@ -226,6 +202,7 @@ class SsbFileManager:
         """
         def set_ram_state(state):
             self.get(filename).ram_state_up_to_date = state
+            self.get(filename).not_breakable = not state
 
         if not self.get(filename).opened_in_ground_engine:
             set_ram_state(True)

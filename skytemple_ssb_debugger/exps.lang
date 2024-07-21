@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -17,8 +16,6 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
-
 -->
 <language id="exps" name="ExplorerScript" version="2.0" _section="Script">
   <metadata>
@@ -104,7 +101,6 @@ from __future__ import annotations
         <context ref="keywords"/>
         <context ref="weak-keywords"/>
         <context ref="ssbs:lang-string-key"/>
-        <context ref="ssbs:position-marker"/>
         <context ref="ssbs:label"/>
         <context ref="ssbs:label-jump"/>
         <context ref="ssbs:constant"/>

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -17,8 +16,6 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
-
 -->
 <language id="ssbs" name="SSBScript" version="2.0" _section="Script">
   <metadata>
@@ -82,20 +79,6 @@ from __future__ import annotations
     <context id="single-quoted-string" style-ref="string" end-at-line-end="true" class="string" class-disabled="no-spell-check">
       <start>'</start>
       <end>'</end>
-    </context>
-
-    <context id="position-marker" style-ref="position-marker">
-      <start>Position&lt;</start>
-      <end>&gt;</end>
-      <include>
-          <context ref="single-quoted-string"/>
-          <context ref="double-quoted-string"/>
-          <context ref="fixed-point"/>
-          <context ref="decimal"/>
-          <context ref="octal"/>
-          <context ref="hex"/>
-          <context ref="binary"/>
-      </include>
     </context>
 
     <context id="fixed-point" style-ref="fixed-point">
@@ -163,7 +146,6 @@ from __future__ import annotations
         <context ref="binary"/>
         <context ref="keywords"/>
         <context ref="lang-string-key"/>
-        <context ref="position-marker"/>
         <context ref="label"/>
         <context ref="label-jump"/>
         <context ref="constant"/>

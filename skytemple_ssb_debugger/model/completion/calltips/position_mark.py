@@ -32,7 +32,7 @@ from skytemple_files.common.i18n_util import f, _
 class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
     """
     Provides a button to click to open a scene editor for interactively editing position marks.
-    This is done by parsing the SSBScript / ExplorerScript, extracting all position marks, and then
+    This is done by parsing the ExplorerScript, extracting all position marks, and then
     telling the DebuggerControlContext to open an editor for the position marks.
     When it's confirmed, the returned position mark data will be read, and the text in the buffer will
     replace this position marks.

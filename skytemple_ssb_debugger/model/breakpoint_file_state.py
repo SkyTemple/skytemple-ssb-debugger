@@ -16,7 +16,7 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import os
-from typing import Optional, Union, Dict, TYPE_CHECKING
+from typing import Optional, Union, Dict, TYPE_CHECKING, Mapping
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import ProjectFileManager
@@ -43,9 +43,9 @@ class BreakpointFileState:
         self._halted_on_call = False
         self._handler_filename = ssb_filename
         self._inside_call_handler_filename = ssb_filename
-        self._current_macro_variables: dict[str, str | int] | None = None
-        self._step_over_addr = None
-        self._step_out_addr = None
+        self._current_macro_variables: Mapping[str, str | int] | None = None
+        self._step_over_addr: int | None = None
+        self._step_out_addr: int | None = None
 
     @property
     def halted_on_call(self):
@@ -60,7 +60,7 @@ class BreakpointFileState:
         return self._handler_filename
 
     @property
-    def current_macro_variables(self) -> dict[str, str | int] | None:
+    def current_macro_variables(self) -> Mapping[str, str | int] | None:
         return self._current_macro_variables
 
     @property
@@ -82,11 +82,11 @@ class BreakpointFileState:
         self._step_out_addr = self._step_over_addr
         self._step_over_addr = None
 
-    def process(self, loaded_ssb: SsbLoadedFile, opcode_offset: int, use_explorerscript, project_fm: ProjectFileManager):
+    def process(self, loaded_ssb: SsbLoadedFile, opcode_offset: int, project_fm: ProjectFileManager):
         """Set the handler_filename and halted_on_call properties depending
         on what opcode is currently being halted at in the source map."""
         try:
-            source_map = loaded_ssb.exps.source_map if use_explorerscript else loaded_ssb.ssbs.source_map
+            source_map = loaded_ssb.exps.source_map
             mapping = source_map.get_op_line_and_col(opcode_offset)
             if isinstance(mapping, MacroSourceMapping):
                 if mapping.called_in is not None:
