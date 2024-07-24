@@ -247,7 +247,9 @@ class ScriptEditorController:
 
     def _save_done_error(self, exc_info, err):
         """Gtk callback after the saving has been done, but an error occured."""
-        self._main_window.set_sensitive(True)
+        if not self._main_window.is_sensitive():
+            self._main_window.set_sensitive(True)
+            self._explorerscript_view.grab_focus()
         prefix = ''
         if isinstance(err, ParseError):
             prefix = _('Parse error: ')
@@ -277,7 +279,9 @@ class ScriptEditorController:
             assert self.parent.file_manager is not None
             emulator_debug_breakpoints_resync(ssb_filename, b_points, self.parent.file_manager.get(ssb_filename))
 
-        self._main_window.set_sensitive(True)
+        if not self._main_window.is_sensitive():
+            self._main_window.set_sensitive(True)
+            self._explorerscript_view.grab_focus()
 
     def load_views(self, exps_bx: Gtk.Box):
         self._activate_spinner(exps_bx)
