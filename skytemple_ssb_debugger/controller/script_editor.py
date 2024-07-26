@@ -420,11 +420,14 @@ class ScriptEditorController:
             i = start.copy()
             ms = []
             while i.get_offset() <= end.get_offset():
-                ms += buffer.get_source_marks_at_iter(i, 'breakpoint')
+                ms += buffer.get_source_marks_at_iter(i, CATEGORY_BREAKPOINT)
                 if not i.forward_char():
                     break
             for m in ms:
                 self.remove_breakpoint(m)
+
+        buffer.remove_source_marks(start, end)
+
         return True
 
     def on_search_entry_focus_out_event(self, widget: Gtk.SearchEntry, *args):
@@ -545,7 +548,7 @@ class ScriptEditorController:
         if self._modified_handler:
             self._modified_handler(self, buffer.get_modified())
 
-    # Breapoint Buttons
+    # Breakpoint Buttons
     def on_code_editor_cntrls_resume_clicked(self, btn: Gtk.Button, *args):
         self.parent.pull_break__resume()
 
