@@ -31,9 +31,6 @@ SkyTemple Script Engine Debugger
 
 Debugger and code editor for the Script Engine of Pokémon Mystery Dungeon Explorers of Sky.
 
-A proper README will follow later.
+To run, you need GTK3 and GtkSourceView 4. Please see SkyTemple_ repository for more info.
 
-To run, you need GTK3. Please keep in mind that some
-stuff may be pretty broken right now, so make sure to
-keep backups of ROMs!
-
+.. _SkyTemple: https://github.com/SkyTemple/skytemple
