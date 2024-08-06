@@ -21,7 +21,8 @@ import os
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional, Dict, Tuple, TYPE_CHECKING, Any
+from typing import Optional, Dict, Tuple, TYPE_CHECKING, Any
+from collections.abc import Callable
 
 from gi.repository import GLib, Gtk
 
