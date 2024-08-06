@@ -16,7 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from enum import Enum
-from typing import Optional, List, Callable
+from typing import Optional, List
+from collections.abc import Callable
 
 import gi
 from skytemple_files.common.i18n_util import _

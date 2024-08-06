@@ -19,7 +19,8 @@ import logging
 import sys
 import threading
 from functools import partial
-from typing import Callable, Optional, TYPE_CHECKING, Tuple, Any
+from typing import Optional, TYPE_CHECKING, Tuple, Any
+from collections.abc import Callable
 
 from gi.repository import GLib
 

@@ -16,7 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from math import radians
-from typing import Optional, Callable
+from typing import Optional
+from collections.abc import Callable
 
 import cairo
 from gi.repository import Gtk, GLib
