@@ -22,7 +22,7 @@ from gi.repository import GtkSource, Gtk
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.completion.calltips.position_mark import PositionMarkEditorCalltip
-from skytemple_ssb_debugger.model.completion.util import backward_until_space
+from skytemple_ssb_debugger.model.completion.util import backward_until_space, backwards_until_no_space
 
 
 class CalltipEmitter:
@@ -133,6 +133,9 @@ class CalltipEmitter:
                 count_commas_since_last_lang_string_begin_mark = 0
             if cursor.get_char() == '(':
                 # Handle the opcode/function name
+                backwards_until_no_space(cursor)
+                backwards_until_no_inline_context(cursor)
+                backwards_until_no_space(cursor)
                 start_of_word = cursor.copy()
                 backward_until_space(start_of_word)
                 opcode_name = buffer.get_text(start_of_word, cursor, False)
@@ -145,3 +148,13 @@ class CalltipEmitter:
                 count_commas += 1
                 count_commas_since_last_lang_string_begin_mark += 1
         return None
+
+
+def backwards_until_no_inline_context(it: Gtk.TextIter):
+    it.backward_char()
+    if it.get_char() == ">":
+        while it.get_char() != "<":
+            if not it.backward_char():
+                return
+        return
+    it.forward_char()

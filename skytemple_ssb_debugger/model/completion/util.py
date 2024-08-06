@@ -35,6 +35,14 @@ def backward_until_space(it: Gtk.TextIter):
     it.forward_char()
 
 
+def backwards_until_no_space(it: Gtk.TextIter):
+    it.backward_char()
+    while it.get_char() in string.whitespace:
+        if not it.backward_char():
+            return
+    it.forward_char()
+
+
 def backward_until_special_char(it: Gtk.TextIter):
     it.backward_char()
     while it.get_char() not in SPECIAL_CHARS_COMPLETION_START:
