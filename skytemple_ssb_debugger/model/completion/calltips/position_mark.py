@@ -92,7 +92,7 @@ class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
             md.destroy()
             return
 
-        pos_marks: list[SourceMapPositionMark] = PositionMarkVisitor().visit(tree)
+        pos_marks: list[SourceMapPositionMark] = tree.traverse(PositionMarkVisitor())
         pos_mark_to_edit = None
         active_line, active_col = self._active_pos
         for i, mark in enumerate(pos_marks):
