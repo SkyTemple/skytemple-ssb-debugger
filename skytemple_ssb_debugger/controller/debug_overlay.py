@@ -99,7 +99,10 @@ class DebugOverlayController:
                     ground_state = self.debugger.ground_engine_state
                     for ssb in ground_state.loaded_ssb_files:
                         if ssb is not None:
-                            for mark in ground_state.ssb_file_manager.get(ssb.file_name).position_markers:  # type: ignore
+                            pos_marks = ground_state.ssb_file_manager.get(ssb.file_name).position_markers
+                            if pos_marks is None:
+                                continue
+                            for mark in pos_marks:
                                 x_absolute = (mark.x_with_offset * TILE_SIZE) - self._camera_pos_cache[0]
                                 y_absolute = (mark.y_with_offset * TILE_SIZE) - self._camera_pos_cache[1]
                                 ctx.set_source_rgba(*COLOR_POS_MARKERS)
