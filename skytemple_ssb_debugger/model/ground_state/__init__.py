@@ -21,7 +21,10 @@ from typing import Optional
 from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.script.ssa_sse_sss.position import TILE_SIZE
-from skytemple_ssb_emulator import emulator_read_mem_from_ptr, emulator_read_mem_from_ptr_with_validity_check
+from skytemple_ssb_emulator import (
+    emulator_read_mem_from_ptr,
+    emulator_read_mem_from_ptr_with_validity_check,
+)
 
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
 
@@ -45,6 +48,7 @@ def pos_in_map_coord(low_coord: int, high_coord: int):
 
 class AbstractEntity(ABC):
     """An entity"""
+
     def __init__(self, pnt_to_block_start: u32, offset: u32, rom_data: Pmd2Data):
         super().__init__()
         self.pnt_to_block_start = pnt_to_block_start
@@ -55,14 +59,23 @@ class AbstractEntity(ABC):
 
     def refresh(self):
         self.buffer = bytes(self._block_size)
+
         def set_val(val):
             self.buffer = val
 
         if self._block_size != 0:
             if self._validity_offset is not None:
-                emulator_read_mem_from_ptr_with_validity_check(self.pnt_to_block_start, self.offset, self._block_size, self._validity_offset, set_val)
+                emulator_read_mem_from_ptr_with_validity_check(
+                    self.pnt_to_block_start,
+                    self.offset,
+                    self._block_size,
+                    self._validity_offset,
+                    set_val,
+                )
             else:
-                emulator_read_mem_from_ptr(self.pnt_to_block_start, self.offset, self._block_size, set_val)
+                emulator_read_mem_from_ptr(
+                    self.pnt_to_block_start, self.offset, self._block_size, set_val
+                )
 
     @property
     @abstractmethod
@@ -77,6 +90,7 @@ class AbstractEntity(ABC):
 
 class AbstractEntityWithScriptStruct(AbstractEntity, ABC):
     """An entity that has a script struct embedded into it's data struct."""
+
     @property
     @abstractmethod
     def _script_struct_offset(self):
@@ -85,5 +99,8 @@ class AbstractEntityWithScriptStruct(AbstractEntity, ABC):
     @property
     def script_struct(self):
         return ScriptRuntimeStruct(
-            self.rom_data, self.pnt_to_block_start, self.offset + self._script_struct_offset, self
+            self.rom_data,
+            self.pnt_to_block_start,
+            self.offset + self._script_struct_offset,
+            self,
         )

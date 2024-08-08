@@ -24,6 +24,7 @@ from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 class AbstractScriptFileContext(ABC):
     """TODO Doc"""
+
     def __init__(self):
         self._registered_ssbs: list[SsbLoadedFile] = []
 
@@ -35,7 +36,9 @@ class AbstractScriptFileContext(ABC):
         self._on_ssbs_reload: Callable[[str], None] | None = None
         # Notifies of added opcodes to create markers for
         # (ssb_filename, opcode_offset, line, column, is_for_macro_call) -> None
-        self._do_insert_opcode_text_mark: Callable[[str, int, int, int, bool], None] | None = None
+        self._do_insert_opcode_text_mark: (
+            Callable[[str, int, int, int, bool], None] | None
+        ) = None
         # Requests opcode text marks to be deleted
         # () -> None
         self._do_clear_opcode_text_marks: Callable[[], None] | None = None
@@ -43,17 +46,22 @@ class AbstractScriptFileContext(ABC):
     def destroy(self):
         self._unregister_ssb_handlers()
 
-    def register_ssbs_state_change_handler(self, on_ssbs_state_change: Callable[[bool, bool], None]):
+    def register_ssbs_state_change_handler(
+        self, on_ssbs_state_change: Callable[[bool, bool], None]
+    ):
         self._on_ssbs_state_change = on_ssbs_state_change
 
     def register_ssbs_reload_handler(self, on_ssbs_reload: Callable[[str], None]):
         self._on_ssbs_reload = on_ssbs_reload
 
-    def register_clear_opcode_text_mark_handler(self, handler: Callable[[], None] | None):
+    def register_clear_opcode_text_mark_handler(
+        self, handler: Callable[[], None] | None
+    ):
         self._do_clear_opcode_text_marks = handler
 
-    def register_insert_opcode_text_mark_handler(self,
-                                                 handler: Callable[[str, int, int, int, bool], None] | None):
+    def register_insert_opcode_text_mark_handler(
+        self, handler: Callable[[str, int, int, int, bool], None] | None
+    ):
         self._do_insert_opcode_text_mark = handler
 
     @property
@@ -65,11 +73,11 @@ class AbstractScriptFileContext(ABC):
     @abstractmethod
     def exps_filepath(self) -> str:
         pass
-        
+
     @abstractmethod
     def on_ssb_reload(self, loaded_ssb: SsbLoadedFile):
         pass
-        
+
     @abstractmethod
     def on_ssb_property_change(self, loaded_ssb: SsbLoadedFile, name, value):
         pass
@@ -89,9 +97,12 @@ class AbstractScriptFileContext(ABC):
         pass
 
     @abstractmethod
-    def save(self, save_text: str,
-             error_callback: Callable[[Any, BaseException], None],
-             success_callback: Callable[[], None]):
+    def save(
+        self,
+        save_text: str,
+        error_callback: Callable[[Any, BaseException], None],
+        success_callback: Callable[[], None],
+    ):
         pass
 
     @abstractmethod

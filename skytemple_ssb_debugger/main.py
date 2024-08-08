@@ -16,57 +16,35 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
+import gi
+
+gi.require_version("Gtk", "4.0")
+gi.require_version("GtkSource", "5")
+gi.require_version("Adw", "1")
+
 import logging
 import os
 import sys
 
-import gi
-
-gi.require_version('Gtk', '3.0')
+from skytemple_ssb_debugger.widget.application import SkyTempleSsbDebuggerApp
 
 from skytemple_icons import icons
-from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
-from skytemple_ssb_debugger.controller.main import MainController
-from skytemple_ssb_emulator import emulator_shutdown
 
-from skytemple_ssb_debugger.ui_util import builder_get_assert
-
-from gi.repository import Gtk, GLib
-from gi.repository.Gtk import Window
+from gi.repository import Gtk, Gdk
 
 
-def main():
-    try:
-        if sys.platform.startswith('win'):
-            # Load theming under Windows
-            _windows_load_theme()
+def main(argv: list[str] | None = None):
+    if argv is None:
+        argv = sys.argv
 
-        itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
-        itheme.append_search_path(os.path.abspath(icons()))
-        itheme.append_search_path(os.path.abspath(os.path.join(get_debugger_data_dir(), "icons")))
-        itheme.rescan_if_needed()
+    display = Gdk.Display.get_default()
+    assert display is not None
+    itheme = Gtk.IconTheme.get_for_display(display)
+    itheme.add_search_path(os.path.abspath(icons()))
+    itheme.add_search_path(os.path.abspath(os.path.join(get_debugger_data_dir(), "icons")))
 
-        # Load Builder and Window
-        builder = get_debugger_builder()
-        main_window = builder_get_assert(builder, Window, "main_window")
-        main_window.set_role("SkyTemple Script Engine Debugger")
-        GLib.set_application_name("SkyTemple Script Engine Debugger")
-        GLib.set_prgname("skytemple_ssb_debugger")
-        # TODO: Deprecated but the only way to set the app title on GNOME...?
-        main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
-
-        # Load main window + controller
-        MainController(builder, main_window, StandaloneDebuggerControlContext(main_window))
-
-        Gtk.main()
-    finally:
-        emulator_shutdown()
-
-
-def get_debugger_builder() -> Gtk.Builder:
-    builder = Gtk.Builder()
-    builder.add_from_file(os.path.join(get_debugger_package_dir(), "debugger.glade"))
-    return builder
+    app = SkyTempleSsbDebuggerApp()
+    sys.exit(app.run(argv))
 
 
 def get_debugger_package_dir():
@@ -77,20 +55,7 @@ def get_debugger_data_dir():
     return os.path.join(get_debugger_package_dir(), "data")
 
 
-def _windows_load_theme():
-    from skytemple_files.common.platform_utils.win import win_use_light_theme
-    settings = Gtk.Settings.get_default()
-    if settings is not None:
-        theme_name = 'Windows-10-Dark-3.2-dark'
-        if win_use_light_theme():
-            theme_name = 'Windows-10-3.2'
-        else:
-            settings.set_property("gtk-application-prefer-dark-theme", True)
-        settings.set_property("gtk-theme-name", theme_name)
-
-
-if __name__ == '__main__':
-    # TODO: At the moment doesn't support any cli arguments.
+if __name__ == "__main__":
     logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    logging.getLogger().setLevel(logging.INFO)
     main()

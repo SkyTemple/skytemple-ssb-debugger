@@ -15,28 +15,36 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
+
 import logging
 import traceback
-from threading import Lock
-from typing import Optional, TYPE_CHECKING, Dict, List
 from collections.abc import Iterable
-
-import gi
+from threading import Lock
+from typing import TYPE_CHECKING
 
 from explorerscript.source_map import SourceMapPositionMark
+from gi.repository import Gtk, Adw
+from ndspy.rom import NintendoDSRom
+from skytemple_files.common.ppmdu_config.data import Pmd2Data
+from skytemple_files.common.project_file_manager import ProjectFileManager
+from skytemple_files.common.script_util import (
+    ScriptFiles,
+    load_script_files,
+    SCRIPT_DIR,
+)
+from skytemple_files.common.types.file_types import FileType
+from skytemple_files.common.util import (
+    get_rom_folder,
+    get_ppmdu_config_for_rom,
+    Capturable,
+)
 from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_emulator import emulator_shutdown
 
-gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
-from ndspy.rom import NintendoDSRom
-
-from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_files.common.project_file_manager import ProjectFileManager
-from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR
-from skytemple_files.common.types.file_types import FileType
-from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom, Capturable
-from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext, EXPS_KEYWORDS
+from skytemple_ssb_debugger.context.abstract import (
+    AbstractDebuggerControlContext,
+    EXPS_KEYWORDS,
+)
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
@@ -48,13 +56,19 @@ file_load_lock = Lock()
 class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     """Context for running the debugger as a standalone application."""
 
-    def __init__(self, main_window: Gtk.Window):
+    def __init__(self):
         self._rom: NintendoDSRom | None = None
         self._rom_filename: str | None = None
         self._project_fm: ProjectFileManager | None = None
         self._static_data: Pmd2Data | None = None
         self._open_files: dict[str, SsbLoadedFile] = {}
-        self._main_window = main_window
+        self._main_window: Adw.ApplicationWindow | None = None
+
+    def set_window(self, value: Adw.ApplicationWindow):
+        self._main_window = value
+
+    def gtk_template(self) -> type[Gtk.Template]:
+        return Gtk.Template
 
     def allows_interactive_file_management(self) -> bool:
         return True
@@ -63,7 +77,6 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         return True
 
     def on_quit(self):
-        Gtk.main_quit()
         emulator_shutdown()
 
     def on_focus(self):
@@ -74,9 +87,6 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
 
     def on_selected_string_changed(self, string: str):
         pass
-
-    def show_ssb_script_editor(self) -> bool:
-        return False
 
     def open_rom(self, filename: str):
         self._rom = NintendoDSRom.fromFile(filename)
@@ -128,8 +138,10 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
                 except ValueError as err:
                     raise FileNotFoundError(str(err)) from err
                 self._open_files[filename] = SsbLoadedFile(
-                    filename, FileType.SSB.deserialize(ssb_bin, self._static_data),
-                    ssb_file_manager, self._project_fm
+                    filename,
+                    FileType.SSB.deserialize(ssb_bin, self._static_data),
+                    ssb_file_manager,
+                    self._project_fm,
                 )
                 self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
             return self._open_files[filename]
@@ -141,9 +153,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         assert self._rom is not None
         with file_load_lock:
             self._check_loaded()
-            self._rom.setFileByName(
-                filename, FileType.SSB.serialize(ssb_model, self._static_data)
-            )
+            self._rom.setFileByName(filename, FileType.SSB.serialize(ssb_model, self._static_data))
             self.save_rom()
 
     def _check_loaded(self):
@@ -156,49 +166,59 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def open_scene_editor_for_map(self, map_name):
         self._scene_editing_not_supported()
 
-    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: list[SourceMapPositionMark],
-                           pos_mark_to_edit: int) -> bool:
+    def edit_position_mark(
+        self,
+        mapname: str,
+        scene_name: str,
+        scene_type: str,
+        pos_marks: list[SourceMapPositionMark],
+        pos_mark_to_edit: int,
+    ) -> bool:
         self.display_error(
             None,
-            f"Visual Position Mark editing is not supported in the standalone version of "
-            f"SkyTemple Script Engine Debugger.\n"
-            f"Please open the debugger through the SkyTemple main application "
-            f"instead."
+            "Visual Position Mark editing is not supported in the standalone version of "
+            "SkyTemple Script Engine Debugger.\n"
+            "Please open the debugger through the SkyTemple main application "
+            "instead.",
         )
         return False
 
     def _scene_editing_not_supported(self):
         self.display_error(
             None,
-            f"Scene editing is not supported in the standalone version of "
-            f"SkyTemple Script Engine Debugger.\n"
-            f"Please open the debugger through the SkyTemple main application "
-            f"instead.",
-            "Action not supported"
+            "Scene editing is not supported in the standalone version of "
+            "SkyTemple Script Engine Debugger.\n"
+            "Please open the debugger through the SkyTemple main application "
+            "instead.",
+            "Action not supported",
         )
 
     def display_error(
-            self, exc_info, error_message,
-            error_title='SkyTemple Script Engine Debugger - Error',
-            *, context: dict[str, Capturable] | None = None
+        self,
+        exc_info,
+        error_message,
+        error_title="SkyTemple Script Engine Debugger - Error",
+        *,
+        context: dict[str, Capturable] | None = None,
     ):
         logger.error(error_message, exc_info=exc_info)
-        exc_info_str = ''
+        exc_info_str = ""
         if exc_info:
-            exc_info_str = '\n' + ''.join(traceback.format_exception(exc_info[0], value=exc_info[1], tb=exc_info[2]))
-        md = self.message_dialog(self._main_window,
-                                 Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                 Gtk.ButtonsType.OK,
-                                 f"{error_message}{exc_info_str}",
-                                 title=error_title)
-        md.set_position(Gtk.WindowPosition.CENTER)
+            exc_info_str = "\n" + "".join(traceback.format_exception(exc_info[0], value=exc_info[1], tb=exc_info[2]))
+        assert self._main_window is not None
+        md = self.message_dialog(
+            self._main_window,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            Gtk.MessageType.ERROR,
+            Gtk.ButtonsType.OK,
+            f"{error_message}{exc_info_str}",
+            title=error_title,
+        )
+        # md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
 
-    def capture_error(
-            self, exc_info,
-            *, context: dict[str, Capturable] | None = None
-    ):
+    def capture_error(self, exc_info, *, context: dict[str, Capturable] | None = None):
         pass
 
     def get_special_words(self) -> Iterable[str]:
@@ -208,7 +228,7 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         """
         assert self._static_data is not None
         yield from self._static_data.script_data.op_codes__by_name.keys()
-        yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
+        yield from (x.name.replace("$", "") for x in SsbConstant.collect_all(self._static_data.script_data))
         yield from EXPS_KEYWORDS
 
     @staticmethod
@@ -218,16 +238,18 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         message_type: Gtk.MessageType,
         buttons_type: Gtk.ButtonsType,
         text: str,
-        **kwargs
+        **kwargs,
     ):
-        kwargs.update({
-            'destroy_with_parent': (dialog_flags & Gtk.DialogFlags.DESTROY_WITH_PARENT) > 0,
-            'modal': (dialog_flags & Gtk.DialogFlags.MODAL) > 0,
-            'use_header_bar': (dialog_flags & Gtk.DialogFlags.USE_HEADER_BAR) > 0,
-            'message_type': message_type,
-            'buttons': buttons_type,
-            'text': text
-        })
+        kwargs.update(
+            {
+                "destroy_with_parent": (dialog_flags & Gtk.DialogFlags.DESTROY_WITH_PARENT) > 0,
+                "modal": (dialog_flags & Gtk.DialogFlags.MODAL) > 0,
+                "use_header_bar": (dialog_flags & Gtk.DialogFlags.USE_HEADER_BAR) > 0,
+                "message_type": message_type,
+                "buttons": buttons_type,
+                "text": text,
+            }
+        )
         if parent is not None:
-            kwargs['parent'] = parent
+            kwargs["parent"] = parent
         return Gtk.MessageDialog(**kwargs)

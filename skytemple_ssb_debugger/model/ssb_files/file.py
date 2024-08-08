@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING, List, Optional, Callable
 from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.common.project_file_manager import ProjectFileManager
 from skytemple_files.script.ssb.model import Ssb
-from skytemple_ssb_emulator import emulator_is_initialized, emulator_debug_set_loaded_ssb_breakable
+from skytemple_ssb_emulator import (
+    emulator_is_initialized,
+    emulator_debug_set_loaded_ssb_breakable,
+)
 
 from skytemple_ssb_debugger.model.ssb_files.explorerscript import ExplorerScriptFile
 
@@ -32,8 +35,13 @@ logger = logging.getLogger(__name__)
 
 
 class SsbLoadedFile:
-    def __init__(self, filename: str, model: Ssb,
-                 ssb_file_manager: SsbFileManager | None, project_file_manager: ProjectFileManager):
+    def __init__(
+        self,
+        filename: str,
+        model: Ssb,
+        ssb_file_manager: SsbFileManager | None,
+        project_file_manager: ProjectFileManager,
+    ):
         self.filename = filename
         self.ssb_model = model
         # TODO: we really have to fix this weird coupling. SsbLoadedFile should not need a file manager reference
@@ -76,7 +84,6 @@ class SsbLoadedFile:
         # TODO: From Macros
         return None
 
-
     @property
     def opened_in_editor(self):
         return self._opened_in_editor
@@ -84,7 +91,7 @@ class SsbLoadedFile:
     @opened_in_editor.setter
     def opened_in_editor(self, value):
         self._opened_in_editor = value
-        self._trigger_property_change('opened_in_editor', value)
+        self._trigger_property_change("opened_in_editor", value)
 
     @property
     def opened_in_ground_engine(self):
@@ -93,7 +100,7 @@ class SsbLoadedFile:
     @opened_in_ground_engine.setter
     def opened_in_ground_engine(self, value):
         self._opened_in_ground_engine = value
-        self._trigger_property_change('opened_in_ground_engine', value)
+        self._trigger_property_change("opened_in_ground_engine", value)
 
     @property
     def ram_state_up_to_date(self):
@@ -102,7 +109,7 @@ class SsbLoadedFile:
     @ram_state_up_to_date.setter
     def ram_state_up_to_date(self, value):
         self._ram_state_up_to_date = value
-        self._trigger_property_change('ram_state_up_to_date', value)
+        self._trigger_property_change("ram_state_up_to_date", value)
 
     @property
     def not_breakable(self):
@@ -112,7 +119,7 @@ class SsbLoadedFile:
     def not_breakable(self, value):
         self._not_breakable_cache = value
         emulator_debug_set_loaded_ssb_breakable(self.filename, not value)
-        self._trigger_property_change('not_breakable', value)
+        self._trigger_property_change("not_breakable", value)
 
     def register_reload_event_manager(self, on_ssb_reload):
         """Called once, then removed."""

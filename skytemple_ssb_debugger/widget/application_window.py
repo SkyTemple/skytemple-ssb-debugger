@@ -1,5 +1,3 @@
-"""Misc. constants"""
-
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -16,12 +14,18 @@
 #
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
-from __future__ import annotations
+from gi.repository import Adw
+
+from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 
 
-ICON_ACTOR = "skytemple-e-actor-symbolic"
-ICON_OBJECT = "skytemple-e-object-symbolic"
-ICON_PERFORMER = "skytemple-e-performer-symbolic"
-ICON_GLOBAL_SCRIPT = "skytemple-e-script-symbolic"
-ICON_EVENTS = "skytemple-e-event-symbolic"
-ICON_POSITION_MARKER = "skytemple-e-position-symbolic"
+class SkyTempleSsbDebuggerAppWindow(Adw.ApplicationWindow):
+    context: AbstractDebuggerControlContext
+
+    def __init__(self, *, context: AbstractDebuggerControlContext, **kwargs):
+        self.context = context
+        super().__init__(**kwargs)
+
+    def open_file(self, rom_path: str):
+        if self.context.allows_interactive_file_management():
+            pass  # TODO

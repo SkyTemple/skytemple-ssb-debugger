@@ -33,7 +33,7 @@ key_names_localized = [
     _("Y"),  # TRANSLATORS: DS Key name
     _("Debug"),  # TRANSLATORS: DS Key name
     _("Boost"),  # TRANSLATORS: DS Key name
-    _("Lid")  # TRANSLATORS: DS Key name
+    _("Lid"),  # TRANSLATORS: DS Key name
 ]
 
 
