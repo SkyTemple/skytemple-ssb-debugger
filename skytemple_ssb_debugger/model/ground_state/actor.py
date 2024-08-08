@@ -23,8 +23,11 @@ from range_typed_integers import u16, u32
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptEntity
 from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
-    pos_in_map_coord
+from skytemple_ssb_debugger.model.ground_state import (
+    pos_for_display_camera,
+    AbstractEntityWithScriptStruct,
+    pos_in_map_coord,
+)
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
 ACTOR_BEGIN_SCRIPT_STRUCT = 0x38
@@ -58,7 +61,9 @@ class Actor(AbstractEntityWithScriptStruct):
         try:
             return self.rom_data.script_data.level_entities__by_id[kind_id]
         except KeyError:
-            return Pmd2ScriptEntity(u16(kind_id), u16(0), 'UNKNOWN', u16(0), u16(0), u16(0))
+            return Pmd2ScriptEntity(
+                u16(kind_id), u16(0), "UNKNOWN", u16(0), u16(0), u16(0)
+            )
 
     @property
     def hanger(self):
@@ -70,7 +75,9 @@ class Actor(AbstractEntityWithScriptStruct):
 
     @property
     def direction(self):
-        return self.rom_data.script_data.directions__by_ssb_id[read_u8(self.buffer, 0x15A)]
+        return self.rom_data.script_data.directions__by_ssb_id[
+            read_u8(self.buffer, 0x15A)
+        ]
 
     @property
     def x_north(self):
@@ -99,6 +106,8 @@ class Actor(AbstractEntityWithScriptStruct):
 
     def get_bounding_box_camera(self, map: Map):
         return (
-            pos_for_display_camera(self.x_north, map.camera_x_pos), pos_for_display_camera(self.y_west, map.camera_y_pos),
-            pos_for_display_camera(self.x_south, map.camera_x_pos), pos_for_display_camera(self.y_east, map.camera_y_pos)
+            pos_for_display_camera(self.x_north, map.camera_x_pos),
+            pos_for_display_camera(self.y_west, map.camera_y_pos),
+            pos_for_display_camera(self.x_south, map.camera_x_pos),
+            pos_for_display_camera(self.y_east, map.camera_y_pos),
         )

@@ -1,4 +1,5 @@
 """Misc. constants"""
+
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -18,9 +19,9 @@
 from __future__ import annotations
 
 
-ICON_ACTOR = 'skytemple-e-actor-symbolic'
-ICON_OBJECT = 'skytemple-e-object-symbolic'
-ICON_PERFORMER = 'skytemple-e-performer-symbolic'
-ICON_GLOBAL_SCRIPT = 'skytemple-e-script-symbolic'
-ICON_EVENTS = 'skytemple-e-event-symbolic'
-ICON_POSITION_MARKER = 'skytemple-e-position-symbolic'
+ICON_ACTOR = "skytemple-e-actor-symbolic"
+ICON_OBJECT = "skytemple-e-object-symbolic"
+ICON_PERFORMER = "skytemple-e-performer-symbolic"
+ICON_GLOBAL_SCRIPT = "skytemple-e-script-symbolic"
+ICON_EVENTS = "skytemple-e-event-symbolic"
+ICON_POSITION_MARKER = "skytemple-e-position-symbolic"

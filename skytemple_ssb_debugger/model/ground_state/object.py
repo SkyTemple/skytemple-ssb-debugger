@@ -23,8 +23,11 @@ from range_typed_integers import u16, u8, u32
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptObject
 from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, AbstractEntityWithScriptStruct, \
-    pos_in_map_coord
+from skytemple_ssb_debugger.model.ground_state import (
+    pos_for_display_camera,
+    AbstractEntityWithScriptStruct,
+    pos_in_map_coord,
+)
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
 OBJECT_BEGIN_SCRIPT_STRUCT = 0x3C
@@ -58,7 +61,7 @@ class Object(AbstractEntityWithScriptStruct):
         try:
             return self.rom_data.script_data.objects__by_id[kind_id]
         except KeyError:
-            return Pmd2ScriptObject(u16(kind_id), u16(0), u16(0), u8(0), 'UNKNOWN')
+            return Pmd2ScriptObject(u16(kind_id), u16(0), u16(0), u8(0), "UNKNOWN")
 
     @property
     def hanger(self):
@@ -98,6 +101,8 @@ class Object(AbstractEntityWithScriptStruct):
 
     def get_bounding_box_camera(self, map: Map):
         return (
-            pos_for_display_camera(self.x_north, map.camera_x_pos), pos_for_display_camera(self.y_west, map.camera_y_pos),
-            pos_for_display_camera(self.x_south, map.camera_x_pos), pos_for_display_camera(self.y_east, map.camera_y_pos)
+            pos_for_display_camera(self.x_north, map.camera_x_pos),
+            pos_for_display_camera(self.y_west, map.camera_y_pos),
+            pos_for_display_camera(self.x_south, map.camera_x_pos),
+            pos_for_display_camera(self.y_east, map.camera_y_pos),
         )

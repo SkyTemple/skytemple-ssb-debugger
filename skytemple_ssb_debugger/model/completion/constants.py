@@ -22,9 +22,16 @@ from gi.repository import GObject, GtkSource, Gtk
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.ppmdu_config.script_data import *
 from skytemple_files.script.ssb.constants import SsbConstant
-from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate, \
-    backward_until_special_char
-from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON_GLOBAL_SCRIPT
+from skytemple_ssb_debugger.model.completion.util import (
+    common_do_match,
+    common_do_populate,
+    backward_until_special_char,
+)
+from skytemple_ssb_debugger.model.constants import (
+    ICON_ACTOR,
+    ICON_OBJECT,
+    ICON_GLOBAL_SCRIPT,
+)
 from skytemple_files.common.i18n_util import _
 
 
@@ -43,11 +50,16 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
     def do_get_priority(self) -> int:
         return 1
 
-    def do_activate_proposal(self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter) -> bool:
+    def do_activate_proposal(
+        self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter
+    ) -> bool:
         return False
 
     def do_get_activation(self) -> GtkSource.CompletionActivation:
-        return GtkSource.CompletionActivation.INTERACTIVE | GtkSource.CompletionActivation.USER_REQUESTED
+        return (
+            GtkSource.CompletionActivation.INTERACTIVE
+            | GtkSource.CompletionActivation.USER_REQUESTED
+        )
 
     # def do_get_info_widget(self, proposal: GtkSource.CompletionProposal) -> Gtk.Widget:
     #     pass
@@ -67,7 +79,11 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
     def do_get_icon_name(self):
         return None
 
-    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> tuple[bool, Gtk.TextIter | None]:
+    def do_get_start_iter(
+        self,
+        context: GtkSource.CompletionContext,
+        proposal: GtkSource.CompletionProposal,
+    ) -> tuple[bool, Gtk.TextIter | None]:
         correctly_set, textiter = context.get_iter()
         assert correctly_set
         copy = textiter.copy()
@@ -84,7 +100,9 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         return [self._build_item(s) for s in self.all_constants]
 
     def _filter(self, cond: str) -> Iterable[GtkSource.CompletionProposal]:
-        return [self._build_item(s) for s in self.all_constants if s.name.startswith(cond)]
+        return [
+            self._build_item(s) for s in self.all_constants if s.name.startswith(cond)
+        ]
 
     def _build_item(self, const: SsbConstant) -> GtkSource.CompletionItem:
         item: GtkSource.CompletionItem = GtkSource.CompletionItem.new()
@@ -98,20 +116,20 @@ class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvid
         elif isinstance(const.value, Pmd2ScriptRoutine):
             item.set_icon_name(ICON_GLOBAL_SCRIPT)
         elif isinstance(const.value, Pmd2ScriptFaceName):
-            item.set_icon_name('skytemple-e-sprite-symbolic')
+            item.set_icon_name("skytemple-e-sprite-symbolic")
         elif isinstance(const.value, Pmd2ScriptFacePositionMode):
-            item.set_icon_name('skytemple-e-position-symbolic')
+            item.set_icon_name("skytemple-e-position-symbolic")
         elif isinstance(const.value, Pmd2ScriptGameVar):
-            item.set_icon_name('skytemple-e-variable-symbolic')
+            item.set_icon_name("skytemple-e-variable-symbolic")
         elif isinstance(const.value, Pmd2ScriptLevel):
-            item.set_icon_name('skytemple-e-ground-symbolic')
+            item.set_icon_name("skytemple-e-ground-symbolic")
         elif isinstance(const.value, Pmd2ScriptMenu):
-            item.set_icon_name('skytemple-e-menu-symbolic')
+            item.set_icon_name("skytemple-e-menu-symbolic")
         elif isinstance(const.value, Pmd2ScriptSpecial):
-            item.set_icon_name('skytemple-e-special-symbolic')
+            item.set_icon_name("skytemple-e-special-symbolic")
         elif isinstance(const.value, Pmd2ScriptDirection):
-            item.set_icon_name('skytemple-move-symbolic')
+            item.set_icon_name("skytemple-move-symbolic")
         elif isinstance(const.value, Pmd2ScriptSpriteEffect):
-            item.set_icon_name('skytemple-e-event-symbolic')
-        
+            item.set_icon_name("skytemple-e-event-symbolic")
+
         return item

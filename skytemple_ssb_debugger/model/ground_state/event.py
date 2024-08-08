@@ -21,7 +21,11 @@ from typing import Optional, cast
 from range_typed_integers import u32
 from skytemple_files.common.util import read_i16, read_u16, read_u8, read_u32
 
-from skytemple_ssb_debugger.model.ground_state import pos_for_display_camera, pos_in_map_coord, AbstractEntity
+from skytemple_ssb_debugger.model.ground_state import (
+    pos_for_display_camera,
+    pos_in_map_coord,
+    AbstractEntity,
+)
 from skytemple_ssb_debugger.model.ground_state.map import Map
 
 EVENT_EXISTS_CHECK_OFFSET = u32(0x02)
@@ -83,6 +87,8 @@ class Event(AbstractEntity):
 
     def get_bounding_box_camera(self, map: Map):
         return (
-            pos_for_display_camera(self.x_north, map.camera_x_pos), pos_for_display_camera(self.y_west, map.camera_y_pos),
-            pos_for_display_camera(self.x_south, map.camera_x_pos), pos_for_display_camera(self.y_east, map.camera_y_pos)
+            pos_for_display_camera(self.x_north, map.camera_x_pos),
+            pos_for_display_camera(self.y_west, map.camera_y_pos),
+            pos_for_display_camera(self.x_south, map.camera_x_pos),
+            pos_for_display_camera(self.y_east, map.camera_y_pos),
         )

@@ -20,11 +20,22 @@ from collections.abc import Iterable
 
 from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
-from skytemple_ssb_emulator import emulator_register_script_debug, emulator_register_debug_print, \
-    emulator_register_debug_flag, emulator_set_debug_mode, emulator_set_debug_flag_1, emulator_set_debug_flag_2, \
-    EmulatorLogType, emulator_unregister_script_debug, \
-    emulator_unregister_debug_print, emulator_unregister_debug_flag, emulator_debug_breakpoints_disabled_get, \
-    emulator_debug_breakpoints_disabled_set, BreakpointState, emulator_set_debug_dungeon_skip
+from skytemple_ssb_emulator import (
+    emulator_register_script_debug,
+    emulator_register_debug_print,
+    emulator_register_debug_flag,
+    emulator_set_debug_mode,
+    emulator_set_debug_flag_1,
+    emulator_set_debug_flag_2,
+    EmulatorLogType,
+    emulator_unregister_script_debug,
+    emulator_unregister_debug_print,
+    emulator_unregister_debug_flag,
+    emulator_debug_breakpoints_disabled_get,
+    emulator_debug_breakpoints_disabled_set,
+    BreakpointState,
+    emulator_set_debug_dungeon_skip,
+)
 
 from skytemple_ssb_debugger.model.ground_engine_state import GroundEngineState
 from skytemple_ssb_debugger.model.script_runtime_struct import ScriptRuntimeStruct
@@ -45,10 +56,10 @@ class DebuggerController:
         self.ground_engine_state: GroundEngineState | None = None
         self.parent: MainController = parent
 
-        self._debug_flags_1 = [0]*NB_DEBUG_FLAGS_1
-        self._debug_flags_2 = [0]*NB_DEBUG_FLAGS_2
+        self._debug_flags_1 = [0] * NB_DEBUG_FLAGS_1
+        self._debug_flags_2 = [0] * NB_DEBUG_FLAGS_2
         self._debug_flag_temp_input = 0
-        
+
         self._log_operations = False
         self._log_debug_print = False
         self._log_printfs = False
@@ -64,9 +75,14 @@ class DebuggerController:
         emulator_debug_breakpoints_disabled_set(val)
 
     def enable(
-            self, rom_data: Pmd2Data, ssb_file_manager: SsbFileManager,
-            inform_ground_engine_start_cb,
-            *, debug_mode: bool, debug_flag_1: Iterable[bool], debug_flag_2: Iterable[bool]
+        self,
+        rom_data: Pmd2Data,
+        ssb_file_manager: SsbFileManager,
+        inform_ground_engine_start_cb,
+        *,
+        debug_mode: bool,
+        debug_flag_1: Iterable[bool],
+        debug_flag_2: Iterable[bool],
     ):
         self.rom_data = rom_data
 
@@ -78,9 +94,9 @@ class DebuggerController:
         )
         emulator_register_debug_print(
             arm9.functions.DebugPrint0.absolute_addresses,  # register offset = 0: -> registers[register_offset + i + 1]
-            arm9.functions.DebugPrint.absolute_addresses,   # register offset = 1
+            arm9.functions.DebugPrint.absolute_addresses,  # register offset = 1
             [ov11.functions.RunNextOpcode.absolute_address + 0x3C40],
-            self.hook__log_msg
+            self.hook__log_msg,
         )
         emulator_register_debug_flag(
             arm9.functions.GetDebugFlag.absolute_addresses,
@@ -88,7 +104,7 @@ class DebuggerController:
             arm9.functions.SetDebugFlag.absolute_addresses,
             arm9.functions.SetDebugLogFlag.absolute_addresses,
             [ov11.functions.RunNextOpcode.absolute_address + 0x15C8],
-            self.hook__set_debug_flag
+            self.hook__set_debug_flag,
         )
 
         # Send current debug flags and debug mode flag to emulator
@@ -99,8 +115,12 @@ class DebuggerController:
             emulator_set_debug_flag_2(j, jv)
 
         self.ground_engine_state = GroundEngineState(
-            self.rom_data, self._print_callback_fn, inform_ground_engine_start_cb, self.parent.do_poll_emulator, ssb_file_manager,
-            self.parent.context
+            self.rom_data,
+            self._print_callback_fn,
+            inform_ground_engine_start_cb,
+            self.parent.do_poll_emulator,
+            ssb_file_manager,
+            self.parent.context,
         )
         self.ground_engine_state.logging_enabled = self._log_ground_engine_state
         self.ground_engine_state.watch()
@@ -133,7 +153,7 @@ class DebuggerController:
         break_state: BreakpointState | None,
         srs_mem: bytes,
         script_target_slot_id: u32,
-        current_opcode: u32
+        current_opcode: u32,
     ):
         # XXX: #121: self.ground_engine_state should never be None in this position...? This may just move the issue
         #      somewhere else.
@@ -143,8 +163,12 @@ class DebuggerController:
                 srs = ScriptRuntimeStruct.from_data(
                     self.rom_data, u32(0), srs_mem, script_target_slot_id
                 )
-                current_opcode_obj = self.rom_data.script_data.op_codes__by_id[current_opcode]
-                self._print_callback_fn(f"> {srs.target_type.name}({srs.script_target_slot_id}): {current_opcode_obj.name} @{srs.current_opcode_addr:0x}")
+                current_opcode_obj = self.rom_data.script_data.op_codes__by_id[
+                    current_opcode
+                ]
+                self._print_callback_fn(
+                    f"> {srs.target_type.name}({srs.script_target_slot_id}): {current_opcode_obj.name} @{srs.current_opcode_addr:0x}"
+                )
         if break_state:
             self.parent.break_pulled(break_state)
 
@@ -165,4 +189,7 @@ class DebuggerController:
 
     def debug_dungeon_skip(self, value: bool):
         if self.rom_data:
-            emulator_set_debug_dungeon_skip(self.rom_data.bin_sections.overlay29.data.DUNGEON_PTR.absolute_address, value)
+            emulator_set_debug_dungeon_skip(
+                self.rom_data.bin_sections.overlay29.data.DUNGEON_PTR.absolute_address,
+                value,
+            )

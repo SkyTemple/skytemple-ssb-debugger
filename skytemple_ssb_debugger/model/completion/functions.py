@@ -21,7 +21,10 @@ from collections.abc import Iterable
 from gi.repository import GObject, GtkSource, Gtk
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
-from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_ssb_debugger.model.completion.util import (
+    common_do_match,
+    common_do_populate,
+)
 from skytemple_files.common.i18n_util import _
 
 
@@ -36,11 +39,16 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
     def do_get_priority(self) -> int:
         return 2
 
-    def do_activate_proposal(self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter) -> bool:
+    def do_activate_proposal(
+        self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter
+    ) -> bool:
         return False
 
     def do_get_activation(self) -> GtkSource.CompletionActivation:
-        return GtkSource.CompletionActivation.INTERACTIVE | GtkSource.CompletionActivation.USER_REQUESTED
+        return (
+            GtkSource.CompletionActivation.INTERACTIVE
+            | GtkSource.CompletionActivation.USER_REQUESTED
+        )
 
     # def do_get_info_widget(self, proposal: GtkSource.CompletionProposal) -> Gtk.Widget:
     #     pass
@@ -60,7 +68,11 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
     def do_get_icon_name(self):
         return None
 
-    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> tuple[bool, Gtk.TextIter | None]:
+    def do_get_start_iter(
+        self,
+        context: GtkSource.CompletionContext,
+        proposal: GtkSource.CompletionProposal,
+    ) -> tuple[bool, Gtk.TextIter | None]:
         return False, None
 
     def do_match(self, context: GtkSource.CompletionContext) -> bool:
@@ -73,7 +85,11 @@ class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvid
         return [self._build_item(opcode) for opcode in self.opcodes]
 
     def _filter(self, cond: str) -> Iterable[GtkSource.CompletionProposal]:
-        return [self._build_item(opcode) for opcode in self.opcodes if opcode.name.startswith(cond)]
+        return [
+            self._build_item(opcode)
+            for opcode in self.opcodes
+            if opcode.name.startswith(cond)
+        ]
 
     def _build_item(self, opcode: Pmd2ScriptOpCode) -> GtkSource.CompletionItem:
         item: GtkSource.CompletionItem = GtkSource.CompletionItem.new()

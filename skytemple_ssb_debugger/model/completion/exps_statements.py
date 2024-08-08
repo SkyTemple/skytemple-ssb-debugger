@@ -21,26 +21,57 @@ from collections.abc import Iterable
 from gi.repository import GObject
 from gi.repository import GtkSource, Gtk
 
-from skytemple_ssb_debugger.model.completion.util import common_do_match, common_do_populate
+from skytemple_ssb_debugger.model.completion.util import (
+    common_do_match,
+    common_do_populate,
+)
 from skytemple_files.common.i18n_util import _
 
-ALL_STATEMENTS = ['return', 'end', 'hold', 'if', 'elseif', 'else', 'with', 'actor', 'object', 'performer', 'jump',
-                  'for', 'while', 'forever', 'break', 'break_loop', 'continue', 'case',
-                  'default', 'clear', 'reset', 'init']
+ALL_STATEMENTS = [
+    "return",
+    "end",
+    "hold",
+    "if",
+    "elseif",
+    "else",
+    "with",
+    "actor",
+    "object",
+    "performer",
+    "jump",
+    "for",
+    "while",
+    "forever",
+    "break",
+    "break_loop",
+    "continue",
+    "case",
+    "default",
+    "clear",
+    "reset",
+    "init",
+]
 
 
-class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.CompletionProvider):
+class GtkSourceCompletionExplorerScriptStatements(
+    GObject.Object, GtkSource.CompletionProvider
+):
     def do_get_name(self) -> str:
         return _("Statements")
 
     def do_get_priority(self) -> int:
         return 0
 
-    def do_activate_proposal(self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter) -> bool:
+    def do_activate_proposal(
+        self, proposal: GtkSource.CompletionProposal, textiter: Gtk.TextIter
+    ) -> bool:
         return False
 
     def do_get_activation(self) -> GtkSource.CompletionActivation:
-        return GtkSource.CompletionActivation.INTERACTIVE | GtkSource.CompletionActivation.USER_REQUESTED
+        return (
+            GtkSource.CompletionActivation.INTERACTIVE
+            | GtkSource.CompletionActivation.USER_REQUESTED
+        )
 
     # def do_get_info_widget(self, proposal: GtkSource.CompletionProposal) -> Gtk.Widget:
     #     pass
@@ -60,7 +91,11 @@ class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.Comp
     def do_get_icon_name(self):
         return None
 
-    def do_get_start_iter(self, context: GtkSource.CompletionContext, proposal: GtkSource.CompletionProposal) -> tuple[bool, Gtk.TextIter | None]:
+    def do_get_start_iter(
+        self,
+        context: GtkSource.CompletionContext,
+        proposal: GtkSource.CompletionProposal,
+    ) -> tuple[bool, Gtk.TextIter | None]:
         return False, None
 
     def do_match(self, context: GtkSource.CompletionContext) -> bool:

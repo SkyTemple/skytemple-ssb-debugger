@@ -20,14 +20,25 @@ from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from range_typed_integers import u32
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.util import read_u32, read_u16, read_i16
-from skytemple_ssb_emulator import emulator_unionall_load_address, emulator_read_mem_from_ptr
+from skytemple_ssb_emulator import (
+    emulator_unionall_load_address,
+    emulator_read_mem_from_ptr,
+)
 
 # This is not the actual size, increase this if we need to read more!
 STRUCT_SIZE = u32(0x34)
 
 
 class ScriptRuntimeStruct:
-    def __init__(self, rom_data: Pmd2Data, pnt_to_block_start: u32, script_struct_offset_from_start: u32, parent=None, *, _do_not_refresh=False):
+    def __init__(
+        self,
+        rom_data: Pmd2Data,
+        pnt_to_block_start: u32,
+        script_struct_offset_from_start: u32,
+        parent=None,
+        *,
+        _do_not_refresh=False,
+    ):
         super().__init__()
         self.rom_data = rom_data
         self.pnt_to_block_start = pnt_to_block_start
@@ -36,17 +47,23 @@ class ScriptRuntimeStruct:
         self._cached_target_id: int = 0
         self._do_not_refresh = _do_not_refresh
         self.refresh()
-        
+
         # for debugging
         self._parent = parent
 
     @classmethod
-    def from_data(cls, rom_data: Pmd2Data, pnt_to_block_start: u32, data: bytes, target_slot_id: u32):
+    def from_data(
+        cls,
+        rom_data: Pmd2Data,
+        pnt_to_block_start: u32,
+        data: bytes,
+        target_slot_id: u32,
+    ):
         slf = cls(
             rom_data,
             pnt_to_block_start,
             None,  # type: ignore
-            _do_not_refresh=True
+            _do_not_refresh=True,
         )
         slf.buffer = data
         slf._cached_target_id = target_slot_id
@@ -59,7 +76,12 @@ class ScriptRuntimeStruct:
 
         if self.pnt_to_block_start is not None and not self._do_not_refresh:
             self._cached_target_id = 0
-            emulator_read_mem_from_ptr(self.pnt_to_block_start, self.script_struct_offset_from_start, STRUCT_SIZE, set_val)
+            emulator_read_mem_from_ptr(
+                self.pnt_to_block_start,
+                self.script_struct_offset_from_start,
+                STRUCT_SIZE,
+                set_val,
+            )
 
     def refresh_target_id(self):
         def set_cached_target_id(val: bytes):
@@ -67,7 +89,9 @@ class ScriptRuntimeStruct:
 
         script_target_address = read_u32(self.buffer, 0x04)
         if script_target_address != 0:
-            emulator_read_mem_from_ptr(script_target_address, u32(0), u32(2), set_cached_target_id)
+            emulator_read_mem_from_ptr(
+                script_target_address, u32(0), u32(2), set_cached_target_id
+            )
 
     @property
     def valid(self):
@@ -95,7 +119,7 @@ class ScriptRuntimeStruct:
 
     @property
     def current_opcode_addr(self) -> int:
-        return read_u32(self.buffer, 0x1c)
+        return read_u32(self.buffer, 0x1C)
 
     @property
     def current_opcode_addr_relative(self) -> int:
@@ -109,7 +133,7 @@ class ScriptRuntimeStruct:
     @property
     def has_call_stack(self) -> bool:
         """Whether or not there is a script return address on the stack -> the debugger can step out"""
-        return read_u32(self.buffer, 0x2c) != 0
+        return read_u32(self.buffer, 0x2C) != 0
 
     @property
     def call_stack__start_addr_routine_infos(self) -> int:
@@ -121,12 +145,18 @@ class ScriptRuntimeStruct:
 
     @property
     def call_stack__current_opcode_addr(self) -> int:
-        return read_u32(self.buffer, 0x2c)
+        return read_u32(self.buffer, 0x2C)
 
     @property
     def call_stack__current_opcode_addr_relative(self) -> int:
         """The stack opcode address relative to the start of the SSB file (after header), in words."""
-        return int((self.call_stack__current_opcode_addr - self.call_stack__start_addr_routine_infos) / 2)
+        return int(
+            (
+                self.call_stack__current_opcode_addr
+                - self.call_stack__start_addr_routine_infos
+            )
+            / 2
+        )
 
     @property
     def call_stack__start_addr_str_table(self) -> int:
@@ -139,7 +169,10 @@ class ScriptRuntimeStruct:
     @property
     def is_in_unionall(self):
         unionall_load_addr = emulator_unionall_load_address()
-        return self.start_addr_routine_infos == unionall_load_addr and unionall_load_addr != 0
+        return (
+            self.start_addr_routine_infos == unionall_load_addr
+            and unionall_load_addr != 0
+        )
 
     @property
     def hanger_ssb(self):
@@ -159,4 +192,8 @@ class ScriptRuntimeStruct:
             return False
         if self.pnt_to_block_start is None or other.pnt_to_block_start is None:
             return self.buffer == other.buffer
-        return self.pnt_to_block_start == other.pnt_to_block_start and self.script_struct_offset_from_start == other.script_struct_offset_from_start
+        return (
+            self.pnt_to_block_start == other.pnt_to_block_start
+            and self.script_struct_offset_from_start
+            == other.script_struct_offset_from_start
+        )

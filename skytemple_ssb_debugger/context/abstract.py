@@ -31,8 +31,8 @@ if TYPE_CHECKING:
     from skytemple_ssb_debugger.model.ssb_files import SsbLoadedFile
     from gi.repository import Gtk
 
-PROJECT_DIR_SUBDIR_NAME = 'debugger'
-PROJECT_DIR_MACRO_NAME = 'Macros'
+PROJECT_DIR_SUBDIR_NAME = "debugger"
+PROJECT_DIR_MACRO_NAME = "Macros"
 
 # todo: refactor
 EXPS_KEYWORDS = (
@@ -207,8 +207,14 @@ class AbstractDebuggerControlContext(ABC):
         """
 
     @abstractmethod
-    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str,
-                           pos_marks: list[SourceMapPositionMark], pos_mark_to_edit: int) -> bool:
+    def edit_position_mark(
+        self,
+        mapname: str,
+        scene_name: str,
+        scene_type: str,
+        pos_marks: list[SourceMapPositionMark],
+        pos_mark_to_edit: int,
+    ) -> bool:
         """
         Edit position marks of an SSB file inside a scene editor, using mapname as a
         background and the scene's entities for reference.
@@ -219,9 +225,12 @@ class AbstractDebuggerControlContext(ABC):
 
     @abstractmethod
     def display_error(
-            self, exc_info, error_message,
-            error_title='SkyTemple Script Engine Debugger - Error',
-            *, context: dict[str, Capturable] | None = None
+        self,
+        exc_info,
+        error_message,
+        error_title="SkyTemple Script Engine Debugger - Error",
+        *,
+        context: dict[str, Capturable] | None = None,
     ):
         """
         Display an error dialog for the user.
@@ -233,10 +242,7 @@ class AbstractDebuggerControlContext(ABC):
         """
 
     @abstractmethod
-    def capture_error(
-            self, exc_info,
-            *, context: dict[str, Capturable] | None = None
-    ):
+    def capture_error(self, exc_info, *, context: dict[str, Capturable] | None = None):
         """
         Same as display_error, but not intended to be shown to the user or logged to the main log
         but to be captured for internal error analysis.
@@ -259,6 +265,6 @@ class AbstractDebuggerControlContext(ABC):
         message_type: Gtk.MessageType,
         buttons_type: Gtk.ButtonsType,
         text: str,
-        **kwargs
+        **kwargs,
     ) -> Gtk.MessageDialog:
         """Creates a Gtk.MessageDialog."""

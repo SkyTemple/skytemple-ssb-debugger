@@ -23,16 +23,19 @@ from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlConte
 
 class StringEventEmitter:
     """Emits the string changed event to the context when a string was selected or changed."""
+
     def __init__(self, view: GtkSource.View, context: AbstractDebuggerControlContext):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
-        self.buffer.connect('notify::cursor-position', self.on_buffer_notify_cursor_position)
-        self.buffer.connect('changed', self.on_buffer_notify_cursor_position)
+        self.buffer.connect(
+            "notify::cursor-position", self.on_buffer_notify_cursor_position
+        )
+        self.buffer.connect("changed", self.on_buffer_notify_cursor_position)
         self.context = context
 
     def on_buffer_notify_cursor_position(self, buffer: GtkSource.Buffer, *args):
         textiter = buffer.get_iter_at_offset(buffer.props.cursor_position)
-        if 'string' in buffer.get_context_classes_at_iter(textiter):
+        if "string" in buffer.get_context_classes_at_iter(textiter):
             # iter_backward_to_context_class_toggle and iter_forward_to_context_class_toggle
             # seem to be broken (because of course they are), so we do it manually.
             start = self._get_string_start(textiter)
@@ -56,7 +59,7 @@ class StringEventEmitter:
         it.backward_char()
         prev = it.copy()
         prev.backward_char()
-        while it.get_char() not in ["'", '"'] or prev.get_char() == '\\':
+        while it.get_char() not in ["'", '"'] or prev.get_char() == "\\":
             if not it.backward_char():
                 return
             prev = it.copy()
@@ -68,7 +71,7 @@ class StringEventEmitter:
     def _get_string_end(textiter):
         it = textiter.copy()
         prev_char = it.get_char()
-        while it.get_char() not in ["'", '"'] or prev_char == '\\':
+        while it.get_char() not in ["'", '"'] or prev_char == "\\":
             prev_char = it.get_char()
             if not it.forward_char():
                 return

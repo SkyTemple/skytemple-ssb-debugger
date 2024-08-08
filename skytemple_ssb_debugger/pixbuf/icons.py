@@ -20,7 +20,11 @@ import math
 import cairo
 from gi.repository import Gdk
 
-from skytemple_ssb_debugger.controller.debug_overlay import COLOR_ACTOR, COLOR_OBJECTS, COLOR_PERFORMER
+from skytemple_ssb_debugger.controller.debug_overlay import (
+    COLOR_ACTOR,
+    COLOR_OBJECTS,
+    COLOR_PERFORMER,
+)
 
 
 def create_breakpoint_icon():
@@ -38,17 +42,21 @@ def create_breakpoint_icon():
     return pixbuf
 
 
-def create_breaked_line_icon(type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs):
+def create_breaked_line_icon(
+    type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs
+):
     h = 12
     w = h * 3
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     cr = cairo.Context(surface)
 
-    _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs)
+    _common_line_icons(
+        cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs
+    )
 
     # Play Icon
     cr.move_to(12 * 2, 0)
-    cr.line_to(w, h/2)
+    cr.line_to(w, h / 2)
     cr.line_to(12 * 2, h)
     cr.close_path()
     cr.set_source_rgb(1.0, 0, 0)
@@ -58,17 +66,21 @@ def create_breaked_line_icon(type_id, slot_id, icon_actor, icon_object, icon_per
     return pixbuf
 
 
-def create_execution_line_icon(type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs):
+def create_execution_line_icon(
+    type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs
+):
     h = 12
     w = h * 3
     surface = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)
     cr = cairo.Context(surface)
 
-    _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs)
+    _common_line_icons(
+        cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs
+    )
 
     # Play Icon
     cr.move_to(12 * 2, 0)
-    cr.line_to(w, h/2)
+    cr.line_to(w, h / 2)
     cr.line_to(12 * 2, h)
     cr.close_path()
     cr.set_source_rgb(129 / 255, 105 / 255, 43 / 255)
@@ -78,7 +90,9 @@ def create_execution_line_icon(type_id, slot_id, icon_actor, icon_object, icon_p
     return pixbuf
 
 
-def _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs):
+def _common_line_icons(
+    cr, type_id, slot_id, icon_actor, icon_object, icon_performer, icon_gs
+):
     # Slot Type
     cr.translate(10, -1)
     if type_id == 3:
@@ -102,7 +116,8 @@ def _common_line_icons(cr, type_id, slot_id, icon_actor, icon_object, icon_perfo
     # Slot ID
     if slot_id > -1 and type_id > 1:
         cr.move_to(0, 11)
-        cr.select_font_face("cairo:monospace", cairo.FONT_SLANT_NORMAL,
-                            cairo.FONT_WEIGHT_NORMAL)
+        cr.select_font_face(
+            "cairo:monospace", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL
+        )
         cr.set_font_size(12)
         cr.show_text(str(slot_id))
