@@ -97,6 +97,10 @@ class AbstractDebuggerControlContext(ABC):
     """
 
     @abstractmethod
+    def gtk_template(self) -> type[Gtk.Template]:
+        """Returns a type that can construct Gtk.Templates."""
+
+    @abstractmethod
     def allows_interactive_file_management(self) -> bool:
         """Returns whether or not this context allows the user to load ROMs via the UI"""
 
@@ -122,14 +126,6 @@ class AbstractDebuggerControlContext(ABC):
         Called when the user selected* a new string in a script editor or the selected string was
         modified.
         *=cursor placed inside of string
-        """
-
-    @abstractmethod
-    def show_ssb_script_editor(self) -> bool:
-        """
-        Whether or not the tab for SSBScript editing should be shown in the editor.
-
-        :deprecated: Not used anymore.
         """
 
     @abstractmethod

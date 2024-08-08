@@ -48,3 +48,14 @@ Discord = "https://discord.gg/skytemple"
 
 [project.scripts]
 skytemple-ssb-debugger = "skytemple_ssb_debugger.main:main"
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [ "W", "E", "F"]
+ignore = [
+  "E402",  # Module level import not at top of file -> gi imports may come after gi.require_version.
+  "E501",  # Line too long. Maybe enable later.
+  "F841",  # Unused variable: f-string magic
+]

@@ -70,7 +70,6 @@ from skytemple_ssb_emulator import (
     emulator_debug_init_breakpoint_manager,
 )
 
-gi.require_version("GtkSource", "4")
 from gi.repository.GtkSource import StyleSchemeManager
 
 from explorerscript import EXPLORERSCRIPT_EXT
@@ -106,7 +105,6 @@ from skytemple_ssb_debugger.controller.desmume_control_ui.keyboard_controls impo
 from skytemple_files.common.i18n_util import f, _
 from skytemple_ssb_debugger.ui_util import assert_not_none
 
-gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk, Gdk, GLib
 

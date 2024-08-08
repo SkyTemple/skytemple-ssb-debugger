@@ -26,7 +26,6 @@ from skytemple_ssb_emulator import EmulatorMemTable, emulator_sync_tables
 
 from skytemple_ssb_debugger.ui_util import builder_get_assert
 
-gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
 
