@@ -38,7 +38,6 @@ from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_
 
 GE_FILE_STORE_SCRIPT = _("Script")
 
-gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
 

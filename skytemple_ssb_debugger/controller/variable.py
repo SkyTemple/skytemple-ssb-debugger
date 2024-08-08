@@ -44,7 +44,6 @@ from skytemple_files.common.i18n_util import f, _
 
 from skytemple_ssb_debugger.ui_util import builder_get_assert
 
-gi.require_version("Gtk", "3.0")
 
 from gi.repository import Gtk
 
