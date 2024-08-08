@@ -33,26 +33,59 @@ from skytemple_ssb_debugger.ui_util import builder_get_assert, create_tree_view_
 
 class LocalVariableController:
     """Controller for showing both local and macro variables"""
+
     def __init__(self, builder: Gtk.Builder, debugger: DebuggerController | None):
         self.builder = builder
         self.debugger = debugger
 
-        self._local__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'local_variables_sw')
-        self._macro__sw = builder_get_assert(builder, Gtk.ScrolledWindow, 'macro_variables_sw')
+        self._local__sw = builder_get_assert(
+            builder, Gtk.ScrolledWindow, "local_variables_sw"
+        )
+        self._macro__sw = builder_get_assert(
+            builder, Gtk.ScrolledWindow, "macro_variables_sw"
+        )
 
-        self._local__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'local_vars_ges_not_loaded')
-        self._macro__not_loaded = builder_get_assert(builder, Gtk.Viewport, 'macro_vars_ges_not_loaded')
+        self._local__not_loaded = builder_get_assert(
+            builder, Gtk.Viewport, "local_vars_ges_not_loaded"
+        )
+        self._macro__not_loaded = builder_get_assert(
+            builder, Gtk.Viewport, "macro_vars_ges_not_loaded"
+        )
 
-        self._local__list_store = builder_get_assert(builder, Gtk.ListStore, 'local_variables_store')
-        self._macro__list_store = builder_get_assert(builder, Gtk.ListStore, 'macro_variables_store')
+        self._local__list_store = builder_get_assert(
+            builder, Gtk.ListStore, "local_variables_store"
+        )
+        self._macro__list_store = builder_get_assert(
+            builder, Gtk.ListStore, "macro_variables_store"
+        )
 
-        self._local__tree = builder_get_assert(builder, Gtk.TreeView, 'local_variables_list')
-        self._local__tree.append_column(resizable(create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)))
-        self._local__tree.append_column(resizable(create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)))
+        self._local__tree = builder_get_assert(
+            builder, Gtk.TreeView, "local_variables_list"
+        )
+        self._local__tree.append_column(
+            resizable(
+                create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)
+            )
+        )
+        self._local__tree.append_column(
+            resizable(
+                create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)
+            )
+        )
 
-        self._macro__tree = builder_get_assert(builder, Gtk.TreeView, 'macro_variables_list')
-        self._macro__tree.append_column(resizable(create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)))
-        self._macro__tree.append_column(resizable(create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)))
+        self._macro__tree = builder_get_assert(
+            builder, Gtk.TreeView, "macro_variables_list"
+        )
+        self._macro__tree.append_column(
+            resizable(
+                create_tree_view_column(_("Name"), Gtk.CellRendererText(), text=0)
+            )
+        )
+        self._macro__tree.append_column(
+            resizable(
+                create_tree_view_column(_("Value"), Gtk.CellRendererText(), text=1)
+            )
+        )
 
         self._local_vars_specs: list[Pmd2ScriptGameVar] | None = None
         self._local_vars_values: Sequence[int] = []
@@ -66,8 +99,16 @@ class LocalVariableController:
             if var.is_local:
                 self._local_vars_specs.append(var)
 
-    def sync(self, local_vars_values: Sequence[int], file_state: BreakpointFileState | None = None):
-        if not self.debugger or not self.debugger.ground_engine_state or not self._local_vars_specs:
+    def sync(
+        self,
+        local_vars_values: Sequence[int],
+        file_state: BreakpointFileState | None = None,
+    ):
+        if (
+            not self.debugger
+            or not self.debugger.ground_engine_state
+            or not self._local_vars_specs
+        ):
             return self.disable()
 
         if self._was_disabled:

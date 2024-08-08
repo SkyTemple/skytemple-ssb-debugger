@@ -22,7 +22,7 @@ import sys
 
 import gi
 
-gi.require_version('Gtk', '3.0')
+gi.require_version("Gtk", "3.0")
 
 from skytemple_icons import icons
 from skytemple_ssb_debugger.context.standalone import StandaloneDebuggerControlContext
@@ -37,13 +37,15 @@ from gi.repository.Gtk import Window
 
 def main():
     try:
-        if sys.platform.startswith('win'):
+        if sys.platform.startswith("win"):
             # Load theming under Windows
             _windows_load_theme()
 
         itheme: Gtk.IconTheme = Gtk.IconTheme.get_default()
         itheme.append_search_path(os.path.abspath(icons()))
-        itheme.append_search_path(os.path.abspath(os.path.join(get_debugger_data_dir(), "icons")))
+        itheme.append_search_path(
+            os.path.abspath(os.path.join(get_debugger_data_dir(), "icons"))
+        )
         itheme.rescan_if_needed()
 
         # Load Builder and Window
@@ -53,10 +55,14 @@ def main():
         GLib.set_application_name("SkyTemple Script Engine Debugger")
         GLib.set_prgname("skytemple_ssb_debugger")
         # TODO: Deprecated but the only way to set the app title on GNOME...?
-        main_window.set_wmclass("SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger")
+        main_window.set_wmclass(
+            "SkyTemple Script Engine Debugger", "SkyTemple Script Engine Debugger"
+        )
 
         # Load main window + controller
-        MainController(builder, main_window, StandaloneDebuggerControlContext(main_window))
+        MainController(
+            builder, main_window, StandaloneDebuggerControlContext(main_window)
+        )
 
         Gtk.main()
     finally:
@@ -79,17 +85,18 @@ def get_debugger_data_dir():
 
 def _windows_load_theme():
     from skytemple_files.common.platform_utils.win import win_use_light_theme
+
     settings = Gtk.Settings.get_default()
     if settings is not None:
-        theme_name = 'Windows-10-Dark-3.2-dark'
+        theme_name = "Windows-10-Dark-3.2-dark"
         if win_use_light_theme():
-            theme_name = 'Windows-10-3.2'
+            theme_name = "Windows-10-3.2"
         else:
             settings.set_property("gtk-application-prefer-dark-theme", True)
         settings.set_property("gtk-theme-name", theme_name)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # TODO: At the moment doesn't support any cli arguments.
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)

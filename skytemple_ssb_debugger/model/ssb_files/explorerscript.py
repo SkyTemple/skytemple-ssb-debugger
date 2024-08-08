@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 class ExplorerScriptFile(AbstractScriptFile):
     def __init__(self, parent: SsbLoadedFile):
         super().__init__(parent)
-        self.ssb_hash: str = ''
-        self._text: str = ''
+        self.ssb_hash: str = ""
+        self._text: str = ""
         self._source_map: SourceMap | None = None
         self._loaded = False
 
@@ -56,7 +56,9 @@ class ExplorerScriptFile(AbstractScriptFile):
             fm.explorerscript_save(self.parent.filename, self._text, self._source_map)
             fm.explorerscript_save_hash(self.parent.filename, self.ssb_hash)
 
-        if not force and not fm.explorerscript_hash_up_to_date(self.parent.filename, self.ssb_hash):
+        if not force and not fm.explorerscript_hash_up_to_date(
+            self.parent.filename, self.ssb_hash
+        ):
             # Hash isn't up to date and load was not forced
             raise SsbHashError()
 
@@ -79,7 +81,9 @@ class ExplorerScriptFile(AbstractScriptFile):
     def source_map(self) -> SourceMap:
         if self._source_map is None:
             # If not currently loaded, load fresh source map instead directly.
-            return self.parent.project_file_manager.explorerscript_load_sourcemap(self.parent.filename)
+            return self.parent.project_file_manager.explorerscript_load_sourcemap(
+                self.parent.filename
+            )
         return self._source_map
 
     @source_map.setter
@@ -89,4 +93,5 @@ class ExplorerScriptFile(AbstractScriptFile):
 
 class SsbHashError(Exception):
     """Raised by load, when the exps already exists but the hash file doesn't or the hash doesn't match the ssb hash."""
+
     pass

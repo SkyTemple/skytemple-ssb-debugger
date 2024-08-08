@@ -69,29 +69,25 @@ class DebugOverlayController:
                 for bbox in self._actor_bbox_cache:
                     ctx.set_source_rgba(*COLOR_ACTOR)
                     ctx.rectangle(
-                        bbox[0], bbox[1],
-                        bbox[2] - bbox[0], bbox[3] - bbox[1]
+                        bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
                     )
                     ctx.fill()
                 for bbox in self._object_bbox_cache:
                     ctx.set_source_rgba(*COLOR_OBJECTS)
                     ctx.rectangle(
-                        bbox[0], bbox[1],
-                        bbox[2] - bbox[0], bbox[3] - bbox[1]
+                        bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
                     )
                     ctx.fill()
                 for bbox in self._perf_bbox_cache:
                     ctx.set_source_rgba(*COLOR_PERFORMER)
                     ctx.rectangle(
-                        bbox[0], bbox[1],
-                        bbox[2] - bbox[0], bbox[3] - bbox[1]
+                        bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
                     )
                     ctx.fill()
                 for bbox in self._event_bbox_cache:
                     ctx.set_source_rgba(*COLOR_EVENTS)
                     ctx.rectangle(
-                        bbox[0], bbox[1],
-                        bbox[2] - bbox[0], bbox[3] - bbox[1]
+                        bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
                     )
                     ctx.fill()
 
@@ -99,17 +95,25 @@ class DebugOverlayController:
                     ground_state = self.debugger.ground_engine_state
                     for ssb in ground_state.loaded_ssb_files:
                         if ssb is not None:
-                            pos_marks = ground_state.ssb_file_manager.get(ssb.file_name).position_markers
+                            pos_marks = ground_state.ssb_file_manager.get(
+                                ssb.file_name
+                            ).position_markers
                             if pos_marks is None:
                                 continue
                             for mark in pos_marks:
-                                x_absolute = (mark.x_with_offset * TILE_SIZE) - self._camera_pos_cache[0]
-                                y_absolute = (mark.y_with_offset * TILE_SIZE) - self._camera_pos_cache[1]
+                                x_absolute = (
+                                    mark.x_with_offset * TILE_SIZE
+                                ) - self._camera_pos_cache[0]
+                                y_absolute = (
+                                    mark.y_with_offset * TILE_SIZE
+                                ) - self._camera_pos_cache[1]
                                 ctx.set_source_rgba(*COLOR_POS_MARKERS)
                                 ctx.rectangle(
                                     # They are centered.
-                                    x_absolute - 4, y_absolute - 4,
-                                    TILE_SIZE, TILE_SIZE
+                                    x_absolute - 4,
+                                    y_absolute - 4,
+                                    TILE_SIZE,
+                                    TILE_SIZE,
                                 )
                                 ctx.fill_preserve()
                                 ctx.set_source_rgb(0, 0, 0)
@@ -117,8 +121,11 @@ class DebugOverlayController:
                                 ctx.stroke()
                                 ctx.set_source_rgba(*COLOR_POS_MARKERS)
                                 ctx.move_to(x_absolute, y_absolute + 18)
-                                ctx.select_font_face("cairo:monospace", cairo.FONT_SLANT_NORMAL,
-                                                    cairo.FONT_WEIGHT_NORMAL)
+                                ctx.select_font_face(
+                                    "cairo:monospace",
+                                    cairo.FONT_SLANT_NORMAL,
+                                    cairo.FONT_WEIGHT_NORMAL,
+                                )
                                 ctx.set_font_size(8)
                                 ctx.text_path(mark.name)
                                 ctx.fill_preserve()
@@ -146,13 +153,21 @@ class DebugOverlayController:
                 self._event_bbox_cache = []
                 ges.force_reload_ground_objects()
                 for actor in not_none(ges.actors):
-                    self._actor_bbox_cache.append(actor.get_bounding_box_camera(ges.map))
+                    self._actor_bbox_cache.append(
+                        actor.get_bounding_box_camera(ges.map)
+                    )
                 for object in not_none(ges.objects):
-                    self._object_bbox_cache.append(object.get_bounding_box_camera(ges.map))
+                    self._object_bbox_cache.append(
+                        object.get_bounding_box_camera(ges.map)
+                    )
                 for performer in not_none(ges.performers):
-                    self._perf_bbox_cache.append(performer.get_bounding_box_camera(ges.map))
+                    self._perf_bbox_cache.append(
+                        performer.get_bounding_box_camera(ges.map)
+                    )
                 for event in not_none(ges.events):
-                    self._event_bbox_cache.append(event.get_bounding_box_camera(ges.map))
+                    self._event_bbox_cache.append(
+                        event.get_bounding_box_camera(ges.map)
+                    )
                 self._camera_pos_cache = (ges.map.camera_x_pos, ges.map.camera_y_pos)
 
         if self._refresh_cache and not self._boost:
@@ -169,7 +184,9 @@ class DebugOverlayController:
             ctx.set_source_rgb(1.0, 0, 0)
             ctx.move_to(10, 20)
             ctx.set_font_size(20)
-            ctx.show_text(_("BOOST"))  # TRANSLATORS: Shown in emulator when boosting / fast-forward
+            ctx.show_text(
+                _("BOOST")
+            )  # TRANSLATORS: Shown in emulator when boosting / fast-forward
             ctx.set_font_size(12)
             ctx.move_to(10, 30)
             ctx.show_text(_("Debugging disabled."))

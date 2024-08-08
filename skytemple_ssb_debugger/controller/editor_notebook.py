@@ -1,4 +1,5 @@
 """Controller for the collection of all open ssb editors."""
+
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
 #
 #  This file is part of SkyTemple.
@@ -24,13 +25,23 @@ from gi.repository import Gtk, Pango
 from explorerscript.ssb_converting.ssb_data_types import SsbRoutineType
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_ssb_debugger.controller.script_editor import ScriptEditorController
-from skytemple_ssb_emulator import BreakpointState, BreakpointStateType, emulator_debug_register_breakpoint_callbacks
+from skytemple_ssb_emulator import (
+    BreakpointState,
+    BreakpointStateType,
+    emulator_debug_register_breakpoint_callbacks,
+)
 from skytemple_ssb_debugger.model.ssb_files.file_manager import SsbFileManager
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.breakpoint_file_state import BreakpointFileState
-from skytemple_ssb_debugger.model.script_file_context.abstract import AbstractScriptFileContext
-from skytemple_ssb_debugger.model.script_file_context.exps_macro import ExpsMacroFileScriptFileContext
-from skytemple_ssb_debugger.model.script_file_context.ssb_file import SsbFileScriptFileContext
+from skytemple_ssb_debugger.model.script_file_context.abstract import (
+    AbstractScriptFileContext,
+)
+from skytemple_ssb_debugger.model.script_file_context.exps_macro import (
+    ExpsMacroFileScriptFileContext,
+)
+from skytemple_ssb_debugger.model.script_file_context.ssb_file import (
+    SsbFileScriptFileContext,
+)
 from skytemple_ssb_debugger.ui_util import builder_get_assert
 from skytemple_files.common.i18n_util import f, _
 
@@ -40,22 +51,29 @@ if TYPE_CHECKING:
 
 
 class EditorNotebookController:
-    def __init__(self, builder: Gtk.Builder, parent: MainController,
-                 main_window: Gtk.Window):
+    def __init__(
+        self, builder: Gtk.Builder, parent: MainController, main_window: Gtk.Window
+    ):
         self.builder = builder
         self.parent = parent
         self.file_manager: SsbFileManager | None = None
         self.rom_data: Pmd2Data | None = None
         self._open_editors: dict[str, ScriptEditorController] = {}
-        self._notebook = builder_get_assert(builder, Gtk.Notebook, 'code_editor_notebook')
-        self._cached_hanger_halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]] = {}
+        self._notebook = builder_get_assert(
+            builder, Gtk.Notebook, "code_editor_notebook"
+        )
+        self._cached_hanger_halt_lines: dict[
+            str, list[tuple[SsbRoutineType, int, int]]
+        ] = {}
         self._cached_file_bpnt_state: BreakpointFileState | None = None
         self._main_window = main_window
 
     def init(self, file_manager: SsbFileManager, rom_data: Pmd2Data):
         self.file_manager = file_manager
         self.rom_data = rom_data
-        emulator_debug_register_breakpoint_callbacks(self.on_breakpoint_added, self.on_breakpoint_removed)
+        emulator_debug_register_breakpoint_callbacks(
+            self.on_breakpoint_added, self.on_breakpoint_removed
+        )
 
     @property
     def currently_open(self) -> ScriptEditorController | None:
@@ -72,29 +90,40 @@ class EditorNotebookController:
             self.file_manager.open_in_editor(ssb_rom_path),
             self.parent.get_scene_type_for(ssb_rom_path),
             self.parent.get_scene_name_for(ssb_rom_path),
-            self
+            self,
         )
-        return self._open_common(ssb_rom_path, context, mapname=ssb_rom_path.split('/')[1])
+        return self._open_common(
+            ssb_rom_path, context, mapname=ssb_rom_path.split("/")[1]
+        )
 
     def open_exps_macro(self, abs_path: str):
         assert self.file_manager
-        context = ExpsMacroFileScriptFileContext(
-            abs_path, self.file_manager, self
-        )
+        context = ExpsMacroFileScriptFileContext(abs_path, self.file_manager, self)
         return self._open_common(abs_path, context)
 
-    def _open_common(self, registered_fname: str, file_context: AbstractScriptFileContext, mapname: str | None = None):
+    def _open_common(
+        self,
+        registered_fname: str,
+        file_context: AbstractScriptFileContext,
+        mapname: str | None = None,
+    ):
         assert self.file_manager
         if self.file_manager:
             if registered_fname in self._open_editors:
-                self._notebook.set_current_page(self._notebook.page_num(
-                    self._open_editors[registered_fname].get_root_object()
-                ))
+                self._notebook.set_current_page(
+                    self._notebook.page_num(
+                        self._open_editors[registered_fname].get_root_object()
+                    )
+                )
             else:
                 assert self.rom_data
                 editor_controller = ScriptEditorController(
-                    self, self._main_window, file_context,
-                    self.rom_data, self.on_ssb_editor_modified, mapname,
+                    self,
+                    self._main_window,
+                    file_context,
+                    self.rom_data,
+                    self.on_ssb_editor_modified,
+                    mapname,
                 )
                 for ssb_path, halt_lines in self._cached_hanger_halt_lines.items():
                     editor_controller.insert_hanger_halt_lines(ssb_path, halt_lines)
@@ -103,17 +132,17 @@ class EditorNotebookController:
                     editor_controller.on_break_pulled(
                         self._cached_file_bpnt_state.ssb_filename,
                         self._cached_file_bpnt_state.opcode_addr,
-                        self._cached_file_bpnt_state.halted_on_call
+                        self._cached_file_bpnt_state.halted_on_call,
                     )
                 current_page = self._notebook.get_current_page()
                 root = editor_controller.get_root_object()
                 self._open_editors[registered_fname] = editor_controller
                 pnum = self._notebook.insert_page(
-                    root, tab_label_close_button(
-                        registered_fname, self.close_tab
-                    ), current_page + 1
+                    root,
+                    tab_label_close_button(registered_fname, self.close_tab),
+                    current_page + 1,
                 )
-                self._notebook.child_set_property(root, 'menu-label', registered_fname)
+                self._notebook.child_set_property(root, "menu-label", registered_fname)
                 self._notebook.set_tab_reorderable(root, True)
                 self._notebook.set_current_page(pnum)
 
@@ -154,7 +183,7 @@ class EditorNotebookController:
                 else:
                     return False
 
-            if filename[-4:] == '.ssb':
+            if filename[-4:] == ".ssb":
                 assert self.file_manager
                 self.file_manager.close_in_editor(filename)
 
@@ -162,10 +191,10 @@ class EditorNotebookController:
             controller.destroy()
             del self._open_editors[filename]
             return True
-            
-    def focus_by_opcode_addr(self, ssb_filename: str,  opcode_addr: int):
+
+    def focus_by_opcode_addr(self, ssb_filename: str, opcode_addr: int):
         """
-        Pull an editor into focus and tell it to jump to opcode_addr. 
+        Pull an editor into focus and tell it to jump to opcode_addr.
         If the editor is not open, it's opened before.
         If a BreakpointFileState is currently registered (because the debugger is halted), then
         calling this method may open the ExplorerScript macro instead that handles the breakpoint,
@@ -174,14 +203,18 @@ class EditorNotebookController:
         editor_filename = ssb_filename
         if self._cached_file_bpnt_state is not None:
             editor_filename = self._cached_file_bpnt_state.handler_filename
-        is_opening_ssb = editor_filename[-4:] == '.ssb'
+        is_opening_ssb = editor_filename[-4:] == ".ssb"
         if editor_filename not in self._open_editors:
             if is_opening_ssb:
                 self.open_ssb(editor_filename)
             else:
                 self.open_exps_macro(editor_filename)
         else:
-            self._notebook.set_current_page(self._notebook.page_num(self._open_editors[editor_filename].get_root_object()))
+            self._notebook.set_current_page(
+                self._notebook.page_num(
+                    self._open_editors[editor_filename].get_root_object()
+                )
+            )
         self._open_editors[editor_filename].focus_opcode(ssb_filename, opcode_addr)
 
     def break_pulled(self, state: BreakpointState):
@@ -190,7 +223,11 @@ class EditorNotebookController:
         assert file_state
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
-            editor.on_break_pulled(file_state.ssb_filename, file_state.opcode_addr, file_state.halted_on_call)
+            editor.on_break_pulled(
+                file_state.ssb_filename,
+                file_state.opcode_addr,
+                file_state.halted_on_call,
+            )
         self._cached_file_bpnt_state = file_state
         state.add_release_hook(self.break_released)
 
@@ -198,7 +235,9 @@ class EditorNotebookController:
         """The debugger paused. Enable debugger controls for file_name."""
         for editor in self._open_editors.values():
             editor.toggle_debugging_controls(True)
-            editor.on_break_pulled(state.ssb_filename, state.opcode_addr, state.halted_on_call)
+            editor.on_break_pulled(
+                state.ssb_filename, state.opcode_addr, state.halted_on_call
+            )
 
     def break_released(self, state: BreakpointState):
         """The debugger is no longer paused, disable all debugging controls."""
@@ -207,7 +246,9 @@ class EditorNotebookController:
             editor.on_break_released()
         self._cached_file_bpnt_state = None
 
-    def insert_hanger_halt_lines(self, halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]]):
+    def insert_hanger_halt_lines(
+        self, halt_lines: dict[str, list[tuple[SsbRoutineType, int, int]]]
+    ):
         """Mark the current execution position for all running scripts. Dict filename -> list (type, id, opcode_addr)"""
         for filename, lines in halt_lines.items():
             self._cached_hanger_halt_lines[filename] = lines
@@ -228,18 +269,22 @@ class EditorNotebookController:
         for editor in self._open_editors.values():
             editor.on_breakpoint_removed(filename, opcode_offset)
 
-    def on_ssb_editor_modified(self, controller: ScriptEditorController, modified: bool):
-        lbl_box = cast(Gtk.Box, self._notebook.get_tab_label(controller.get_root_object()))
+    def on_ssb_editor_modified(
+        self, controller: ScriptEditorController, modified: bool
+    ):
+        lbl_box = cast(
+            Gtk.Box, self._notebook.get_tab_label(controller.get_root_object())
+        )
         lbl = cast(Gtk.Label, lbl_box.get_children()[0])
         pathsep = os.path.sep
-        if controller.filename.endswith('.ssb'):
-            pathsep = '/'
+        if controller.filename.endswith(".ssb"):
+            pathsep = "/"
         filename = controller.filename.split(pathsep)[-1]
         # TODO: Alert SkyTemple main UI somehow? (via FileManager?)
         if modified:
-            lbl.set_markup(f'<i>{filename}*</i>')
+            lbl.set_markup(f"<i>{filename}*</i>")
         else:
-            lbl.set_markup(f'{filename}')
+            lbl.set_markup(f"{filename}")
 
     def on_ssb_changed_externally(self, ssb_filename, ready_to_reload):
         """
@@ -269,12 +314,18 @@ class EditorNotebookController:
 
     def pull_break__step_over(self):
         if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_over_addr:
-            return self.parent.emu_resume(BreakpointStateType.StepManual, self._cached_file_bpnt_state.step_over_addr)
+            return self.parent.emu_resume(
+                BreakpointStateType.StepManual,
+                self._cached_file_bpnt_state.step_over_addr,
+            )
         self.parent.emu_resume(BreakpointStateType.StepOver)
 
     def pull_break__step_out(self):
         if self._cached_file_bpnt_state and self._cached_file_bpnt_state.step_out_addr:
-            return self.parent.emu_resume(BreakpointStateType.StepManual, self._cached_file_bpnt_state.step_out_addr)
+            return self.parent.emu_resume(
+                BreakpointStateType.StepManual,
+                self._cached_file_bpnt_state.step_out_addr,
+            )
         self.parent.emu_resume(BreakpointStateType.StepOut)
 
     def pull_break__step_next(self):
@@ -314,10 +365,11 @@ class EditorNotebookController:
             self._main_window,
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
-            Gtk.ButtonsType.NONE, f(_("Do you want to save changes to {filename}?"))
+            Gtk.ButtonsType.NONE,
+            f(_("Do you want to save changes to {filename}?")),
         )
         dont_save: Gtk.Widget = dialog.add_button(_("Don't Save"), 0)
-        dont_save.get_style_context().add_class('destructive-action')
+        dont_save.get_style_context().add_class("destructive-action")
         dialog.add_button(_("_Cancel"), Gtk.ResponseType.CANCEL)
         dialog.add_button(_("_Save"), 1)
         dialog.format_secondary_text(_("If you don't save, your changes will be lost."))
@@ -331,10 +383,12 @@ class EditorNotebookController:
             Gtk.DialogFlags.MODAL,
             Gtk.MessageType.WARNING,
             Gtk.ButtonsType.YES_NO,
-            _("The file is still loaded in RAM! Currently you are still able to debug using the old cached "
-              "information stored in the editor.\nIf you close the editor, you won't be able to debug this "
-              "file until it is reloaded in RAM.\n\nDo you still want to close this file?"),
-            title=_("Warning!")
+            _(
+                "The file is still loaded in RAM! Currently you are still able to debug using the old cached "
+                "information stored in the editor.\nIf you close the editor, you won't be able to debug this "
+                "file until it is reloaded in RAM.\n\nDo you still want to close this file?"
+            ),
+            title=_("Warning!"),
         )
 
         response = md.run()
@@ -343,8 +397,8 @@ class EditorNotebookController:
 
 
 def tab_label_close_button(filename, close_callback):
-    lbl = filename.split('/')[-1]
-    if lbl[-4:] == '.ssb':
+    lbl = filename.split("/")[-1]
+    if lbl[-4:] == ".ssb":
         lbl = lbl[:-4]
     else:
         lbl = lbl[:-5]
@@ -354,11 +408,13 @@ def tab_label_close_button(filename, close_callback):
     label.set_tooltip_text(filename)
     label.set_width_chars(10)
 
-    button: Gtk.Button = Gtk.Button.new_from_icon_name('window-close-symbolic', Gtk.IconSize.MENU)
-    button.set_tooltip_text(_('Close'))
+    button: Gtk.Button = Gtk.Button.new_from_icon_name(
+        "window-close-symbolic", Gtk.IconSize.MENU
+    )
+    button.set_tooltip_text(_("Close"))
     button.set_relief(Gtk.ReliefStyle.NONE)
     button.set_focus_on_click(False)
-    button.connect('clicked', lambda *args: close_callback(filename))
+    button.connect("clicked", lambda *args: close_callback(filename))
 
     box: Gtk.Box = Gtk.Box.new(Gtk.Orientation.HORIZONTAL, 10)
     box.pack_start(label, True, True, 0)

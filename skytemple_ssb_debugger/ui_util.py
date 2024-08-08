@@ -50,9 +50,7 @@ def iter_tree_model(model: Gtk.TreeModel) -> Any:
 
 
 def create_tree_view_column(
-    title: str,
-    renderer: Gtk.CellRenderer,
-    **kwargs: int
+    title: str, renderer: Gtk.CellRenderer, **kwargs: int
 ) -> Gtk.TreeViewColumn:
     """
     Compatibility with the 'old' TreeViewColumn constructor and generally a convenient shortcut for quick TreeViewColumn
@@ -70,4 +68,4 @@ def get_debugger_version():
     try:
         return importlib_metadata.metadata("skytemple_ssb_debugger")["version"]
     except importlib_metadata.PackageNotFoundError:
-        return 'unknown'
+        return "unknown"

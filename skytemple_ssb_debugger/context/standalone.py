@@ -27,16 +27,27 @@ from explorerscript.source_map import SourceMapPositionMark
 from skytemple_files.script.ssb.constants import SsbConstant
 from skytemple_ssb_emulator import emulator_shutdown
 
-gi.require_version('Gtk', '3.0')
+gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 from ndspy.rom import NintendoDSRom
 
 from skytemple_files.common.ppmdu_config.data import Pmd2Data
 from skytemple_files.common.project_file_manager import ProjectFileManager
-from skytemple_files.common.script_util import ScriptFiles, load_script_files, SCRIPT_DIR
+from skytemple_files.common.script_util import (
+    ScriptFiles,
+    load_script_files,
+    SCRIPT_DIR,
+)
 from skytemple_files.common.types.file_types import FileType
-from skytemple_files.common.util import get_rom_folder, get_ppmdu_config_for_rom, Capturable
-from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext, EXPS_KEYWORDS
+from skytemple_files.common.util import (
+    get_rom_folder,
+    get_ppmdu_config_for_rom,
+    Capturable,
+)
+from skytemple_ssb_debugger.context.abstract import (
+    AbstractDebuggerControlContext,
+    EXPS_KEYWORDS,
+)
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
 
 if TYPE_CHECKING:
@@ -128,10 +139,14 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
                 except ValueError as err:
                     raise FileNotFoundError(str(err)) from err
                 self._open_files[filename] = SsbLoadedFile(
-                    filename, FileType.SSB.deserialize(ssb_bin, self._static_data),
-                    ssb_file_manager, self._project_fm
+                    filename,
+                    FileType.SSB.deserialize(ssb_bin, self._static_data),
+                    ssb_file_manager,
+                    self._project_fm,
                 )
-                self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(ssb_bin)
+                self._open_files[filename].exps.ssb_hash = ssb_file_manager.hash(
+                    ssb_bin
+                )
             return self._open_files[filename]
 
     def on_script_edit(self, filename):
@@ -156,14 +171,20 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
     def open_scene_editor_for_map(self, map_name):
         self._scene_editing_not_supported()
 
-    def edit_position_mark(self, mapname: str, scene_name: str, scene_type: str, pos_marks: list[SourceMapPositionMark],
-                           pos_mark_to_edit: int) -> bool:
+    def edit_position_mark(
+        self,
+        mapname: str,
+        scene_name: str,
+        scene_type: str,
+        pos_marks: list[SourceMapPositionMark],
+        pos_mark_to_edit: int,
+    ) -> bool:
         self.display_error(
             None,
             f"Visual Position Mark editing is not supported in the standalone version of "
             f"SkyTemple Script Engine Debugger.\n"
             f"Please open the debugger through the SkyTemple main application "
-            f"instead."
+            f"instead.",
         )
         return False
 
@@ -174,31 +195,38 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
             f"SkyTemple Script Engine Debugger.\n"
             f"Please open the debugger through the SkyTemple main application "
             f"instead.",
-            "Action not supported"
+            "Action not supported",
         )
 
     def display_error(
-            self, exc_info, error_message,
-            error_title='SkyTemple Script Engine Debugger - Error',
-            *, context: dict[str, Capturable] | None = None
+        self,
+        exc_info,
+        error_message,
+        error_title="SkyTemple Script Engine Debugger - Error",
+        *,
+        context: dict[str, Capturable] | None = None,
     ):
         logger.error(error_message, exc_info=exc_info)
-        exc_info_str = ''
+        exc_info_str = ""
         if exc_info:
-            exc_info_str = '\n' + ''.join(traceback.format_exception(exc_info[0], value=exc_info[1], tb=exc_info[2]))
-        md = self.message_dialog(self._main_window,
-                                 Gtk.DialogFlags.DESTROY_WITH_PARENT, Gtk.MessageType.ERROR,
-                                 Gtk.ButtonsType.OK,
-                                 f"{error_message}{exc_info_str}",
-                                 title=error_title)
+            exc_info_str = "\n" + "".join(
+                traceback.format_exception(
+                    exc_info[0], value=exc_info[1], tb=exc_info[2]
+                )
+            )
+        md = self.message_dialog(
+            self._main_window,
+            Gtk.DialogFlags.DESTROY_WITH_PARENT,
+            Gtk.MessageType.ERROR,
+            Gtk.ButtonsType.OK,
+            f"{error_message}{exc_info_str}",
+            title=error_title,
+        )
         md.set_position(Gtk.WindowPosition.CENTER)
         md.run()
         md.destroy()
 
-    def capture_error(
-            self, exc_info,
-            *, context: dict[str, Capturable] | None = None
-    ):
+    def capture_error(self, exc_info, *, context: dict[str, Capturable] | None = None):
         pass
 
     def get_special_words(self) -> Iterable[str]:
@@ -208,7 +236,10 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         """
         assert self._static_data is not None
         yield from self._static_data.script_data.op_codes__by_name.keys()
-        yield from (x.name.replace('$', '') for x in SsbConstant.collect_all(self._static_data.script_data))
+        yield from (
+            x.name.replace("$", "")
+            for x in SsbConstant.collect_all(self._static_data.script_data)
+        )
         yield from EXPS_KEYWORDS
 
     @staticmethod
@@ -218,16 +249,21 @@ class StandaloneDebuggerControlContext(AbstractDebuggerControlContext):
         message_type: Gtk.MessageType,
         buttons_type: Gtk.ButtonsType,
         text: str,
-        **kwargs
+        **kwargs,
     ):
-        kwargs.update({
-            'destroy_with_parent': (dialog_flags & Gtk.DialogFlags.DESTROY_WITH_PARENT) > 0,
-            'modal': (dialog_flags & Gtk.DialogFlags.MODAL) > 0,
-            'use_header_bar': (dialog_flags & Gtk.DialogFlags.USE_HEADER_BAR) > 0,
-            'message_type': message_type,
-            'buttons': buttons_type,
-            'text': text
-        })
+        kwargs.update(
+            {
+                "destroy_with_parent": (
+                    dialog_flags & Gtk.DialogFlags.DESTROY_WITH_PARENT
+                )
+                > 0,
+                "modal": (dialog_flags & Gtk.DialogFlags.MODAL) > 0,
+                "use_header_bar": (dialog_flags & Gtk.DialogFlags.USE_HEADER_BAR) > 0,
+                "message_type": message_type,
+                "buttons": buttons_type,
+                "text": text,
+            }
+        )
         if parent is not None:
-            kwargs['parent'] = parent
+            kwargs["parent"] = parent
         return Gtk.MessageDialog(**kwargs)

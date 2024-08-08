@@ -21,14 +21,23 @@ from collections.abc import Callable
 
 import cairo
 from gi.repository import Gtk, GLib
-from skytemple_ssb_emulator import SCREEN_PIXEL_SIZE, SCREEN_WIDTH, SCREEN_HEIGHT, emulator_display_buffer_as_rgbx
+from skytemple_ssb_emulator import (
+    SCREEN_PIXEL_SIZE,
+    SCREEN_WIDTH,
+    SCREEN_HEIGHT,
+    emulator_display_buffer_as_rgbx,
+)
 
 FRAMES_PER_SECOND = 60
 
 
 class AsyncSoftwareRenderer:
-    def __init__(self, top_screen: Gtk.Widget, bottom_screen: Gtk.Widget,
-                 after_render_hook: Callable[[cairo.Context, int], None] | None = None):
+    def __init__(
+        self,
+        top_screen: Gtk.Widget,
+        bottom_screen: Gtk.Widget,
+        after_render_hook: Callable[[cairo.Context, int], None] | None = None,
+    ):
         self._boost = False
         self._upper_image: cairo.ImageSurface | None = None
         self._lower_image: cairo.ImageSurface | None = None
@@ -46,7 +55,10 @@ class AsyncSoftwareRenderer:
 
             ctx.translate(base_w * self._scale / 2, base_h * self._scale / 2)
             ctx.rotate(-radians(self._screen_rotation_degrees))
-            if self._screen_rotation_degrees == 90 or self._screen_rotation_degrees == 270:
+            if (
+                self._screen_rotation_degrees == 90
+                or self._screen_rotation_degrees == 270
+            ):
                 ctx.translate(-base_h * self._scale / 2, -base_w * self._scale / 2)
             else:
                 ctx.translate(-base_w * self._scale / 2, -base_h * self._scale / 2)
@@ -64,11 +76,17 @@ class AsyncSoftwareRenderer:
     def decode_screen(self):
         gpu_framebuffer = memoryview(bytearray(emulator_display_buffer_as_rgbx()))
         self._upper_image = cairo.ImageSurface.create_for_data(
-            gpu_framebuffer[:SCREEN_PIXEL_SIZE*4], cairo.FORMAT_RGB24, SCREEN_WIDTH, SCREEN_HEIGHT
+            gpu_framebuffer[: SCREEN_PIXEL_SIZE * 4],
+            cairo.FORMAT_RGB24,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
         )
 
         self._lower_image = cairo.ImageSurface.create_for_data(
-            gpu_framebuffer[SCREEN_PIXEL_SIZE*4:], cairo.FORMAT_RGB24, SCREEN_WIDTH, SCREEN_HEIGHT
+            gpu_framebuffer[SCREEN_PIXEL_SIZE * 4 :],
+            cairo.FORMAT_RGB24,
+            SCREEN_WIDTH,
+            SCREEN_HEIGHT,
         )
 
     def start(self):

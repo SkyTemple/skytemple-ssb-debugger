@@ -22,20 +22,41 @@ from gi.repository import GtkSource, Gtk
 
 from skytemple_files.common.ppmdu_config.script_data import Pmd2ScriptOpCode
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
-from skytemple_ssb_debugger.model.completion.calltips.position_mark import PositionMarkEditorCalltip
-from skytemple_ssb_debugger.model.completion.util import backward_until_space, backwards_until_no_space
+from skytemple_ssb_debugger.model.completion.calltips.position_mark import (
+    PositionMarkEditorCalltip,
+)
+from skytemple_ssb_debugger.model.completion.util import (
+    backward_until_space,
+    backwards_until_no_space,
+)
 
 
 class CalltipEmitter:
     """Provides calltips for the currently selected function (if inside the parentheses)"""
-    def __init__(self, view: GtkSource.View, opcodes: Sequence[Pmd2ScriptOpCode],
-                 mapname: str | None, scene_name: str, scene_type: str, context: AbstractDebuggerControlContext, is_ssbs=False):
+
+    def __init__(
+        self,
+        view: GtkSource.View,
+        opcodes: Sequence[Pmd2ScriptOpCode],
+        mapname: str | None,
+        scene_name: str,
+        scene_type: str,
+        context: AbstractDebuggerControlContext,
+        is_ssbs=False,
+    ):
         self.view = view
         self.buffer: GtkSource.Buffer = view.get_buffer()
         self.opcodes = opcodes
-        self.buffer.connect('notify::cursor-position', self.on_buffer_notify_cursor_position)
+        self.buffer.connect(
+            "notify::cursor-position", self.on_buffer_notify_cursor_position
+        )
         self.position_mark_calltip = None
-        if not is_ssbs and mapname is not None and scene_name is not None and scene_type is not None:
+        if (
+            not is_ssbs
+            and mapname is not None
+            and scene_name is not None
+            and scene_type is not None
+        ):
             self.position_mark_calltip = PositionMarkEditorCalltip(
                 view, mapname, scene_name, scene_type, context
             )
@@ -78,34 +99,41 @@ class CalltipEmitter:
 
         if not op_was_same or self._active_arg != arg_index:
             self._active_arg = arg_index
-            btn_box = cast(Gtk.Box, cast(Gtk.Container, self._active_widget.get_children()[0]).get_children()[0])
+            btn_box = cast(
+                Gtk.Box,
+                cast(
+                    Gtk.Container, self._active_widget.get_children()[0]
+                ).get_children()[0],
+            )
             for c in btn_box.get_children():
                 btn_box.remove(c)
             for i, arg in enumerate(op.arguments):
-                lbl: Gtk.Label = Gtk.Label.new('')
+                lbl: Gtk.Label = Gtk.Label.new("")
                 if arg_index == i:
-                    markup = f'<b>{arg.name}: <i>{arg.type}</i></b>, '
+                    markup = f"<b>{arg.name}: <i>{arg.type}</i></b>, "
                 else:
-                    markup = f'<span weight="light">{arg.name}:  <i>{arg.type}</i></span>, '
+                    markup = (
+                        f'<span weight="light">{arg.name}:  <i>{arg.type}</i></span>, '
+                    )
                 if i == len(op.arguments) - 1 and not op.repeating_argument_group:
-                    markup = markup.rstrip(', ')
+                    markup = markup.rstrip(", ")
                 lbl.set_markup(markup)
                 btn_box.pack_start(lbl, True, False, 0)
             if op.repeating_argument_group:
-                lbl = Gtk.Label.new('[')
+                lbl = Gtk.Label.new("[")
                 btn_box.pack_start(lbl, True, False, 0)
                 for i, arg in enumerate(op.repeating_argument_group.arguments):
-                    lbl = Gtk.Label.new('')
+                    lbl = Gtk.Label.new("")
                     # TODO: Support highlighting individual repeating args. (not really used though)
                     if arg_index >= len(op.arguments):
-                        markup = f'<b>{arg.name}: <i>{arg.type}</i></b>, '
+                        markup = f"<b>{arg.name}: <i>{arg.type}</i></b>, "
                     else:
                         markup = f'<span weight="light">{arg.name}:  <i>{arg.type}</i></span>, '
                     if i == len(op.repeating_argument_group.arguments) - 1:
-                        markup = markup.rstrip(', ')
+                        markup = markup.rstrip(", ")
                     lbl.set_markup(markup)
                     btn_box.pack_start(lbl, True, False, 0)
-                lbl = Gtk.Label.new('... ]')
+                lbl = Gtk.Label.new("... ]")
                 btn_box.pack_start(lbl, True, False, 0)
 
         if self.position_mark_calltip is not None:
@@ -122,17 +150,17 @@ class CalltipEmitter:
         count_commas = 0
         count_commas_since_last_lang_string_begin_mark = 0
         while cursor.backward_char():
-            if cursor.get_char() == ')':
+            if cursor.get_char() == ")":
                 # We are not in a function, for sure!
                 return None
-            if cursor.get_char() == '{' or cursor.get_char() == '<':
+            if cursor.get_char() == "{" or cursor.get_char() == "<":
                 # Handle middle of language string or a pos marker
                 count_commas -= count_commas_since_last_lang_string_begin_mark
                 count_commas_since_last_lang_string_begin_mark = 0
-            if cursor.get_char() == '}' or cursor.get_char() == '>':
+            if cursor.get_char() == "}" or cursor.get_char() == ">":
                 # Handle end of language string or a pos marker
                 count_commas_since_last_lang_string_begin_mark = 0
-            if cursor.get_char() == '(':
+            if cursor.get_char() == "(":
                 # Handle the opcode/function name
                 backwards_until_no_space(cursor)
                 backwards_until_no_inline_context(cursor)
@@ -144,7 +172,7 @@ class CalltipEmitter:
                     if op.name == opcode_name:
                         return op, count_commas
                 return None
-            if cursor.get_char() == ',':
+            if cursor.get_char() == ",":
                 # Collect commas for the arg index
                 count_commas += 1
                 count_commas_since_last_lang_string_begin_mark += 1

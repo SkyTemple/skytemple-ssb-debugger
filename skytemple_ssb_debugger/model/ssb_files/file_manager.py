@@ -1,17 +1,17 @@
 #  Copyright 2020-2024 Capypara and the SkyTemple Contributors
-# 
+#
 #  This file is part of SkyTemple.
-# 
+#
 #  SkyTemple is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-# 
+#
 #  SkyTemple is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-# 
+#
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
@@ -45,7 +45,9 @@ class SsbFileManager:
         """Get a file. If loaded by editor or ground engine, use the open_* methods instead!"""
         return self.context.get_ssb(filename, self)
 
-    def save_from_explorerscript(self, ssb_filename: str, code: str) -> tuple[bool, set[str]]:
+    def save_from_explorerscript(
+        self, ssb_filename: str, code: str
+    ) -> tuple[bool, set[str]]:
         """
         Save an SSB model from ExplorerScript. It's existing model and source map will be updated.
 
@@ -95,9 +97,13 @@ class SsbFileManager:
         pd_w_pathsetp = project_dir + os.path.sep
         logger.debug(f"{ssb_filename}: Diff IMs")
         for removed_path in diff.removed:
-            project_fm.explorerscript_include_usage_remove(removed_path.replace(pd_w_pathsetp, ''), ssb_filename)
+            project_fm.explorerscript_include_usage_remove(
+                removed_path.replace(pd_w_pathsetp, ""), ssb_filename
+            )
         for added_path in diff.added:
-            project_fm.explorerscript_include_usage_add(added_path.replace(pd_w_pathsetp, ''), ssb_filename)
+            project_fm.explorerscript_include_usage_add(
+                added_path.replace(pd_w_pathsetp, ""), ssb_filename
+            )
 
         # Save ROM
         logger.debug(f"{ssb_filename}: Save ROM")
@@ -112,12 +118,16 @@ class SsbFileManager:
 
         # After save:
         logger.debug(f"{ssb_filename}: After Save")
-        result = self._handle_after_save(ssb_filename), new_inclusion_list.included_files
+        result = (
+            self._handle_after_save(ssb_filename),
+            new_inclusion_list.included_files,
+        )
         logger.debug(f"{ssb_filename}: Done")
         return result
 
-    def save_explorerscript_macro(self, abs_exps_path: str, code: str,
-                                  changed_ssbs: list[SsbLoadedFile]) -> tuple[list[bool], list[set[str]]]:
+    def save_explorerscript_macro(
+        self, abs_exps_path: str, code: str, changed_ssbs: list[SsbLoadedFile]
+    ) -> tuple[list[bool], list[set[str]]]:
         """
         Saves an ExplorerScript macro file. This will save the source file for the macro and also recompile all SSB
         models in the list of changed_ssbs.
@@ -126,7 +136,7 @@ class SsbFileManager:
         """
         logger.debug(f"{abs_exps_path}: Saving ExplorerScript macro")
         # Write ExplorerScript to file
-        with open_utf8(abs_exps_path, 'w') as f:
+        with open_utf8(abs_exps_path, "w") as f:
             f.write(code)
 
         ready_to_reloads = []
@@ -134,13 +144,20 @@ class SsbFileManager:
         project_fm = self.context.get_project_filemanager()
         for ssb in changed_ssbs:
             # Skip non-existing or not up to date exps:
-            if not project_fm.explorerscript_exists(ssb.filename) or \
-                    not project_fm.explorerscript_hash_up_to_date(ssb.filename, ssb.exps.ssb_hash):
+            if not project_fm.explorerscript_exists(
+                ssb.filename
+            ) or not project_fm.explorerscript_hash_up_to_date(
+                ssb.filename, ssb.exps.ssb_hash
+            ):
                 ready_to_reloads.append(False)
                 included_files_list.append(set())
             else:
-                exps_source, _ = project_fm.explorerscript_load(ssb.filename, sourcemap=False)
-                ready_to_reload, included_files = self.save_from_explorerscript(ssb.filename, exps_source)
+                exps_source, _ = project_fm.explorerscript_load(
+                    ssb.filename, sourcemap=False
+                )
+                ready_to_reload, included_files = self.save_from_explorerscript(
+                    ssb.filename, exps_source
+                )
                 ready_to_reloads.append(ready_to_reload)
                 included_files_list.append(included_files)
 
@@ -200,6 +217,7 @@ class SsbFileManager:
         # - If the file is no longer loaded in Ground Engine: Regenerate text marks from source map.
         Returns whether a reload is possible.
         """
+
         def set_ram_state(state):
             self.get(filename).ram_state_up_to_date = state
             self.get(filename).not_breakable = not state
