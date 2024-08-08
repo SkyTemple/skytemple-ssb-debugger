@@ -90,6 +90,9 @@ class EditorTextMarkUtil:
     @classmethod
     def create_opcode_mark(cls, b: GtkSource.Buffer, ssb_filename: str,
                            offset: int, line: int, col: int, is_for_macro_call: bool):
+        if col == 0:
+            # XXX: Bug in GtkSourceView 4. Placing it at col 0 will cause it to hang. It shouldn't be a big issue in most cases.
+            col = 1
         textiter = b.get_iter_at_line_offset(line, col)
         macro_call_suffix = '_call' if is_for_macro_call else ''
         b.create_source_mark(f'opcode_<<<{ssb_filename}>>>_{offset}{macro_call_suffix}', CATEGORY_OPCODE, textiter)
