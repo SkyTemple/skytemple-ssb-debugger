@@ -80,7 +80,7 @@ SKYTEMPLE_WIKI_LINK = 'https://wiki.skytemple.org'
 
 
 class MainController:
-    
+
     def __init__(self, builder: Gtk.Builder, window: Gtk.Window, control_context: AbstractDebuggerControlContext):
         self.builder = builder
         self.window = window
@@ -982,10 +982,10 @@ class MainController:
         except ValueError:
             val = -1
         self.global_state_controller.change_current_table(val)
-        
+
     def on_global_state_reload_clicked(self, *args):
         self.global_state_controller.sync()
-        
+
     def on_global_state_alloc_dump_clicked(self, *args):
         active_rows: list[Gtk.TreePath] = builder_get_assert(self.builder, Gtk.TreeView, 'global_state_alloc_treeview').get_selection().get_selected_rows()[1]
         if len(active_rows) >= 1:
@@ -1134,6 +1134,7 @@ class MainController:
             self.local_variable_controller.init(rom_data)
             self.editor_notebook.init(self.ssb_fm, rom_data)
             self.rom_was_loaded = True
+            self.emu_reset()
         except BaseException as ex:
             self.context.display_error(
                 sys.exc_info(),
