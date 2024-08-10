@@ -17,7 +17,8 @@
 from __future__ import annotations
 import os
 from time import sleep
-from typing import Optional, List, Callable, Any
+from typing import Optional, List, Any
+from collections.abc import Callable
 
 from gi.repository import Gtk, Gdk, GLib
 from skytemple_files.common.i18n_util import _
