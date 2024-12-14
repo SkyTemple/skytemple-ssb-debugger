@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU General Public License
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
-from typing import List, Optional, cast, Sequence
+from typing import List, Optional, cast
+from collections.abc import Sequence
 
 from gi.repository import GtkSource, Gtk
 

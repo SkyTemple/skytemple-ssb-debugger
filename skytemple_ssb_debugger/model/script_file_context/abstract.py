@@ -16,7 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import List, Optional, Callable, Tuple, Any
+from typing import List, Optional, Tuple, Any
+from collections.abc import Callable
 
 from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlContext
 from skytemple_ssb_debugger.model.ssb_files.file import SsbLoadedFile
