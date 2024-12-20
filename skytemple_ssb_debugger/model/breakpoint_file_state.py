@@ -16,7 +16,8 @@
 #  along with SkyTemple.  If not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 import os
-from typing import Optional, Union, Dict, TYPE_CHECKING, Mapping
+from typing import Optional, Union, Dict, TYPE_CHECKING
+from collections.abc import Mapping
 
 from explorerscript.source_map import MacroSourceMapping
 from skytemple_files.common.project_file_manager import ProjectFileManager

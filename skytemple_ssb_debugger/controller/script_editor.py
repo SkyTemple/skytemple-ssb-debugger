@@ -21,7 +21,8 @@ import os
 import re
 import webbrowser
 from functools import partial
-from typing import Tuple, List, Optional, TYPE_CHECKING, Callable, Dict, cast
+from typing import Tuple, List, Optional, TYPE_CHECKING, Dict, cast
+from collections.abc import Callable
 from collections.abc import Iterable
 
 from gi.repository import GtkSource, Gtk
