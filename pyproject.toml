@@ -4,16 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "skytemple-ssb-debugger"
-version = "1.8.2"
+version = "1.8.3"
 authors = [
-    {name = 'Marco "Capypara" Köpcke', email = "hello@capypara.de"},
+    { name = 'Marco "Capypara" Köpcke', email = "hello@capypara.de" },
     # see About dialog or GitHub contributors list for additional people.
 ]
 description = "Script Engine Debugger for Pokémon Mystery Dungeon Explorers of Sky"
 readme = "README.rst"
 requires-python = ">=3.10"
 keywords = ["rom-hacking", "game-modding", "skytemple", "gtk"]
-license = {text = "GPL-3.0-or-later"}
+license = { text = "GPL-3.0-or-later" }
 classifiers = [
     "Development Status :: 4 - Beta",
     "Programming Language :: Python",
@@ -25,14 +25,14 @@ classifiers = [
 ]
 dependencies = [
     "ndspy >= 3.0.0",
-    "skytemple-files >= 1.8.2, < 1.9.0",
-    "pmdsky-debug-py",  #  Whatever version skytemple-files requires.
+    "skytemple-files >= 1.8.4, < 1.9.0",
+    "pmdsky-debug-py", #  Whatever version skytemple-files requires.
     "skytemple-icons >= 0.1.0",
     "range-typed-integers >= 1.0.0",
     "pygobject >= 3.26.0",
     "pycairo >= 1.16.0",
-    "skytemple-ssb-emulator >= 1.8.0, < 1.9.0",
-    "explorerscript >= 0.2.1",
+    "skytemple-ssb-emulator >= 1.8.1, < 1.9.0",
+    "explorerscript >= 0.2.2",
     "nest-asyncio >= 1.4.1",
     "pygtkspellcheck >= 5.0"
 ]
