@@ -17,7 +17,8 @@
 from __future__ import annotations
 import warnings
 from itertools import chain
-from typing import Optional, List, Tuple, Callable, cast, no_type_check
+from typing import Optional, List, Tuple, cast, no_type_check
+from collections.abc import Callable
 from collections.abc import Iterable
 
 from gi.repository import Gtk, GLib
