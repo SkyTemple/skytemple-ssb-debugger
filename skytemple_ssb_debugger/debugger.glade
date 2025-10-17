@@ -3258,10 +3258,7 @@ Thanks for making this great emulator!</property>
     <property name="comments" translatable="yes">Interactive debugger for the script engine of Pokémon Mystery Dungeon Explorers of Sky (EU/US)</property>
     <property name="website">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
     <property name="website-label" translatable="yes">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
-    <property name="authors">Project Lead:
-Marco "Capypara" Köpcke https://github.com/theCapypara
-
-Contributors:
+    <property name="authors">Contributors:
 Aikku93 (via tilequant) https://github.com/aikku93
 techticks (MacOS packaging) https://github.com/tech-ticks
 marius851000 (via skytemple-rust) https://github.com/marius851000
