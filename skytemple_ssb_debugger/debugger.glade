@@ -3259,6 +3259,7 @@ Thanks for making this great emulator!</property>
     <property name="website">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
     <property name="website-label" translatable="yes">https://github.com/SkyTemple/skytemple-ssb-debugger</property>
     <property name="authors">Contributors:
+Marco "Capypara" Köpcke (former project lead) https://github.com/theCapypara
 Aikku93 (via tilequant) https://github.com/aikku93
 techticks (MacOS packaging) https://github.com/tech-ticks
 marius851000 (via skytemple-rust) https://github.com/marius851000
