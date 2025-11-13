@@ -29,7 +29,7 @@ ALL_STATEMENTS = ['return', 'end', 'hold', 'if', 'elseif', 'else', 'with', 'acto
                   'default', 'clear', 'reset', 'init']
 
 
-class GtkSourceCompletionExplorerScriptStatements(GObject.Object, GtkSource.CompletionProvider):
+class GtkSourceCompletionExplorerScriptStatements(GtkSource.CompletionProvider):
     def do_get_name(self) -> str:
         return _("Statements")
 
