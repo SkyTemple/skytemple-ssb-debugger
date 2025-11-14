@@ -28,7 +28,7 @@ from skytemple_ssb_debugger.model.constants import ICON_ACTOR, ICON_OBJECT, ICON
 from skytemple_files.common.i18n_util import _
 
 
-class GtkSourceCompletionSsbConstants(GtkSource.CompletionProvider):
+class GtkSourceCompletionSsbConstants(GObject.Object, GtkSource.CompletionProvider):
     def __init__(self, rom_data: Pmd2Data):
         super().__init__()
         self.constant_source = rom_data.script_data

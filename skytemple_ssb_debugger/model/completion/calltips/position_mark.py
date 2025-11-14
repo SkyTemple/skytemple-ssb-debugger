@@ -29,7 +29,7 @@ from skytemple_ssb_debugger.context.abstract import AbstractDebuggerControlConte
 from skytemple_files.common.i18n_util import f, _
 
 
-class PositionMarkEditorCalltip(GtkSource.CompletionProvider):
+class PositionMarkEditorCalltip(GObject.Object, GtkSource.CompletionProvider):
     """
     Provides a button to click to open a scene editor for interactively editing position marks.
     This is done by parsing the ExplorerScript, extracting all position marks, and then
