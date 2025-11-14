@@ -25,7 +25,7 @@ from skytemple_ssb_debugger.model.completion.util import common_do_match, common
 from skytemple_files.common.i18n_util import _
 
 
-class GtkSourceCompletionSsbFunctions(GtkSource.CompletionProvider):
+class GtkSourceCompletionSsbFunctions(GObject.Object, GtkSource.CompletionProvider): # type: ignore
     def __init__(self, opcodes: list[Pmd2ScriptOpCode]):
         super().__init__()
         self.opcodes = opcodes
